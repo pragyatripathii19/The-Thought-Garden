@@ -56,10 +56,10 @@ export const SettingsView: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <h3 className="font-serif text-base font-semibold text-[#233126]">
-              Local-First & Completely Private
+              Local-First &amp; Private
             </h3>
             <p className="text-xs text-[#596d5e] leading-relaxed">
-              The Thought Garden stores all data inside your browser using IndexedDB. No accounts, no tracking, and no thoughts are ever uploaded to any server or cloud database.
+              Your thoughts are stored only on this device using IndexedDB — no thought content is ever uploaded or shared. As part of the Thought Garden pilot, we collect a small amount of usage data (your name, activity patterns, and any feedback you choose to submit) to help us improve the product.
             </p>
             <div className="flex items-center gap-1.5 pt-1 text-[11px] text-amber-800 font-medium">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />

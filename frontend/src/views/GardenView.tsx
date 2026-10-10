@@ -7,7 +7,6 @@ import {
   X,
   History,
   Link2,
-  Lightbulb,
   Search,
   PenTool,
   CheckSquare,
@@ -19,6 +18,7 @@ import { formatRelativeTime } from '../lib/time';
 import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon, SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { FallingLeaves } from '../components/FallingLeaves';
+import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -31,6 +31,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
   const {
     thoughts,
     collections,
+    connections,
     suggestedConnection,
     rediscoveredThought,
     dismissRediscoveredThought,
@@ -51,6 +52,17 @@ export const GardenView: React.FC<GardenViewProps> = ({
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
+
+  const acceptedConnections = connections
+    .filter((c) => c.status === 'accepted')
+    .map((c) => {
+      const source = thoughts.find((t) => t.id === c.sourceThoughtId);
+      const target = thoughts.find((t) => t.id === c.targetThoughtId);
+      return { connection: c, source, target };
+    })
+    .filter((item): item is { connection: typeof item.connection; source: Thought; target: Thought } =>
+      Boolean(item.source && item.target)
+    );
 
   // Time-of-day greeting
   const getGreeting = () => {
@@ -91,57 +103,6 @@ export const GardenView: React.FC<GardenViewProps> = ({
     if (onNavigateTab) {
       onNavigateTab('collections');
     }
-  };
-
-  // Helper to determine icon and badge for thoughts in feed
-  const getThoughtCategoryMeta = (thought: Thought) => {
-    if (thought.category === 'connection') {
-      return {
-        label: 'Connections',
-        badgeBg: 'bg-[#eef4fb] text-[#36618c] border-[#d4e4f5]',
-        iconBg: 'bg-[#edf4fb] text-[#36618c]',
-        Icon: Link2,
-      };
-    }
-    if (thought.category === 'research' || thought.collectionIds.includes('col-things-to-research')) {
-      return {
-        label: 'Research',
-        badgeBg: 'bg-[#f4f3fa] text-[#554e8c] border-[#e1def4]',
-        iconBg: 'bg-[#f4f3fa] text-[#554e8c]',
-        Icon: Search,
-      };
-    }
-    if (thought.category === 'writing' || thought.collectionIds.includes('col-writing')) {
-      return {
-        label: 'Writing',
-        badgeBg: 'bg-[#fdf2f2] text-[#8c3b42] border-[#f5d9db]',
-        iconBg: 'bg-[#fdf2f2] text-[#8c3b42]',
-        Icon: PenTool,
-      };
-    }
-    if (thought.category === 'task' || thought.collectionIds.includes('col-tasks-to-revisit')) {
-      return {
-        label: 'Tasks',
-        badgeBg: 'bg-[#fdf6ee] text-[#855320] border-[#f5e3ce]',
-        iconBg: 'bg-[#fdf6ee] text-[#855320]',
-        Icon: CheckSquare,
-      };
-    }
-    if (thought.category === 'idea' || thought.collectionIds.includes('col-startup-ideas')) {
-      return {
-        label: 'Idea',
-        badgeBg: 'bg-[#edf5ee] text-[#34593e] border-[#d5e6d8]',
-        iconBg: 'bg-[#fef9e8] text-[#8a681c]',
-        Icon: Lightbulb,
-      };
-    }
-
-    return {
-      label: 'Thought',
-      badgeBg: 'bg-[#edf4ee] text-[#34593e] border-[#d5e6d8]',
-      iconBg: 'bg-[#edf4ee] text-[#34593e]',
-      Icon: Sprout,
-    };
   };
 
   // Collection card styling variants
@@ -425,9 +386,9 @@ export const GardenView: React.FC<GardenViewProps> = ({
           </button>
         </div>
 
-        {/* Desktop & Tablet: 4 Pastel Collection Cards Grid */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {collections.slice(0, 4).map((col) => {
+        {/* Desktop & Tablet: Up to 6 Pastel Collection Cards Grid */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {collections.slice(0, 6).map((col) => {
             const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
             const styles = getCollectionCardStyles(col);
             const Icon = styles.Icon;
@@ -464,8 +425,19 @@ export const GardenView: React.FC<GardenViewProps> = ({
             );
           })}
         </div>
+        {collections.length > 6 && (
+          <div className="hidden sm:flex justify-end">
+            <button
+              type="button"
+              onClick={() => onNavigateTab && onNavigateTab('collections')}
+              className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
+            >
+              + {collections.length - 6} more collections →
+            </button>
+          </div>
+        )}
 
-        {/* Mobile: Compact Rounded List Rows */}
+        {/* Mobile: Compact Rounded List Rows — show 4 */}
         <div className="sm:hidden space-y-2">
           {collections.slice(0, 4).map((col) => {
             const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
@@ -506,7 +478,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
           </h3>
           <button
             type="button"
-            onClick={() => onNavigateTab && onNavigateTab('collections')}
+            onClick={() => onNavigateTab && onNavigateTab('thoughts')}
             className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
           >
             View all
@@ -564,6 +536,53 @@ export const GardenView: React.FC<GardenViewProps> = ({
           </div>
         )}
       </section>
+
+      {/* Connected Thoughts Section */}
+      {acceptedConnections.length > 0 && (
+        <section className="space-y-3.5">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-[#edf5ee] text-[#34593e] flex items-center justify-center">
+                <Link2 className="w-3.5 h-3.5" />
+              </span>
+              <h3 className="font-serif text-lg font-semibold text-[#233126]">
+                Connected Thoughts
+              </h3>
+            </div>
+            <span className="text-xs text-[#718273]">
+              {acceptedConnections.length} connected {acceptedConnections.length === 1 ? 'pair' : 'pairs'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {acceptedConnections.slice(0, 4).map(({ connection: c, source, target }) => (
+              <div
+                key={c.id}
+                className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl shadow-xs transition-all space-y-2.5"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] text-[#3d5a45] font-semibold">
+                  <Link2 className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{c.reason}</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div
+                    onClick={() => setSelectedThoughtId(source.id)}
+                    className="p-2.5 rounded-xl bg-[#faf8f4] hover:bg-[#f3f0e8] cursor-pointer text-[#233126] line-clamp-2 transition-colors border border-[#ede9df]"
+                  >
+                    "{source.text}"
+                  </div>
+                  <div
+                    onClick={() => setSelectedThoughtId(target.id)}
+                    className="p-2.5 rounded-xl bg-[#faf8f4] hover:bg-[#f3f0e8] cursor-pointer text-[#233126] line-clamp-2 transition-colors border border-[#ede9df]"
+                  >
+                    "{target.text}"
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Decorative Rolling Hills Artwork on Mobile */}
       <div className="sm:hidden pt-4 -mb-8">

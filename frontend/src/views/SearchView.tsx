@@ -145,6 +145,23 @@ export const SearchView: React.FC = () => {
           <p className="text-xs text-[#718273] max-w-sm mx-auto">
             Type any keyword or phrase you remember jotting down. Search works in real-time across your garden.
           </p>
+          {collections.length > 0 && (
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-1.5 max-w-md mx-auto">
+              <span className="text-[11px] text-[#869688] w-full text-center mb-1">
+                Quick search by collection:
+              </span>
+              {collections.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setQuery(c.name)}
+                  className="px-2.5 py-1 text-xs rounded-full bg-[#f4f1e8] hover:bg-[#eae5d8] text-[#3d5a45] font-medium border border-[#e2dcd0] transition-colors"
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

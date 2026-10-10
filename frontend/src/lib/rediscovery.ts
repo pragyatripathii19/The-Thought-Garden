@@ -33,6 +33,6 @@ export function pickThoughtToRevisit(
     return null;
   }
 
-  // Return the first eligible (oldest) or randomly chosen candidate
-  return eligible[0];
+  // Pick randomly from eligible candidates for variety
+  return eligible[Math.floor(Math.random() * eligible.length)];
 }

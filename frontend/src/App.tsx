@@ -8,6 +8,7 @@ import { CollectionsView } from './views/CollectionsView';
 import { SearchView } from './views/SearchView';
 import { SavedView } from './views/SavedView';
 import { SettingsView } from './views/SettingsView';
+import { AllThoughtsView } from './views/AllThoughtsView';
 import { StorageProvider } from './context/StorageContext';
 import { NavTab } from './types';
 
@@ -62,6 +63,7 @@ function AppContent() {
               onOpenNewThought={() => setIsNewThoughtModalOpen(true)}
             />
           )}
+          {activeTab === 'thoughts' && <AllThoughtsView />}
           {activeTab === 'collections' && <CollectionsView />}
           {activeTab === 'search' && <SearchView />}
           {activeTab === 'saved' && <SavedView />}

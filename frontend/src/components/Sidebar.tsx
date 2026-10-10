@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Home, Library, Search, Bookmark, SlidersHorizontal, Compass, X } from 'lucide-react';
+import { Home, Library, Search, Bookmark, SlidersHorizontal, Compass, X, BookOpen } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
+import { getDailyQuote } from '../lib/quotes';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -15,6 +16,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
   const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'garden', label: 'Home', icon: Home },
+    { id: 'thoughts', label: 'All Thoughts', icon: BookOpen },
     { id: 'collections', label: 'Collections', icon: Library },
     { id: 'search', label: 'Search', icon: Search },
     { id: 'saved', label: 'Saved', icon: Bookmark },
@@ -110,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
               <LeafLogoIcon className="w-3.5 h-3.5" />
             </div>
             <p className="text-xs text-[#616e63] leading-relaxed">
-              Small thoughts can grow into big things.
+              {getDailyQuote()}
             </p>
           </div>
         </div>

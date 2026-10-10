@@ -16,7 +16,7 @@ export const OnboardingModal: React.FC = () => {
   const { isOnboardingOpen, saveUserProfile } = useThoughts();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [selectedReasons, setSelectedReasons] = useState<string[]>(['Daily Brain Dump']);
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOnboardingOpen) return null;

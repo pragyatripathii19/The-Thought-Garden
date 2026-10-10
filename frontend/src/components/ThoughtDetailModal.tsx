@@ -13,6 +13,8 @@ import {
   Sprout,
   Sparkles,
   Link2,
+  Plus,
+  X,
 } from 'lucide-react';
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
@@ -44,13 +46,14 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   onDelete,
   onSelectThought,
 }) => {
-  const { collections, toggleSaveThought, connections, thoughts } = useThoughts();
+  const { collections, toggleSaveThought, connections, thoughts, toggleThoughtCollection } = useThoughts();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddingCollection, setIsAddingCollection] = useState(false);
 
   useEffect(() => {
     if (thought) {
@@ -58,6 +61,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
       setIsEditing(false);
       setShowDeleteConfirm(false);
       setShowOptions(false);
+      setIsAddingCollection(false);
     }
   }, [thought]);
 
@@ -241,12 +245,14 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
         {/* Modal Scrollable Body */}
         <div className="p-6 sm:p-7 overflow-y-auto space-y-6 flex-1">
-          {/* Badge: Connection or Stage */}
+          {/* Badge: Connection (only if category is 'connection') or just Stage */}
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#eef4fb] text-[#36618c] border border-[#d4e4f5]">
-              <Link2 className="w-3.5 h-3.5" />
-              <span>Connection</span>
-            </span>
+            {thought.category === 'connection' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#eef4fb] text-[#36618c] border border-[#d4e4f5]">
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Connection</span>
+              </span>
+            )}
             <GrowthStageBadge stage={thought.stage || 'seed'} size="sm" />
           </div>
 
@@ -370,6 +376,85 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               </p>
             </div>
           )}
+
+          {/* Collections Section */}
+          <div className="pt-2 border-t border-[#eee9dc]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="block text-xs font-semibold uppercase tracking-wider text-[#738274]">
+                Collections
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAddingCollection(!isAddingCollection)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-[#3d5a45] hover:text-[#283e2e] transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add to collection</span>
+              </button>
+            </div>
+
+            {/* Current collection badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              {thought.collectionIds && thought.collectionIds.length > 0 ? (
+                thought.collectionIds.map((cid) => {
+                  const col = collections.find((c) => c.id === cid);
+                  if (!col) return null;
+                  return (
+                    <span
+                      key={cid}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#f2ede4] text-[#2c3d2e] border border-[#e4ded0]"
+                    >
+                      <span>{col.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleThoughtCollection(thought.id, cid)}
+                        className="p-0.5 hover:bg-[#e4ded0] rounded-full text-[#738274] hover:text-[#233126] transition-colors"
+                        title={`Remove from ${col.name}`}
+                        aria-label={`Remove from ${col.name}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="text-xs text-[#879688] italic">
+                  Not assigned to any collections yet
+                </span>
+              )}
+            </div>
+
+            {/* Dropdown to add unassigned collections */}
+            {isAddingCollection && (
+              <div className="mt-2.5 p-2 bg-white border border-[#e4ded0] rounded-2xl shadow-sm space-y-1 animate-fade-in">
+                <div className="text-[11px] font-semibold text-[#738274] px-2 py-0.5">
+                  Choose a collection:
+                </div>
+                {collections.filter((c) => !thought.collectionIds?.includes(c.id)).length > 0 ? (
+                  collections
+                    .filter((c) => !thought.collectionIds?.includes(c.id))
+                    .map((col) => (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={async () => {
+                          await toggleThoughtCollection(thought.id, col.id);
+                          setIsAddingCollection(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-[#233126] hover:bg-[#f3f0e8] rounded-xl text-left transition-colors"
+                      >
+                        <span className="font-medium">{col.name}</span>
+                        <Plus className="w-3.5 h-3.5 text-[#3d5a45]" />
+                      </button>
+                    ))
+                ) : (
+                  <p className="text-xs text-[#879688] px-2 py-1">
+                    This thought is already in all your collections.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Growth Stage Selector */}
           <div className="pt-2 border-t border-[#eee9dc]">

@@ -5,20 +5,21 @@ import {
   Plus,
   ChevronRight,
   MoreHorizontal,
-  Lightbulb,
   PenTool,
   CheckSquare,
   Sprout,
-  Link2,
   Trash2,
   X,
   Check,
   AlertCircle,
+  Leaf,
+  Flower2,
 } from 'lucide-react';
+import { CollectionColorVariant, CollectionIconType, Collection } from '../types';
 import { useThoughts } from '../context/StorageContext';
-import { Collection, Thought } from '../types';
 import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
+import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 
 export const CollectionsView: React.FC = () => {
   const {
@@ -43,6 +44,8 @@ export const CollectionsView: React.FC = () => {
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
   const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<CollectionColorVariant>('green');
+  const [selectedIcon, setSelectedIcon] = useState<CollectionIconType>('sprout');
 
   const activeCollection = collections.find((c) => c.id === activeCollectionId) || null;
   const activeThoughts = activeCollection
@@ -69,9 +72,14 @@ export const CollectionsView: React.FC = () => {
     try {
       setIsSaving(true);
       setCreateError(null);
-      const created = await createCollection(trimmed, newColDesc.trim() || undefined);
+      const created = await createCollection(trimmed, newColDesc.trim() || undefined, {
+        colorVariant: selectedColor,
+        iconType: selectedIcon,
+      });
       setNewColName('');
       setNewColDesc('');
+      setSelectedColor('green');
+      setSelectedIcon('sprout');
       setIsCreateModalOpen(false);
       setActiveCollectionId(created.id);
     } catch (err) {
@@ -96,68 +104,35 @@ export const CollectionsView: React.FC = () => {
   };
 
   const getCollectionIconStyles = (collection: Collection) => {
-    if (collection.id === 'col-startup-ideas' || collection.colorVariant === 'green') {
-      return {
-        iconBg: 'bg-[#dcebdd] text-[#34593e]',
-        Icon: Sprout,
-      };
-    }
-    if (collection.id === 'col-writing' || collection.colorVariant === 'rose') {
+    let Icon = Sprout;
+    if (collection.iconType === 'pencil' || collection.id === 'col-writing') Icon = PenTool;
+    else if (collection.iconType === 'search' || collection.id === 'col-things-to-research') Icon = Search;
+    else if (collection.iconType === 'check' || collection.id === 'col-tasks-to-revisit') Icon = CheckSquare;
+    else if (collection.iconType === 'leaf') Icon = Leaf;
+    else if (collection.iconType === 'flower') Icon = Flower2;
+    else if (collection.iconType === 'sprout' || collection.id === 'col-startup-ideas') Icon = Sprout;
+
+    if (collection.colorVariant === 'rose' || collection.id === 'col-writing') {
       return {
         iconBg: 'bg-[#fae2e3] text-[#8c3b42]',
-        Icon: PenTool,
+        Icon,
       };
     }
-    if (collection.id === 'col-things-to-research' || collection.colorVariant === 'purple') {
+    if (collection.colorVariant === 'purple' || collection.id === 'col-things-to-research') {
       return {
         iconBg: 'bg-[#e7e4f6] text-[#4f4886]',
-        Icon: Search,
+        Icon,
+      };
+    }
+    if (collection.colorVariant === 'amber' || collection.id === 'col-tasks-to-revisit') {
+      return {
+        iconBg: 'bg-[#fae8d4] text-[#855320]',
+        Icon,
       };
     }
     return {
-      iconBg: 'bg-[#fae8d4] text-[#855320]',
-      Icon: CheckSquare,
-    };
-  };
-
-  const getThoughtCategoryMeta = (thought: Thought) => {
-    if (thought.category === 'connection') {
-      return {
-        label: 'Connection',
-        badgeBg: 'bg-[#eef4fb] text-[#36618c] border-[#d4e4f5]',
-        iconBg: 'bg-[#edf4fb] text-[#36618c]',
-        Icon: Link2,
-      };
-    }
-    if (thought.category === 'research' || thought.collectionIds.includes('col-things-to-research')) {
-      return {
-        label: 'Research',
-        badgeBg: 'bg-[#f4f3fa] text-[#554e8c] border-[#e1def4]',
-        iconBg: 'bg-[#f4f3fa] text-[#554e8c]',
-        Icon: Search,
-      };
-    }
-    if (thought.category === 'writing' || thought.collectionIds.includes('col-writing')) {
-      return {
-        label: 'Writing',
-        badgeBg: 'bg-[#fdf2f2] text-[#8c3b42] border-[#f5d9db]',
-        iconBg: 'bg-[#fdf2f2] text-[#8c3b42]',
-        Icon: PenTool,
-      };
-    }
-    if (thought.category === 'task' || thought.collectionIds.includes('col-tasks-to-revisit')) {
-      return {
-        label: 'Tasks',
-        badgeBg: 'bg-[#fdf6ee] text-[#855320] border-[#f5e3ce]',
-        iconBg: 'bg-[#fdf6ee] text-[#855320]',
-        Icon: CheckSquare,
-      };
-    }
-    return {
-      label: 'Idea',
-      badgeBg: 'bg-[#edf5ee] text-[#34593e] border-[#d5e6d8]',
-      iconBg: 'bg-[#fef9e8] text-[#8a681c]',
-      Icon: Lightbulb,
+      iconBg: 'bg-[#dcebdd] text-[#34593e]',
+      Icon,
     };
   };
 
@@ -453,6 +428,69 @@ export const CollectionsView: React.FC = () => {
                   disabled={isSaving}
                   className="w-full px-4 py-2 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-hidden text-[#233126] text-sm resize-none"
                 />
+              </div>
+
+              {/* Color Theme Selector */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
+                  Color Theme
+                </label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'green', label: 'Sage', bg: 'bg-[#dcebdd] border-[#b8d4bd]' },
+                    { id: 'rose', label: 'Rose', bg: 'bg-[#fae2e3] border-[#eec2c5]' },
+                    { id: 'purple', label: 'Lavender', bg: 'bg-[#e7e4f6] border-[#cecaec]' },
+                    { id: 'amber', label: 'Amber', bg: 'bg-[#fae8d4] border-[#ebd0b4]' },
+                  ].map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSelectedColor(c.id as CollectionColorVariant)}
+                      className={`h-8 px-3 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all ${c.bg} ${
+                        selectedColor === c.id ? 'ring-2 ring-[#3d5a45] ring-offset-1 font-semibold' : 'opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      {selectedColor === c.id && <Check className="w-3 h-3 text-[#233126]" />}
+                      <span>{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Icon Selector */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
+                  Icon
+                </label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'sprout', label: 'Sprout', Icon: Sprout },
+                    { id: 'leaf', label: 'Leaf', Icon: Leaf },
+                    { id: 'flower', label: 'Flower', Icon: Flower2 },
+                    { id: 'pencil', label: 'Writing', Icon: PenTool },
+                    { id: 'search', label: 'Search', Icon: Search },
+                    { id: 'check', label: 'Tasks', Icon: CheckSquare },
+                  ].map((ic) => {
+                    const IconComponent = ic.Icon;
+                    const isSelected = selectedIcon === ic.id;
+                    return (
+                      <button
+                        key={ic.id}
+                        type="button"
+                        onClick={() => setSelectedIcon(ic.id as CollectionIconType)}
+                        className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all ${
+                          isSelected
+                            ? 'bg-[#3d5a45] text-white border-[#3d5a45] shadow-xs'
+                            : 'bg-white text-[#5d6b5e] border-[#e4ded0] hover:bg-[#faf8f4]'
+                        }`}
+                        title={ic.label}
+                      >
+                        <IconComponent className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">{ic.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {createError && (

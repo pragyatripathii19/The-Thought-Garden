@@ -1,4 +1,4 @@
-export type NavTab = 'garden' | 'collections' | 'search' | 'saved' | 'settings';
+export type NavTab = 'garden' | 'collections' | 'search' | 'saved' | 'settings' | 'thoughts';
 
 export type GrowthStage = 'seed' | 'sprout' | 'bloom' | 'mature';
 

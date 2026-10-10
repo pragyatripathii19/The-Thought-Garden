@@ -7,6 +7,7 @@ interface GrowthStageBadgeProps {
   size?: 'sm' | 'md';
   showLabel?: boolean;
   className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const stageConfig: Record<
@@ -54,6 +55,7 @@ export const GrowthStageBadge: React.FC<GrowthStageBadgeProps> = ({
   size = 'sm',
   showLabel = true,
   className = '',
+  onClick,
 }) => {
   const config = stageConfig[stage] || stageConfig.seed;
   const Icon = config.icon;
@@ -63,6 +65,23 @@ export const GrowthStageBadge: React.FC<GrowthStageBadgeProps> = ({
     : 'px-3 py-1.5 text-xs gap-1.5';
 
   const iconSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(e);
+        }}
+        className={`inline-flex items-center font-medium rounded-full border transition-all cursor-pointer active:scale-95 ${config.styles} ${sizeClasses} ${className}`}
+        title={`Growth stage: ${config.label} (${config.description}) — Click to change stage`}
+      >
+        <Icon className={`${iconSize} ${config.iconColor}`} />
+        {showLabel && <span>{config.label}</span>}
+      </button>
+    );
+  }
 
   return (
     <span

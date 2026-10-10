@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Bookmark } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Bookmark, Search, X } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
@@ -7,10 +7,17 @@ import { GrowthStageBadge } from '../components/GrowthStageBadge';
 
 export const SavedView: React.FC = () => {
   const { thoughts, updateThought, deleteThought } = useThoughts();
+  const [query, setQuery] = useState('');
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
 
   const savedThoughts = thoughts.filter((t) => t.isSaved);
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return savedThoughts;
+    const q = query.toLowerCase();
+    return savedThoughts.filter((t) => t.text.toLowerCase().includes(q));
+  }, [savedThoughts, query]);
 
   return (
     <div className="space-y-6 pb-16 max-w-2xl mx-auto">
@@ -31,6 +38,30 @@ export const SavedView: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Filter Bar (if there are saved thoughts) */}
+      {savedThoughts.length > 0 && (
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b998d]" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter saved thoughts..."
+            className="w-full pl-10 pr-9 py-2.5 bg-white border border-[#e4ded0] rounded-2xl text-xs text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-hidden shadow-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b998d] hover:text-[#233126] p-1 rounded-lg"
+              aria-label="Clear filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Thought List or Empty State */}
       {savedThoughts.length === 0 ? (
         <div className="py-16 text-center bg-white border border-dashed border-[#e4ded0] rounded-3xl p-6 space-y-2">
@@ -44,9 +75,25 @@ export const SavedView: React.FC = () => {
             When you inspect any thought, tap the 📌 bookmark icon to pin it here for easy return.
           </p>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-12 text-center bg-white border border-dashed border-[#e4ded0] rounded-3xl p-6 space-y-2">
+          <p className="font-serif text-base font-semibold text-[#253227]">
+            No matching saved thoughts
+          </p>
+          <p className="text-xs text-[#718273]">
+            No pinned thoughts matched "{query}".
+          </p>
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="text-xs text-[#34593e] underline underline-offset-2 mt-1"
+          >
+            Clear filter
+          </button>
+        </div>
       ) : (
         <div className="space-y-3">
-          {savedThoughts.map((thought) => (
+          {filtered.map((thought) => (
             <div
               key={thought.id}
               onClick={() => setSelectedThoughtId(thought.id)}
