@@ -222,7 +222,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isSaving}
-              placeholder="e.g. A startup idea, a question, a note, anything..."
+              placeholder="e.g. an idea, a feeling to express, or perhaps a whim?"
               className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
             />
           </div>

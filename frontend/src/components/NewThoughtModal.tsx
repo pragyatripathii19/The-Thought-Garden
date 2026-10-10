@@ -132,7 +132,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
                 maxLength={1000}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. Startup idea: an app that helps people stop forgetting their ideas..."
+                placeholder="e.g. an idea, a feeling to express, or perhaps a whim?"
                 className="w-full bg-transparent text-[#253227] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
               />
             </div>

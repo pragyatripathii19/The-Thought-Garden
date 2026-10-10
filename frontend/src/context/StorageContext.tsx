@@ -22,7 +22,7 @@ import {
 import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connections';
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
-import { STARTER_COLLECTIONS, getStarterThoughts, getStarterConnections } from '../lib/defaults';
+import { STARTER_COLLECTIONS } from '../lib/defaults';
 import { syncPilotSignup, syncPilotPing, submitPilotFeedback } from '../lib/pilotApi';
 import { computeTodayThoughtsCount, computeGardenStreak } from '../lib/analytics';
 
@@ -246,20 +246,13 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       setIsLoading(true);
       setError(null);
 
-      // Idempotent starter seeding: seed once only if collection store is completely empty
+      // Idempotent starter seeding: seed the 4 starter collections (with 0 thoughts) if collection store is empty
       const hasSeeded = typeof window !== 'undefined' ? localStorage.getItem('thought_garden_starter_seeded') : null;
       if (!hasSeeded) {
-        const thoughtsCount = await thoughtRepository.count();
         const colCount = await collectionRepository.count();
-        if (thoughtsCount === 0 && colCount === 0) {
+        if (colCount === 0) {
           for (const col of STARTER_COLLECTIONS) {
             await collectionRepository.save(col);
-          }
-          for (const thought of getStarterThoughts()) {
-            await thoughtRepository.save(thought);
-          }
-          for (const conn of getStarterConnections()) {
-            await connectionRepository.save(conn);
           }
         }
         if (typeof window !== 'undefined') {
