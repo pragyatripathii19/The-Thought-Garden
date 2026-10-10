@@ -1,0 +1,195 @@
+﻿Diagnose log at 2026-10-09T23:50:43Z
+
+AppPath: C:\Users\pragya.tripathi\AppData\Local\Programs\Git\mingw64\bin\git-credential-manager.exe
+InstallDir: C:\Users\pragya.tripathi\AppData\Local\Programs\Git\mingw64\bin\
+Version: 2.7.0+d1dd8a4ded75a2b1faae653157ac1699609442ad
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+SESSIONNAME=Console
+ProgramFiles(x86)=C:\Program Files (x86)
+MSYSTEM=MINGW64
+ProgramW6432=C:\Program Files
+windir=C:\WINDOWS
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 197 Stepping 2, GenuineIntel
+EFC_13676_1262719628=1
+PROCESSOR_ARCHITECTURE=AMD64
+VSCODE_GIT_ASKPASS_MAIN=c:\Users\pragya.tripathi\AppData\Roaming\Code\User\globalStorage\vscode.git\askpass\70789581cae28aa7\askpass-main.js
+Path=C:/Users/pragya.tripathi/AppData/Local/Programs/Git/mingw64/libexec/git-core;C:\Users\pragya.tripathi\AppData\Local\Programs\Git\mingw64\bin;C:\Users\pragya.tripathi\AppData\Local\Programs\Git\usr\bin;C:\Users\pragya.tripathi\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\Microsoft VS Code\bin;C:\Program Files\nodejs\;C:\Program Files\Docker\Docker\resources\bin;C:\Users\pragya.tripathi\AppData\Local\agy\bin;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Launcher\;C:\Users\pragya.tripathi\AppData\Local\Microsoft\WindowsApps;C:\Users\pragya.tripathi\AppData\Local\Python\bin;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\Scripts;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\pragya.tripathi\AppData\Local\Programs\Python\Python312\;C:\Users\pragya.tripathi\AppData\Local\Programs\Antigravity\bin;C:\Users\pragya.tripathi\AppData\Local\Programs\Git\cmd;C:\Users\pragya.tripathi\AppData\Roaming\npm;C:\Users\pragya.tripathi\AppData\Local\Microsoft\WinGet\Packages\Microsoft.devtunnel_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\Users\pragya.tripathi\AppData\Local\Programs\Antigravity IDE\bin
+HUGGINGFACE_HUB_CACHE=C:\Users\pragya.tripathi\.cache\huggingface
+USERPROFILE=C:\Users\pragya.tripathi
+VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-d6336c2616-sock
+PROCESSOR_REVISION=c502
+EFC_13676_4126798990=0
+EFC_13676_1592913036=1
+FPS_BROWSER_APP_PROFILE_STRING=Internet Explorer
+FPS_BROWSER_USER_PROFILE_STRING=Default
+LOGONSERVER=\\AS-CMMQHG4-L
+TEMP=C:\Users\PRAGYA~1.TRI\AppData\Local\Temp
+USERNAME=pragya.tripathi
+SystemRoot=C:\WINDOWS
+CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_25132_LDLGHAPBOPDCIOPG
+GIT_EXEC_PATH=C:/Users/pragya.tripathi/AppData/Local/Programs/Git/mingw64/libexec/git-core
+PLINK_PROTOCOL=ssh
+USERDNSDOMAIN=IONgroup.net
+OneDrive=C:\Users\pragya.tripathi\OneDrive - ION
+HF_HUB_OFFLINE=1
+CommonProgramFiles=C:\Program Files\Common Files
+VSCODE_INJECTION=1
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+EFC_13676_3789132940=1
+ProgramData=C:\ProgramData
+LANG=en_US.UTF-8
+GIT_ASKPASS=c:\Users\pragya.tripathi\AppData\Roaming\Code\User\globalStorage\vscode.git\askpass\70789581cae28aa7\askpass.sh
+HOMEPATH=\Users\pragya.tripathi
+COMPUTERNAME=AS-CMMQHG4-L
+ALLUSERSPROFILE=C:\ProgramData
+CommonProgramW6432=C:\Program Files\Common Files
+OneDriveCommercial=C:\Users\pragya.tripathi\OneDrive - ION
+TMP=C:\Users\PRAGYA~1.TRI\AppData\Local\Temp
+TERM=xterm-256color
+DriverData=C:\Windows\System32\Drivers\DriverData
+HOMEDRIVE=C:
+HF_HOME=C:\Users\pragya.tripathi\.cache\huggingface
+GIT_TRACE2_PARENT_SID=fe8f4a45-9b81-4005-ac64-4ea47aa31c4c
+SystemDrive=C:
+NUMBER_OF_PROCESSORS=16
+OS=Windows_NT
+ProgramFiles=C:\Program Files
+ComSpec=C:\WINDOWS\system32\cmd.exe
+USERDOMAIN_ROAMINGPROFILE=ION
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+HOME=C:\Users\pragya.tripathi
+PSModulePath=C:\Users\pragya.tripathi\OneDrive - ION\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+TMPDIR=C:\Users\PRAGYA~1.TRI\AppData\Local\Temp
+APPDATA=C:\Users\pragya.tripathi\AppData\Roaming
+USERDOMAIN=ION
+PROCESSOR_LEVEL=6
+LOCALAPPDATA=C:\Users\pragya.tripathi\AppData\Local
+EFC_13676_2283032206=1
+VSCODE_GIT_ASKPASS_NODE=C:\Program Files\Microsoft VS Code\Code.exe
+EFC_13676_2775293581=1
+TERM_PROGRAM_VERSION=1.138.0
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+COLORTERM=truecolor
+PUBLIC=C:\Users\Public
+TERM_PROGRAM=vscode
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\pragya.tripathi\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\pragya.tripathi\AppData\Local\Temp\243a47fc8cd29515425c2561'... OK
+Reading from temporary file 'C:\Users\pragya.tripathi\AppData\Local\Temp\243a47fc8cd29515425c2561'... OK
+Deleting temporary file 'C:\Users\pragya.tripathi\AppData\Local\Temp\243a47fc8cd29515425c2561'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\pragya.tripathi
+UserDataDirectoryPath: C:\Users\pragya.tripathi\.gcm
+GetCurrentDirectory(): C:\Users\pragya.tripathi\OneDrive - ION\Prototype-1
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... OK
+ OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:49205/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.53.0.windows.1'
+Locating current repository...Git repository at 'C:/Users/pragya.tripathi/OneDrive - ION/Prototype-1/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	core.autocrlf=true
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	core.fscache=true
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	core.symlinks=false
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	pull.rebase=false
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	credential.helper=manager
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Users/pragya.tripathi/AppData/Local/Programs/Git/etc/gitconfig	init.defaultbranch=main
+file:C:/Users/pragya.tripathi/.gitconfig	user.name=Pragya Tripathi
+file:C:/Users/pragya.tripathi/.gitconfig	user.email=pragya.tripathi@iongroup.com
+file:C:/Users/pragya.tripathi/.gitconfig	safe.directory=C:/Users/pragya.tripathi/OneDrive - ION/Agentic Ecosystem Memory Modelling-Good-To-Haves
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	remote.origin.url=https://github.com/pragyatripathii19/The-Thought-Garden.git
+file:.git/config	remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\pragya.tripathi\AppData\Local\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\pragya.tripathi\AppData\Local\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+
