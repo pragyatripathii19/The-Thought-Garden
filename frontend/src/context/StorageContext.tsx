@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Thought, Collection, Connection } from '../types';
+import { Thought, Collection, Connection, ThoughtCategory, GrowthStage, CollectionColorVariant, CollectionIconType } from '../types';
 import {
   getThoughtRepository,
   getCollectionRepository,
@@ -11,6 +11,7 @@ import {
 import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connections';
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
+import { STARTER_COLLECTIONS, getStarterThoughts, getStarterConnections } from '../lib/defaults';
 
 interface StorageContextValue {
   thoughts: Thought[];
@@ -18,18 +19,34 @@ interface StorageContextValue {
   connections: Connection[];
   suggestedConnection: SuggestedConnection | null;
   rediscoveredThought: Thought | null;
+  activeCollectionId: string | null;
+  setActiveCollectionId: (id: string | null) => void;
   isLoading: boolean;
   error: string | null;
   // Thought actions
-  createThought: (text: string) => Promise<Thought>;
-  updateThought: (id: string, updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds'>>) => Promise<Thought>;
+  createThought: (
+    text: string,
+    options?: { collectionIds?: string[]; category?: ThoughtCategory; stage?: GrowthStage }
+  ) => Promise<Thought>;
+  updateThought: (
+    id: string,
+    updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds' | 'isSaved' | 'category'>>
+  ) => Promise<Thought>;
   deleteThought: (id: string) => Promise<void>;
   refreshThoughts: () => Promise<void>;
   toggleThoughtCollection: (thoughtId: string, collectionId: string) => Promise<Thought>;
+  toggleSaveThought: (id: string) => Promise<Thought>;
   dismissRediscoveredThought: (id: string) => void;
   // Collection actions
-  createCollection: (name: string, description?: string) => Promise<Collection>;
-  updateCollection: (id: string, updates: { name?: string; description?: string }) => Promise<Collection>;
+  createCollection: (
+    name: string,
+    description?: string,
+    options?: { colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+  ) => Promise<Collection>;
+  updateCollection: (
+    id: string,
+    updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+  ) => Promise<Collection>;
   deleteCollection: (id: string) => Promise<void>;
   refreshCollections: () => Promise<void>;
   // Connection actions
@@ -63,6 +80,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,11 +121,33 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     try {
       setIsLoading(true);
       setError(null);
+
+      // Idempotent starter seeding: seed once only if collection store is completely empty
+      const hasSeeded = typeof window !== 'undefined' ? localStorage.getItem('thought_garden_starter_seeded') : null;
+      if (!hasSeeded) {
+        const thoughtsCount = await thoughtRepository.count();
+        const colCount = await collectionRepository.count();
+        if (thoughtsCount === 0 && colCount === 0) {
+          for (const col of STARTER_COLLECTIONS) {
+            await collectionRepository.save(col);
+          }
+          for (const thought of getStarterThoughts()) {
+            await thoughtRepository.save(thought);
+          }
+          for (const conn of getStarterConnections()) {
+            await connectionRepository.save(conn);
+          }
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('thought_garden_starter_seeded', 'true');
+        }
+      }
+
       await Promise.all([refreshThoughts(), refreshCollections(), refreshConnections()]);
     } finally {
       setIsLoading(false);
     }
-  }, [refreshThoughts, refreshCollections, refreshConnections]);
+  }, [thoughtRepository, collectionRepository, connectionRepository, refreshThoughts, refreshCollections, refreshConnections]);
 
   useEffect(() => {
     loadAll();
@@ -119,10 +159,18 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   }, [thoughts, connections]);
 
   const createThought = useCallback(
-    async (text: string): Promise<Thought> => {
+    async (
+      text: string,
+      options?: { collectionIds?: string[]; category?: ThoughtCategory; stage?: GrowthStage }
+    ): Promise<Thought> => {
       try {
         setError(null);
-        const newThought = await thoughtRepository.create({ text });
+        const newThought = await thoughtRepository.create({
+          text,
+          collectionIds: options?.collectionIds,
+          category: options?.category,
+          stage: options?.stage,
+        });
         setThoughts((prev) => [newThought, ...prev]);
         return newThought;
       } catch (err) {
@@ -138,7 +186,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const updateThought = useCallback(
     async (
       id: string,
-      updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds'>>
+      updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds' | 'isSaved' | 'category'>>
     ): Promise<Thought> => {
       try {
         setError(null);
@@ -153,6 +201,17 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       }
     },
     [thoughtRepository]
+  );
+
+  const toggleSaveThought = useCallback(
+    async (id: string): Promise<Thought> => {
+      const thought = thoughts.find((t) => t.id === id);
+      if (!thought) {
+        throw new Error('Thought not found');
+      }
+      return await updateThought(id, { isSaved: !thought.isSaved });
+    },
+    [thoughts, updateThought]
   );
 
   const deleteThought = useCallback(
@@ -198,10 +257,19 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   );
 
   const createCollection = useCallback(
-    async (name: string, description?: string): Promise<Collection> => {
+    async (
+      name: string,
+      description?: string,
+      options?: { colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+    ): Promise<Collection> => {
       try {
         setError(null);
-        const newCollection = await collectionRepository.create({ name, description });
+        const newCollection = await collectionRepository.create({
+          name,
+          description,
+          colorVariant: options?.colorVariant,
+          iconType: options?.iconType,
+        });
         setCollections((prev) => [newCollection, ...prev]);
         return newCollection;
       } catch (err) {
@@ -215,7 +283,10 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   );
 
   const updateCollection = useCallback(
-    async (id: string, updates: { name?: string; description?: string }): Promise<Collection> => {
+    async (
+      id: string,
+      updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+    ): Promise<Collection> => {
       try {
         setError(null);
         const updated = await collectionRepository.update(id, updates);
@@ -415,6 +486,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         connections,
         suggestedConnection,
         rediscoveredThought,
+        activeCollectionId,
+        setActiveCollectionId,
         isLoading,
         error,
         createThought,
@@ -422,6 +495,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         deleteThought,
         refreshThoughts,
         toggleThoughtCollection,
+        toggleSaveThought,
         dismissRediscoveredThought,
         createCollection,
         updateCollection,

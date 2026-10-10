@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Edit3, Trash2, Check, AlertCircle, Library, Plus, Link2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  MoreHorizontal,
+  Bookmark,
+  Edit3,
+  Trash2,
+  Check,
+  AlertCircle,
+  Search,
+  PenTool,
+  CheckSquare,
+  Sprout,
+  Sparkles,
+  Link2,
+} from 'lucide-react';
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
+import { formatRelativeTime } from '../lib/time';
 
 interface ThoughtDetailModalProps {
   thought: Thought | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: string, updates: { text?: string; stage?: GrowthStage; collectionIds?: string[] }) => Promise<Thought>;
+  onUpdate: (
+    id: string,
+    updates: {
+      text?: string;
+      stage?: GrowthStage;
+      collectionIds?: string[];
+      isSaved?: boolean;
+    }
+  ) => Promise<Thought>;
   onDelete: (id: string) => Promise<void>;
   onSelectThought?: (thought: Thought) => void;
 }
@@ -21,10 +44,11 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   onDelete,
   onSelectThought,
 }) => {
-  const { collections, toggleThoughtCollection, connections, thoughts } = useThoughts();
+  const { collections, toggleSaveThought, connections, thoughts } = useThoughts();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -33,6 +57,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
       setEditText(thought.text);
       setIsEditing(false);
       setShowDeleteConfirm(false);
+      setShowOptions(false);
     }
   }, [thought]);
 
@@ -56,11 +81,23 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
   if (!isOpen || !thought) return null;
 
-  // Find confirmed connected thoughts
-  const connectedThoughtIds = connections
-    .filter((c) => c.status === 'accepted' && (c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id))
-    .map((c) => (c.sourceThoughtId === thought.id ? c.targetThoughtId : c.sourceThoughtId));
-  const connectedThoughts = thoughts.filter((t) => connectedThoughtIds.includes(t.id));
+  // Find accepted connected thoughts
+  const activeConnections = connections.filter(
+    (c) =>
+      c.status === 'accepted' &&
+      (c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id)
+  );
+
+  const connectedThoughts = activeConnections.map((c) => {
+    const otherId = c.sourceThoughtId === thought.id ? c.targetThoughtId : c.sourceThoughtId;
+    const otherThought = thoughts.find((t) => t.id === otherId);
+    return {
+      connection: c,
+      thought: otherThought,
+    };
+  }).filter((item): item is { connection: typeof item.connection; thought: Thought } => Boolean(item.thought));
+
+  const primaryConnectionReason = activeConnections[0]?.reason || null;
 
   const handleSaveText = async () => {
     const trimmed = editText.trim();
@@ -77,6 +114,14 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
       console.error('Failed to update thought text:', err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    try {
+      await toggleSaveThought(thought.id);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -101,66 +146,112 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
     }
   };
 
-  const formatFullDate = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleDateString(undefined, {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
+  const getThoughtIcon = (t: Thought) => {
+    if (t.category === 'research' || t.collectionIds.includes('col-things-to-research')) {
+      return { Icon: Search, bg: 'bg-[#e7e4f6] text-[#4f4886]' };
     }
+    if (t.category === 'writing' || t.collectionIds.includes('col-writing')) {
+      return { Icon: PenTool, bg: 'bg-[#fae2e3] text-[#8c3b42]' };
+    }
+    if (t.category === 'task' || t.collectionIds.includes('col-tasks-to-revisit')) {
+      return { Icon: CheckSquare, bg: 'bg-[#fae8d4] text-[#855320]' };
+    }
+    return { Icon: Sprout, bg: 'bg-[#dcebdd] text-[#34593e]' };
   };
 
-  const isTended = new Date(thought.updatedAt).getTime() - new Date(thought.createdAt).getTime() > 2000;
+  const getCollectionName = (collectionIds: string[]) => {
+    const col = collections.find((c) => collectionIds.includes(c.id));
+    return col ? col.name : 'Garden';
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-900/40 backdrop-blur-sm animate-fade-in">
-      <div 
-        className="w-full max-w-2xl bg-white border border-parchment-border rounded-3xl shadow-soft-lg overflow-hidden flex flex-col max-h-[90vh]"
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-xl bg-[#faf8f4] border border-[#e4ded0] rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-parchment-border/70 flex items-center justify-between bg-parchment-light">
-          <div className="flex items-center gap-2">
-            <GrowthStageBadge stage={thought.stage || 'seed'} size="md" />
-            <span className="text-xs text-stone-400">Thought Details</span>
-          </div>
-
+        {/* Header Bar matching reference: <- on left, ... on right */}
+        <div className="px-6 py-4 border-b border-[#eee9dc] flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-stone-400 hover:text-earth-900 hover:bg-parchment-soft transition-colors"
-            aria-label="Close dialog"
+            className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+            aria-label="Back"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
-        </div>
 
-        {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {/* Main Thought Text */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider">
-                Verbatim Thought
-              </span>
-              {!isEditing && (
+          <div className="flex items-center gap-2 relative">
+            <button
+              type="button"
+              onClick={handleToggleSave}
+              className={`p-1.5 rounded-xl transition-colors ${
+                thought.isSaved
+                  ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  : 'text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc]'
+              }`}
+              title={thought.isSaved ? 'Saved thought' : 'Save thought'}
+              aria-label="Bookmark thought"
+            >
+              <Bookmark className={`w-5 h-5 ${thought.isSaved ? 'fill-current' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowOptions(!showOptions)}
+              className="p-1.5 text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              aria-label="Options"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {showOptions && (
+              <div className="absolute right-0 top-9 z-20 w-44 bg-white border border-[#e4ded0] rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs space-y-1">
                 <button
                   type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-1.5 text-xs text-sage-600 hover:text-sage-700 font-medium transition-colors"
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowOptions(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[#253227] hover:bg-[#f2efe6] rounded-xl transition-colors text-left"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Edit words</span>
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit Words</span>
                 </button>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(true);
+                    setShowOptions(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Remove Thought</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* Modal Scrollable Body */}
+        <div className="p-6 sm:p-7 overflow-y-auto space-y-6 flex-1">
+          {/* Badge: Connection or Stage */}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#eef4fb] text-[#36618c] border border-[#d4e4f5]">
+              <Link2 className="w-3.5 h-3.5" />
+              <span>Connection</span>
+            </span>
+            <GrowthStageBadge stage={thought.stage || 'seed'} size="sm" />
+          </div>
+
+          {/* Thought Headline Typography */}
+          <div>
             {isEditing ? (
               <div className="space-y-3">
                 <textarea
@@ -169,7 +260,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   onChange={(e) => setEditText(e.target.value)}
                   disabled={isSaving}
                   placeholder="Thought cannot be empty..."
-                  className="w-full p-4 bg-parchment-soft/50 rounded-2xl border border-sage-300 focus:border-sage-500 focus:ring-2 focus:ring-sage-200 text-earth-900 text-base leading-relaxed resize-none transition-all"
+                  className="w-full p-4 bg-white rounded-2xl border border-[#7a9d83] text-[#253227] text-base leading-relaxed resize-none focus:outline-hidden"
                   autoFocus
                 />
                 <div className="flex items-center justify-end gap-2">
@@ -179,7 +270,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                       setIsEditing(false);
                       setEditText(thought.text);
                     }}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-stone-500 hover:bg-parchment-soft transition-colors"
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
                   >
                     Cancel
                   </button>
@@ -187,28 +278,105 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                     type="button"
                     onClick={handleSaveText}
                     disabled={!editText.trim() || isSaving}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-sage-600 hover:bg-sage-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#3d5a45] hover:bg-[#344e3b] text-white rounded-xl text-xs font-semibold shadow-xs"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>{isSaving ? 'Saving...' : 'Save changes'}</span>
+                    <span>Save changes</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-parchment-soft/40 border border-parchment-border/60">
-                <p className="text-earth-900 text-base sm:text-lg leading-relaxed whitespace-pre-wrap font-sans">
-                  {thought.text}
-                </p>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#233126] leading-relaxed tracking-tight">
+                {thought.text}
+              </h2>
+            )}
+
+            {/* Timestamp & Pin Tag */}
+            <div className="flex items-center gap-2 text-xs text-[#819283] mt-2">
+              <span>{formatRelativeTime(thought.createdAt)}</span>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                className="hover:text-[#253227] inline-flex items-center gap-1"
+              >
+                <span>📌</span>
+                <span>{thought.isSaved ? 'Saved' : 'Pin thought'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Related Thoughts Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-base font-semibold text-[#233126]">
+                Related Thoughts
+              </h3>
+              {connectedThoughts.length > 0 && (
+                <span className="text-xs text-[#718273]">
+                  {connectedThoughts.length} linked
+                </span>
+              )}
+            </div>
+
+            {connectedThoughts.length === 0 ? (
+              <p className="text-xs text-[#7b897c] p-3.5 bg-white rounded-2xl border border-[#e4ded0]">
+                No accepted connections yet. As more thoughts accumulate, the connection discovery engine will suggest related ideas here.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {connectedThoughts.map(({ thought: related }) => {
+                  const iconMeta = getThoughtIcon(related);
+                  const Icon = iconMeta.Icon;
+                  const colName = getCollectionName(related.collectionIds);
+
+                  return (
+                    <div
+                      key={related.id}
+                      onClick={() => onSelectThought && onSelectThought(related)}
+                      className="p-3.5 bg-white hover:bg-[#fcfbf9] border border-[#e4ded0] hover:border-[#b8caa0] rounded-2xl cursor-pointer transition-all flex items-start gap-3 shadow-xs"
+                    >
+                      <div className={`w-8 h-8 rounded-full ${iconMeta.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm text-[#233126] leading-relaxed line-clamp-2">
+                          {related.text}
+                        </p>
+                        <div className="text-[11px] text-[#869688] mt-1 flex items-center gap-1.5">
+                          <span>{formatRelativeTime(related.createdAt)}</span>
+                          <span>•</span>
+                          <span>{colName}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
+          {/* "A possible connection" Section */}
+          {primaryConnectionReason && (
+            <div className="p-4 rounded-2xl bg-[#f0f5fc] border border-[#d6e4f5] space-y-1.5">
+              <div className="flex items-center gap-2 text-[#355f8a]">
+                <Sparkles className="w-4 h-4" />
+                <h4 className="font-serif text-sm font-semibold">
+                  A possible connection
+                </h4>
+              </div>
+              <p className="text-xs sm:text-sm text-[#3e5f82] leading-relaxed">
+                {primaryConnectionReason}
+              </p>
+            </div>
+          )}
+
           {/* Growth Stage Selector */}
-          <div>
-            <label className="block text-xs uppercase font-semibold text-stone-400 tracking-wider mb-2.5">
+          <div className="pt-2 border-t border-[#eee9dc]">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-[#738274] mb-2">
               Growth Stage
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {(Object.keys(stageConfig) as GrowthStage[]).map((stageKey) => {
                 const config = stageConfig[stageKey];
                 const Icon = config.icon;
@@ -218,150 +386,47 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                     key={stageKey}
                     type="button"
                     onClick={() => handleStageSelect(stageKey)}
-                    className={`flex flex-col items-center text-center p-3 rounded-2xl border transition-all text-xs ${
+                    className={`flex flex-col items-center p-2.5 rounded-xl border text-xs transition-all ${
                       isSelected
-                        ? 'border-sage-600 bg-sage-50/80 shadow-soft font-semibold text-sage-800 ring-1 ring-sage-500'
-                        : 'border-parchment-border hover:border-stone-300 bg-white hover:bg-parchment-soft/50 text-stone-600'
+                        ? 'border-[#3d5a45] bg-[#edf5ee] font-semibold text-[#253d2c]'
+                        : 'border-[#e4ded0] bg-white text-[#5d6b5e] hover:bg-[#f6f4ee]'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-sage-600' : config.iconColor}`} />
+                    <Icon className="w-4 h-4 mb-1" />
                     <span className="capitalize">{config.label}</span>
-                    <span className="text-[10px] text-stone-400 mt-0.5 line-clamp-1">{config.description}</span>
                   </button>
                 );
               })}
             </div>
           </div>
+        </div>
 
-          {/* Collections Section */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1.5">
-                <Library className="w-3.5 h-3.5 text-stone-400" />
-                <span>Collections</span>
-              </label>
-              <span className="text-[11px] text-stone-400">
-                {thought.collectionIds?.length || 0} assigned
-              </span>
+        {/* Delete Confirmation Banner inside Modal */}
+        {showDeleteConfirm && (
+          <div className="p-4 bg-rose-50 border-t border-rose-200 flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-2 text-xs text-rose-800 font-medium">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>Remove this thought from your garden?</span>
             </div>
-
-            {collections.length === 0 ? (
-              <p className="text-xs text-stone-400 p-3 bg-parchment-soft/40 rounded-xl border border-dashed border-parchment-border/70">
-                No collections yet. You can create one in the Collections tab.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {collections.map((col) => {
-                  const isMember = thought.collectionIds?.includes(col.id);
-                  return (
-                    <button
-                      key={col.id}
-                      type="button"
-                      onClick={() => toggleThoughtCollection(thought.id, col.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
-                        isMember
-                          ? 'bg-sage-600 text-white border-sage-600 shadow-soft'
-                          : 'bg-white hover:bg-parchment-soft text-earth-700 border-parchment-border hover:border-sage-300'
-                      }`}
-                    >
-                      {isMember ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5 text-stone-400" />}
-                      <span>{col.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Connected Thoughts Section (Piece 5) */}
-          {connectedThoughts.length > 0 && (
-            <div>
-              <label className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1.5 mb-2.5">
-                <Link2 className="w-3.5 h-3.5 text-sage-600" />
-                <span>Connected Thoughts ({connectedThoughts.length})</span>
-              </label>
-              <div className="space-y-2">
-                {connectedThoughts.map((connected) => (
-                  <div
-                    key={connected.id}
-                    onClick={() => {
-                      if (onSelectThought) {
-                        onSelectThought(connected);
-                      }
-                    }}
-                    className="p-3 bg-parchment-soft/50 hover:bg-parchment-soft border border-parchment-border rounded-xl text-xs text-earth-800 cursor-pointer flex items-center justify-between transition-colors"
-                  >
-                    <p className="line-clamp-2 pr-3">{connected.text}</p>
-                    <GrowthStageBadge stage={connected.stage || 'seed'} size="sm" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Timestamps */}
-          <div className="pt-2 border-t border-parchment-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-500">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-stone-400 flex-shrink-0" />
-              <span>Planted: {formatFullDate(thought.createdAt)}</span>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 text-xs text-[#5e6c5f] hover:bg-rose-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg shadow-xs hover:bg-rose-700"
+              >
+                {isDeleting ? 'Removing...' : 'Confirm Remove'}
+              </button>
             </div>
-            {isTended && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                <span>Last tended: {formatFullDate(thought.updatedAt)}</span>
-              </div>
-            )}
           </div>
-        </div>
-
-        {/* Modal Footer / Safe Deletion */}
-        <div className="px-6 py-4 border-t border-parchment-border/70 bg-parchment-light/60 flex items-center justify-between">
-          {showDeleteConfirm ? (
-            <div className="flex items-center justify-between w-full gap-3 animate-fade-in">
-              <div className="flex items-center gap-1.5 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
-                <span>Remove thought from garden?</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isDeleting}
-                  className="px-3 py-1.5 rounded-xl text-xs font-medium text-stone-600 hover:bg-parchment-soft"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-soft transition-all"
-                >
-                  {isDeleting ? 'Removing...' : 'Confirm Remove'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-rose-600 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Remove thought</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-white hover:bg-parchment-soft border border-parchment-border text-earth-800 rounded-xl text-xs font-medium shadow-soft transition-all"
-              >
-                Done
-              </button>
-            </>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

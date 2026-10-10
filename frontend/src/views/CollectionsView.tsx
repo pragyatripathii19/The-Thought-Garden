@@ -1,22 +1,48 @@
 import React, { useState } from 'react';
-import { Plus, Flower2, Sprout, Sparkles, Leaf, Trash2, ArrowLeft, X, Check, Calendar, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Search,
+  Plus,
+  ChevronRight,
+  MoreHorizontal,
+  Lightbulb,
+  PenTool,
+  CheckSquare,
+  Sprout,
+  Link2,
+  Trash2,
+  X,
+  Check,
+  AlertCircle,
+} from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
-import { Collection } from '../types';
-import { GrowthStageBadge } from '../components/GrowthStageBadge';
+import { Collection, Thought } from '../types';
+import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 
 export const CollectionsView: React.FC = () => {
-  const { collections, thoughts, createCollection, deleteCollection, updateThought, deleteThought } = useThoughts();
+  const {
+    collections,
+    thoughts,
+    activeCollectionId,
+    setActiveCollectionId,
+    createCollection,
+    deleteCollection,
+    updateThought,
+    deleteThought,
+  } = useThoughts();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [newColDesc, setNewColDesc] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
-  const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null);
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
+  const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null);
+  const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
 
   const activeCollection = collections.find((c) => c.id === activeCollectionId) || null;
   const activeThoughts = activeCollection
@@ -24,6 +50,13 @@ export const CollectionsView: React.FC = () => {
     : [];
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
+
+  // Filter collections by search query
+  const filteredCollections = collections.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +69,11 @@ export const CollectionsView: React.FC = () => {
     try {
       setIsSaving(true);
       setCreateError(null);
-      await createCollection(trimmed, newColDesc.trim() || undefined);
+      const created = await createCollection(trimmed, newColDesc.trim() || undefined);
       setNewColName('');
       setNewColDesc('');
       setIsCreateModalOpen(false);
+      setActiveCollectionId(created.id);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create collection');
     } finally {
@@ -55,217 +89,337 @@ export const CollectionsView: React.FC = () => {
         setActiveCollectionId(null);
       }
       setCollectionToDelete(null);
+      setIsOptionsMenuOpen(false);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const formatTimestamp = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return isoString;
+  const getCollectionIconStyles = (collection: Collection) => {
+    if (collection.id === 'col-startup-ideas' || collection.colorVariant === 'green') {
+      return {
+        iconBg: 'bg-[#dcebdd] text-[#34593e]',
+        Icon: Sprout,
+      };
     }
+    if (collection.id === 'col-writing' || collection.colorVariant === 'rose') {
+      return {
+        iconBg: 'bg-[#fae2e3] text-[#8c3b42]',
+        Icon: PenTool,
+      };
+    }
+    if (collection.id === 'col-things-to-research' || collection.colorVariant === 'purple') {
+      return {
+        iconBg: 'bg-[#e7e4f6] text-[#4f4886]',
+        Icon: Search,
+      };
+    }
+    return {
+      iconBg: 'bg-[#fae8d4] text-[#855320]',
+      Icon: CheckSquare,
+    };
   };
 
-  // Determine botanical icon based on collection index or content
-  const getCollectionIcon = (index: number) => {
-    const icons = [Sprout, Leaf, Flower2, Sparkles];
-    const Icon = icons[index % icons.length];
-    return Icon;
+  const getThoughtCategoryMeta = (thought: Thought) => {
+    if (thought.category === 'connection') {
+      return {
+        label: 'Connection',
+        badgeBg: 'bg-[#eef4fb] text-[#36618c] border-[#d4e4f5]',
+        iconBg: 'bg-[#edf4fb] text-[#36618c]',
+        Icon: Link2,
+      };
+    }
+    if (thought.category === 'research' || thought.collectionIds.includes('col-things-to-research')) {
+      return {
+        label: 'Research',
+        badgeBg: 'bg-[#f4f3fa] text-[#554e8c] border-[#e1def4]',
+        iconBg: 'bg-[#f4f3fa] text-[#554e8c]',
+        Icon: Search,
+      };
+    }
+    if (thought.category === 'writing' || thought.collectionIds.includes('col-writing')) {
+      return {
+        label: 'Writing',
+        badgeBg: 'bg-[#fdf2f2] text-[#8c3b42] border-[#f5d9db]',
+        iconBg: 'bg-[#fdf2f2] text-[#8c3b42]',
+        Icon: PenTool,
+      };
+    }
+    if (thought.category === 'task' || thought.collectionIds.includes('col-tasks-to-revisit')) {
+      return {
+        label: 'Tasks',
+        badgeBg: 'bg-[#fdf6ee] text-[#855320] border-[#f5e3ce]',
+        iconBg: 'bg-[#fdf6ee] text-[#855320]',
+        Icon: CheckSquare,
+      };
+    }
+    return {
+      label: 'Idea',
+      badgeBg: 'bg-[#edf5ee] text-[#34593e] border-[#d5e6d8]',
+      iconBg: 'bg-[#fef9e8] text-[#8a681c]',
+      Icon: Lightbulb,
+    };
   };
 
-  return (
-    <div className="space-y-8 pb-16">
-      {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {activeCollection ? (
+  // SCREEN B: Single Collection Detail View
+  if (activeCollection) {
+    return (
+      <div className="space-y-6 pb-16 max-w-2xl mx-auto">
+        {/* Collection Header */}
+        <div className="flex items-start justify-between border-b border-[#eee9dc] pb-4">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setActiveCollectionId(null)}
-              className="p-2 bg-white border border-parchment-border hover:bg-parchment-soft rounded-xl text-stone-500 hover:text-earth-900 transition-colors shadow-soft"
+              className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
               aria-label="Back to all collections"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif text-3xl font-semibold text-earth-900 tracking-tight">
-                  {activeCollection.name}
-                </h2>
-                <span className="text-xs text-sage-700 bg-sage-50 px-2.5 py-0.5 rounded-full border border-sage-200 font-medium">
-                  {activeThoughts.length} {activeThoughts.length === 1 ? 'thought' : 'thoughts'}
-                </span>
-              </div>
-              {activeCollection.description && (
-                <p className="text-xs text-stone-500 mt-1">{activeCollection.description}</p>
-              )}
+              <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+                {activeCollection.name}
+              </h2>
+              <p className="text-xs text-[#718273] mt-0.5">
+                {activeThoughts.length} thoughts
+                {activeCollection.description && ` • ${activeCollection.description}`}
+              </p>
             </div>
           </div>
-        ) : (
-          <div>
-            <h2 className="font-serif text-3xl font-semibold text-earth-900 tracking-tight">
-              My Collections
-            </h2>
-            <p className="text-sm text-stone-400 mt-1">
-              Natural homes for related thoughts and reflections
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
+              className="p-1.5 text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              aria-label="Collection options"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {isOptionsMenuOpen && (
+              <div className="absolute right-0 top-9 z-20 w-44 bg-white border border-[#e4ded0] rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCollectionToDelete(activeCollection);
+                    setIsOptionsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Collection</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Thoughts inside this collection */}
+        {activeThoughts.length === 0 ? (
+          <div className="py-16 text-center bg-white border border-dashed border-[#e4ded0] rounded-3xl p-6">
+            <Sprout className="w-8 h-8 mx-auto text-[#628469] mb-2 opacity-80" />
+            <p className="font-serif text-base font-semibold text-[#253227]">
+              No thoughts in this collection yet
             </p>
+            <p className="text-xs text-[#718273] mt-1 max-w-sm mx-auto">
+              Open any thought on the Home screen and tag it with "{activeCollection.name}".
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {activeThoughts.map((thought) => {
+              const meta = getThoughtCategoryMeta(thought);
+              const CategoryIcon = meta.Icon;
+
+              return (
+                <div
+                  key={thought.id}
+                  onClick={() => setSelectedThoughtId(thought.id)}
+                  className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl shadow-xs hover:shadow-sm cursor-pointer transition-all flex items-start justify-between gap-3 group"
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-full ${meta.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
+                      <CategoryIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#233126] group-hover:text-[#18231a] leading-relaxed">
+                        {thought.text}
+                      </p>
+                      <span className="text-[11px] text-[#869688] mt-1 block">
+                        {formatRelativeTime(thought.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border shrink-0 ${meta.badgeBg}`}>
+                    {meta.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 
+        {/* Thought Detail Modal */}
+        <ThoughtDetailModal
+          thought={selectedThought}
+          isOpen={Boolean(selectedThought)}
+          onClose={() => setSelectedThoughtId(null)}
+          onUpdate={updateThought}
+          onDelete={deleteThought}
+        />
+
+        {/* Delete Collection Modal */}
+        {collectionToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in">
+            <div className="w-full max-w-md bg-white border border-[#e4ded0] rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center gap-3 text-rose-600">
+                <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-5 h-5 text-rose-600" />
+                </div>
+                <h3 className="font-serif text-xl font-semibold text-[#233126]">
+                  Delete "{collectionToDelete.name}"?
+                </h3>
+              </div>
+              <p className="text-xs text-[#6e7d70] leading-relaxed bg-[#faf8f4] p-3 rounded-xl border border-[#ede9df]">
+                <strong>Your thoughts are safe:</strong> Removing this collection will never delete member thoughts.
+              </p>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCollectionToDelete(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteCollection}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs"
+                >
+                  Delete Collection
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // SCREEN A: Collections Overview
+  return (
+    <div className="space-y-6 pb-16 max-w-2xl mx-auto">
+      {/* Header matching bottom-left reference */}
+      <div className="flex items-center justify-between border-b border-[#eee9dc] pb-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-600 hover:bg-sage-700 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+            onClick={() => window.history.back()}
+            className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors sm:hidden"
+            aria-label="Back"
           >
-            <Plus className="w-4 h-4" />
-            <span>New Collection</span>
+            <ArrowLeft className="w-5 h-5" />
           </button>
+          <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+            Collections
+          </h2>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsSearchActive(!isSearchActive)}
+          className="p-1.5 text-[#6e7d70] hover:text-[#233126] hover:bg-[#ede8dc] rounded-xl transition-colors"
+          aria-label="Search collections"
+        >
+          <Search className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Main View: Either Drill-down Thoughts or Collections Grid */}
-      {activeCollection ? (
-        activeThoughts.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-white/60 border border-dashed border-parchment-border rounded-3xl">
-            <div className="w-12 h-12 rounded-full bg-parchment-soft text-stone-400 flex items-center justify-center mx-auto mb-3">
-              <Sprout className="w-6 h-6 text-sage-500" />
-            </div>
-            <h3 className="font-serif text-lg font-medium text-earth-800 mb-1">
-              No thoughts in this collection yet
-            </h3>
-            <p className="text-xs text-stone-400 max-w-sm mx-auto mb-4">
-              Open any thought on the Garden page and add it to "{activeCollection.name}".
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeThoughts.map((thought) => (
-              <div
-                key={thought.id}
-                onClick={() => setSelectedThoughtId(thought.id)}
-                className="group relative bg-white border border-parchment-border hover:border-sage-400 rounded-2xl p-5 shadow-soft hover:shadow-soft-md transition-all cursor-pointer flex flex-col justify-between"
-              >
-                <p className="text-earth-900 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                  {thought.text}
-                </p>
-                <div className="mt-4 pt-3 border-t border-parchment-border/60 flex items-center justify-between text-xs text-stone-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-stone-400" />
-                    {formatTimestamp(thought.createdAt)}
-                  </span>
-                  <GrowthStageBadge stage={thought.stage || 'seed'} size="sm" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      ) : collections.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-white/60 border border-dashed border-parchment-border rounded-3xl">
-          <div className="w-14 h-14 rounded-full bg-sage-50 text-sage-600 flex items-center justify-center mx-auto mb-3">
-            <Leaf className="w-7 h-7 text-sage-500" />
-          </div>
-          <h3 className="font-serif text-2xl font-semibold text-earth-900 mb-1.5">
-            Your collections will sprout here
-          </h3>
-          <p className="text-sm text-stone-400 max-w-md mx-auto mb-5 leading-relaxed">
-            Collections group thoughts around shared themes. Plant your first collection whenever you are ready.
-          </p>
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-600 hover:bg-sage-700 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create First Collection</span>
-          </button>
-        </div>
-      ) : (
-        /* Grid of Real Collection Cards (matching reference) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {collections.map((collection, idx) => {
-            const memberCount = thoughts.filter((t) => t.collectionIds?.includes(collection.id)).length;
-            const Icon = getCollectionIcon(idx);
-
-            return (
-              <div
-                key={collection.id}
-                onClick={() => setActiveCollectionId(collection.id)}
-                className="group relative bg-white border border-parchment-border hover:border-sage-400/90 rounded-3xl p-6 shadow-soft hover:shadow-soft-md transition-all duration-200 flex flex-col justify-between h-72 cursor-pointer"
-              >
-                {/* Top header: Member count badge & Delete button */}
-                <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-medium">
-                    {memberCount} {memberCount === 1 ? 'THOUGHT' : 'THOUGHTS'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCollectionToDelete(collection);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-rose-600 rounded-lg transition-all"
-                    title="Delete collection"
-                    aria-label="Delete collection"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Botanical Centerpiece */}
-                <div className="flex-1 flex items-center justify-center my-3 group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-24 h-24 rounded-full bg-parchment-soft/80 border border-parchment-border/60 flex items-center justify-center shadow-soft">
-                    <Icon className="w-10 h-10 text-sage-600 group-hover:text-sage-700 transition-colors" />
-                  </div>
-                </div>
-
-                {/* Bottom details */}
-                <div className="pt-2 border-t border-parchment-border/60">
-                  <h3 className="font-serif text-base font-semibold text-earth-900 group-hover:text-sage-700 transition-colors truncate">
-                    {collection.name}
-                  </h3>
-                  <div className="flex items-center justify-between mt-1 text-xs text-stone-400">
-                    <span>{formatTimestamp(collection.createdAt)}</span>
-                    <span className="text-[11px] text-sage-600 group-hover:translate-x-0.5 transition-transform">
-                      View thoughts &rarr;
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Optional Search Bar */}
+      {isSearchActive && (
+        <div className="relative animate-fade-in">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b998d]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search collections..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e4ded0] rounded-xl text-xs text-[#233126] focus:border-[#7a9d83] focus:outline-hidden"
+            autoFocus
+          />
         </div>
       )}
 
-      {/* Thought Detail Modal for clicking a thought inside a collection */}
-      <ThoughtDetailModal
-        thought={selectedThought}
-        isOpen={Boolean(selectedThought)}
-        onClose={() => setSelectedThoughtId(null)}
-        onUpdate={updateThought}
-        onDelete={deleteThought}
-      />
+      {/* List of Collections Cards matching Reference */}
+      <div className="space-y-3">
+        {filteredCollections.map((col) => {
+          const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
+          const styles = getCollectionIconStyles(col);
+          const Icon = styles.Icon;
+
+          return (
+            <div
+              key={col.id}
+              onClick={() => setActiveCollectionId(col.id)}
+              className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-10 h-10 rounded-full ${styles.iconBg} flex items-center justify-center shrink-0`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-serif text-base font-semibold text-[#233126] leading-tight">
+                    {col.name}
+                  </h3>
+                  <div className="text-[11px] text-[#788779] font-medium mt-0.5">
+                    {count} thoughts
+                  </div>
+                  {col.description && (
+                    <p className="text-xs text-[#6e7d70] truncate mt-0.5">
+                      {col.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <ChevronRight className="w-5 h-5 text-[#9cb09f] group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+          );
+        })}
+
+        {/* New Collection Action Card */}
+        <div
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-[#fcfbf8] border border-dashed border-[#d8d2c4] hover:border-[#7a9d83] p-4 rounded-2xl flex items-center gap-3.5 cursor-pointer transition-colors group mt-2"
+        >
+          <div className="w-10 h-10 rounded-full bg-[#ede9dd] group-hover:bg-[#dce9df] text-[#5e6c5f] group-hover:text-[#34593e] flex items-center justify-center shrink-0 transition-colors">
+            <Plus className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-serif text-base font-semibold text-[#233126]">
+              New Collection
+            </h3>
+            <p className="text-xs text-[#788779]">
+              Create a custom collection (optional).
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Create Collection Dialog Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white border border-parchment-border rounded-3xl p-6 shadow-soft-lg space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-parchment-border">
-              <div className="flex items-center gap-2">
-                <Leaf className="w-5 h-5 text-sage-600" />
-                <h3 className="font-serif text-xl font-semibold text-earth-900">
-                  Plant a Collection
-                </h3>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md bg-white border border-[#e4ded0] rounded-3xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc]">
+              <h3 className="font-serif text-xl font-bold text-[#233126]">
+                New Collection
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-stone-400 hover:text-earth-900 rounded-lg"
+                className="p-1 text-[#7c8779] hover:text-[#233126] rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -273,7 +427,7 @@ export const CollectionsView: React.FC = () => {
 
             <form onSubmit={handleCreateCollection} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
                   Collection Name *
                 </label>
                 <input
@@ -282,13 +436,13 @@ export const CollectionsView: React.FC = () => {
                   onChange={(e) => setNewColName(e.target.value)}
                   placeholder="e.g. Work Reflections, Book Notes..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2.5 bg-parchment-soft/50 rounded-xl border border-parchment-border focus:border-sage-400 focus:ring-2 focus:ring-sage-200 text-earth-900 text-sm transition-all"
+                  className="w-full px-4 py-2.5 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-hidden text-[#233126] text-sm"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
                   Description (optional)
                 </label>
                 <textarea
@@ -297,7 +451,7 @@ export const CollectionsView: React.FC = () => {
                   onChange={(e) => setNewColDesc(e.target.value)}
                   placeholder="Brief note on what belongs here..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2 bg-parchment-soft/50 rounded-xl border border-parchment-border focus:border-sage-400 focus:ring-2 focus:ring-sage-200 text-earth-900 text-sm resize-none transition-all"
+                  className="w-full px-4 py-2 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-hidden text-[#233126] text-sm resize-none"
                 />
               </div>
 
@@ -312,57 +466,20 @@ export const CollectionsView: React.FC = () => {
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-stone-600 hover:bg-parchment-soft"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!newColName.trim() || isSaving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-600 hover:bg-sage-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#3d5a45] hover:bg-[#344e3b] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{isSaving ? 'Planting...' : 'Plant Collection'}</span>
+                  <span>{isSaving ? 'Creating...' : 'Create Collection'}</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Collection Confirmation Modal */}
-      {collectionToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white border border-parchment-border rounded-3xl p-6 shadow-soft-lg space-y-4">
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-rose-600" />
-              </div>
-              <h3 className="font-serif text-xl font-semibold text-earth-900">
-                Remove "{collectionToDelete.name}"?
-              </h3>
-            </div>
-
-            <p className="text-xs text-stone-500 leading-relaxed bg-parchment-soft/40 p-3 rounded-xl border border-parchment-border">
-              <strong>Your thoughts are safe:</strong> Deleting this collection will <em>never</em> delete its member thoughts. It only removes this grouping.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setCollectionToDelete(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-stone-600 hover:bg-parchment-soft"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteCollection}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
-              >
-                Confirm Delete
-              </button>
-            </div>
           </div>
         </div>
       )}

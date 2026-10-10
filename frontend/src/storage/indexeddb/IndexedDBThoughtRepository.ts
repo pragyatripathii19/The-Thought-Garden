@@ -21,6 +21,8 @@ export class IndexedDBThoughtRepository implements IThoughtRepository {
       updatedAt: now,
       collectionIds: dto.collectionIds ? [...dto.collectionIds] : [],
       stage: dto.stage || 'seed',
+      isSaved: dto.isSaved || false,
+      category: dto.category,
     };
 
     const db = await getDatabase();
@@ -57,6 +59,8 @@ export class IndexedDBThoughtRepository implements IThoughtRepository {
       text: dto.text !== undefined ? dto.text : existing.text,
       collectionIds: dto.collectionIds !== undefined ? [...dto.collectionIds] : existing.collectionIds,
       stage: dto.stage !== undefined ? dto.stage : existing.stage,
+      isSaved: dto.isSaved !== undefined ? dto.isSaved : existing.isSaved,
+      category: dto.category !== undefined ? dto.category : existing.category,
       updatedAt: new Date().toISOString(),
     };
 

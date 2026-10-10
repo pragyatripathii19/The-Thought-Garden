@@ -1,15 +1,28 @@
-import { Thought, Collection, Connection, ConnectionStatus, GrowthStage } from '../types';
+import {
+  Thought,
+  Collection,
+  Connection,
+  ConnectionStatus,
+  GrowthStage,
+  ThoughtCategory,
+  CollectionColorVariant,
+  CollectionIconType,
+} from '../types';
 
 export interface CreateThoughtDTO {
   text: string;
   collectionIds?: string[];
   stage?: GrowthStage;
+  isSaved?: boolean;
+  category?: ThoughtCategory;
 }
 
 export interface UpdateThoughtDTO {
   text?: string;
   collectionIds?: string[];
   stage?: GrowthStage;
+  isSaved?: boolean;
+  category?: ThoughtCategory;
 }
 
 /**
@@ -31,11 +44,15 @@ export interface IThoughtRepository {
 export interface CreateCollectionDTO {
   name: string;
   description?: string;
+  colorVariant?: CollectionColorVariant;
+  iconType?: CollectionIconType;
 }
 
 export interface UpdateCollectionDTO {
   name?: string;
   description?: string;
+  colorVariant?: CollectionColorVariant;
+  iconType?: CollectionIconType;
 }
 
 /**

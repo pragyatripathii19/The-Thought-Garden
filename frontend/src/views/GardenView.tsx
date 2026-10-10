@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sprout, Trees, History, Check, Trash2, Clock, ChevronRight, Sparkles, X, Link2 } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ArrowRight,
+  ChevronRight,
+  Sparkles,
+  X,
+  History,
+  Link2,
+  Lightbulb,
+  Search,
+  PenTool,
+  CheckSquare,
+  Sprout,
+} from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
-import { GrowthStageBadge } from '../components/GrowthStageBadge';
+import { NavTab, Thought, Collection } from '../types';
+import { formatRelativeTime } from '../lib/time';
+import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon } from '../components/BotanicalIllustrations';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 
-export const GardenView: React.FC = () => {
+interface GardenViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+  onOpenNewThought?: () => void;
+}
+
+export const GardenView: React.FC<GardenViewProps> = ({
+  onNavigateTab,
+}) => {
   const {
     thoughts,
+    collections,
     suggestedConnection,
     rediscoveredThought,
     dismissRediscoveredThought,
@@ -15,16 +38,24 @@ export const GardenView: React.FC = () => {
     deleteThought,
     acceptConnection,
     dismissConnection,
+    setActiveCollectionId,
     isLoading,
     error,
   } = useThoughts();
 
   const [input, setInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [justPlanted, setJustPlanted] = useState(false);
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
+
+  // Time-of-day greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   const handlePlant = async () => {
     const trimmed = input.trim();
@@ -34,8 +65,6 @@ export const GardenView: React.FC = () => {
       setIsSaving(true);
       await createThought(trimmed);
       setInput('');
-      setJustPlanted(true);
-      setTimeout(() => setJustPlanted(false), 2500);
     } catch (err) {
       console.error(err);
     } finally {
@@ -50,94 +79,182 @@ export const GardenView: React.FC = () => {
     }
   };
 
-  const formatTimestamp = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
+  const handleCollectionClick = (collectionId: string) => {
+    setActiveCollectionId(collectionId);
+    if (onNavigateTab) {
+      onNavigateTab('collections');
     }
   };
 
+  // Helper to determine icon and badge for thoughts in feed
+  const getThoughtCategoryMeta = (thought: Thought) => {
+    if (thought.category === 'connection') {
+      return {
+        label: 'Connections',
+        badgeBg: 'bg-[#eef4fb] text-[#36618c] border-[#d4e4f5]',
+        iconBg: 'bg-[#edf4fb] text-[#36618c]',
+        Icon: Link2,
+      };
+    }
+    if (thought.category === 'research' || thought.collectionIds.includes('col-things-to-research')) {
+      return {
+        label: 'Research',
+        badgeBg: 'bg-[#f4f3fa] text-[#554e8c] border-[#e1def4]',
+        iconBg: 'bg-[#f4f3fa] text-[#554e8c]',
+        Icon: Search,
+      };
+    }
+    if (thought.category === 'writing' || thought.collectionIds.includes('col-writing')) {
+      return {
+        label: 'Writing',
+        badgeBg: 'bg-[#fdf2f2] text-[#8c3b42] border-[#f5d9db]',
+        iconBg: 'bg-[#fdf2f2] text-[#8c3b42]',
+        Icon: PenTool,
+      };
+    }
+    if (thought.category === 'task' || thought.collectionIds.includes('col-tasks-to-revisit')) {
+      return {
+        label: 'Tasks',
+        badgeBg: 'bg-[#fdf6ee] text-[#855320] border-[#f5e3ce]',
+        iconBg: 'bg-[#fdf6ee] text-[#855320]',
+        Icon: CheckSquare,
+      };
+    }
+    if (thought.category === 'idea' || thought.collectionIds.includes('col-startup-ideas')) {
+      return {
+        label: 'Idea',
+        badgeBg: 'bg-[#edf5ee] text-[#34593e] border-[#d5e6d8]',
+        iconBg: 'bg-[#fef9e8] text-[#8a681c]',
+        Icon: Lightbulb,
+      };
+    }
+
+    return {
+      label: 'Thought',
+      badgeBg: 'bg-[#edf4ee] text-[#34593e] border-[#d5e6d8]',
+      iconBg: 'bg-[#edf4ee] text-[#34593e]',
+      Icon: Sprout,
+    };
+  };
+
+  // Collection card styling variants
+  const getCollectionCardStyles = (collection: Collection) => {
+    if (collection.id === 'col-startup-ideas' || collection.colorVariant === 'green') {
+      return {
+        cardBg: 'bg-[#edf4ee] border-[#d6e5d8] hover:border-[#b8d4bd]',
+        iconBg: 'bg-[#dcebdd] text-[#34593e]',
+        arrowColor: 'text-[#34593e]',
+        Icon: Sprout,
+      };
+    }
+    if (collection.id === 'col-writing' || collection.colorVariant === 'rose') {
+      return {
+        cardBg: 'bg-[#fdf2f2] border-[#f5d9db] hover:border-[#eec2c5]',
+        iconBg: 'bg-[#fae2e3] text-[#8c3b42]',
+        arrowColor: 'text-[#8c3b42]',
+        Icon: PenTool,
+      };
+    }
+    if (collection.id === 'col-things-to-research' || collection.colorVariant === 'purple') {
+      return {
+        cardBg: 'bg-[#f4f3fa] border-[#e1def4] hover:border-[#cecaec]',
+        iconBg: 'bg-[#e7e4f6] text-[#4f4886]',
+        arrowColor: 'text-[#4f4886]',
+        Icon: Search,
+      };
+    }
+    return {
+      cardBg: 'bg-[#fdf6ee] border-[#f5e3ce] hover:border-[#ebd0b4]',
+      iconBg: 'bg-[#fae8d4] text-[#855320]',
+      arrowColor: 'text-[#855320]',
+      Icon: CheckSquare,
+    };
+  };
+
   return (
-    <div className="space-y-10 pb-16">
-      {/* Quick Capture Hero Section */}
-      <section className="bg-white/80 backdrop-blur-sm border border-parchment-border rounded-3xl p-6 sm:p-8 shadow-soft">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider font-semibold text-sage-600 flex items-center gap-1.5">
-              <Sprout className="w-4 h-4 text-sage-500" />
-              Plant a thought
+    <div className="space-y-8 pb-16">
+      {/* Top Greeting Section with Botanical Illustration */}
+      <section className="flex items-center justify-between pt-1">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[#3d5a45]">
+              <LeafLogoIcon className="w-5 h-5" />
             </span>
-            <span className="text-xs text-stone-400">
-              No title or tags needed
-            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#222c23]">
+              {getGreeting()}, Pragya
+            </h2>
           </div>
+          <p className="text-xs sm:text-sm text-[#738274]">
+            Your thoughts are growing.
+          </p>
+        </div>
 
-          {/* Capture Surface */}
-          <div className="relative">
-            <textarea
-              rows={3}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSaving}
-              placeholder="What's on your mind? Jot down an unfinished idea, question, or fragment..."
-              className="w-full bg-parchment-soft/60 focus:bg-white text-earth-800 placeholder-stone-400 text-base sm:text-lg rounded-2xl p-4 sm:p-5 border border-parchment-border focus:border-sage-400 focus:ring-2 focus:ring-sage-200 transition-all resize-none leading-relaxed disabled:opacity-75"
-            />
-          </div>
+        {/* Botanical Illustration (Desktop & Tablet) */}
+        <div className="hidden sm:block shrink-0 -my-4 -mr-2">
+          <WateringCanHeroArt className="w-44 h-24 lg:w-52 lg:h-28" />
+        </div>
+      </section>
 
-          {error && (
-            <p className="text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200">
-              {error}
-            </p>
-          )}
+      {/* Prominent Quick Capture Card */}
+      <section className="bg-white border border-[#e2dcd0] rounded-2xl p-4 sm:p-5 shadow-xs focus-within:border-[#7a9d83] focus-within:ring-2 focus-within:ring-[#e4ede6] transition-all">
+        <div className="space-y-2">
+          <label
+            htmlFor="home-capture-input"
+            className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]"
+          >
+            What's on your mind?
+          </label>
+          <textarea
+            id="home-capture-input"
+            rows={2}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isSaving}
+            placeholder="e.g. A startup idea, a question, a note, anything..."
+            className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
+          />
+        </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <p className="text-xs text-stone-400 hidden sm:block">
-              Press <kbd className="px-1.5 py-0.5 bg-parchment-soft rounded border border-parchment-border font-mono text-[10px] text-stone-500">Ctrl + Enter</kbd> to plant
-            </p>
-            
-            <div className="ml-auto flex items-center gap-3">
-              {justPlanted && (
-                <span className="inline-flex items-center gap-1 text-xs text-sage-600 font-medium animate-fade-in">
-                  <Check className="w-4 h-4 text-sage-500" />
-                  Planted in garden
-                </span>
-              )}
+        {error && (
+          <p className="text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 mt-2">
+            {error}
+          </p>
+        )}
 
-              <button
-                type="button"
-                onClick={handlePlant}
-                disabled={!input.trim() || isSaving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-sage-600 hover:bg-sage-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-white rounded-xl text-sm font-medium shadow-soft transition-all"
-              >
-                <span>{isSaving ? 'Planting...' : 'Plant thought'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="flex items-center justify-between pt-2 border-t border-[#f4f0e6] mt-2">
+          <span className="text-[11px] text-[#97a599] hidden sm:inline">
+            Press <kbd className="px-1.5 py-0.5 bg-[#f5f2e9] rounded border border-[#e4ded2] font-mono text-[10px] text-[#6b786c]">Ctrl + Enter</kbd> to plant
+          </span>
+
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handlePlant}
+              disabled={!input.trim() || isSaving}
+              className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
+              title="Plant thought"
+              aria-label="Plant thought"
+            >
+              <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+            </button>
           </div>
         </div>
       </section>
 
       {/* Suggested Connection Card (Piece 5) */}
       {suggestedConnection && (
-        <section className="bg-gradient-to-tr from-sage-50/90 to-moss-50/70 border border-sage-200/90 rounded-3xl p-6 sm:p-7 shadow-soft animate-fade-in space-y-4">
+        <section className="bg-[#f3f7f4] border border-[#d6e5d8] rounded-2xl p-5 shadow-xs animate-fade-in space-y-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
+              <span className="w-6 h-6 rounded-lg bg-[#3d5a45] text-white flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5" />
               </span>
               <div>
-                <h3 className="font-serif text-lg font-semibold text-earth-900">
+                <h3 className="font-serif text-base font-semibold text-[#233126]">
                   This might connect to…
                 </h3>
-                <p className="text-xs text-sage-800 font-medium mt-0.5">
+                <p className="text-xs text-[#526e57] font-medium">
                   {suggestedConnection.reason}
                 </p>
               </div>
@@ -151,7 +268,7 @@ export const GardenView: React.FC = () => {
                   suggestedConnection.targetThought.id
                 )
               }
-              className="p-1 text-stone-400 hover:text-earth-900 rounded-lg"
+              className="p-1 text-[#869688] hover:text-[#233126] rounded-lg"
               title="Dismiss suggestion"
               aria-label="Dismiss suggestion"
             >
@@ -159,37 +276,27 @@ export const GardenView: React.FC = () => {
             </button>
           </div>
 
-          {/* Two Connected Thought Snippets */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div
               onClick={() => setSelectedThoughtId(suggestedConnection.sourceThought.id)}
-              className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-sage-200/80 cursor-pointer shadow-soft transition-all"
+              className="p-3.5 bg-white rounded-xl border border-[#dbe7dc] cursor-pointer shadow-xs hover:border-[#a8cca0] transition-colors"
             >
-              <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+              <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed">
                 {suggestedConnection.sourceThought.text}
               </p>
-              <div className="mt-2 text-[10px] text-stone-400 flex items-center justify-between">
-                <span>{formatTimestamp(suggestedConnection.sourceThought.createdAt)}</span>
-                <GrowthStageBadge stage={suggestedConnection.sourceThought.stage || 'seed'} size="sm" />
-              </div>
             </div>
 
             <div
               onClick={() => setSelectedThoughtId(suggestedConnection.targetThought.id)}
-              className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-sage-200/80 cursor-pointer shadow-soft transition-all"
+              className="p-3.5 bg-white rounded-xl border border-[#dbe7dc] cursor-pointer shadow-xs hover:border-[#a8cca0] transition-colors"
             >
-              <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+              <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed">
                 {suggestedConnection.targetThought.text}
               </p>
-              <div className="mt-2 text-[10px] text-stone-400 flex items-center justify-between">
-                <span>{formatTimestamp(suggestedConnection.targetThought.createdAt)}</span>
-                <GrowthStageBadge stage={suggestedConnection.targetThought.stage || 'seed'} size="sm" />
-              </div>
             </div>
           </div>
 
-          {/* Accept / Dismiss Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-1">
             <button
               type="button"
               onClick={() =>
@@ -198,11 +305,10 @@ export const GardenView: React.FC = () => {
                   suggestedConnection.targetThought.id
                 )
               }
-              className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-earth-900 rounded-xl hover:bg-parchment-soft/80 transition-colors"
+              className="text-xs text-[#6e7d70] hover:text-[#233126]"
             >
               Dismiss for now
             </button>
-
             <button
               type="button"
               onClick={() =>
@@ -212,7 +318,7 @@ export const GardenView: React.FC = () => {
                   suggestedConnection.reason
                 )
               }
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-700 hover:bg-sage-800 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3d5a45] hover:bg-[#344e3b] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
             >
               <Link2 className="w-3.5 h-3.5" />
               <span>Confirm Connection</span>
@@ -223,22 +329,18 @@ export const GardenView: React.FC = () => {
 
       {/* Gentle Rediscovery Card (Piece 6) */}
       {rediscoveredThought && (
-        <section className="bg-gradient-to-tr from-[#fcfbf7] to-[#f7f5ed] border border-[#e3decb] rounded-3xl p-6 sm:p-7 shadow-soft animate-fade-in space-y-4">
+        <section className="bg-[#fbfaf6] border border-[#e4ded0] rounded-2xl p-5 shadow-xs animate-fade-in space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-[#e8e4d8] text-[#556354] flex items-center justify-center">
-                <History className="w-4 h-4" />
+              <span className="w-6 h-6 rounded-lg bg-[#e8e2d4] text-[#556958] flex items-center justify-center">
+                <History className="w-3.5 h-3.5" />
               </span>
               <div>
-                <h3 className="font-serif text-lg font-semibold text-earth-900">
+                <h3 className="font-serif text-base font-semibold text-[#233126]">
                   A thought to revisit
                 </h3>
-                <p className="text-xs text-stone-500">
-                  Planted on {new Date(rediscoveredThought.createdAt).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+                <p className="text-xs text-[#788779]">
+                  Planted {formatRelativeTime(rediscoveredThought.createdAt)}
                 </p>
               </div>
             </div>
@@ -246,7 +348,7 @@ export const GardenView: React.FC = () => {
             <button
               type="button"
               onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
-              className="p-1 text-stone-400 hover:text-earth-900 rounded-lg"
+              className="p-1 text-[#869688] hover:text-[#233126] rounded-lg"
               title="Dismiss for now"
               aria-label="Dismiss for now"
             >
@@ -256,33 +358,25 @@ export const GardenView: React.FC = () => {
 
           <div
             onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
-            className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-[#e3decb] cursor-pointer shadow-soft transition-all"
+            className="p-3.5 bg-white rounded-xl border border-[#e4ded0] cursor-pointer shadow-xs hover:border-[#b8caa0] transition-colors"
           >
-            <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed whitespace-pre-wrap">
+            <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed whitespace-pre-wrap">
               {rediscoveredThought.text}
             </p>
-            <div className="mt-3 flex items-center justify-between">
-              <GrowthStageBadge stage={rediscoveredThought.stage || 'seed'} size="sm" />
-              <span className="text-xs text-sage-600 font-medium inline-flex items-center gap-1">
-                Inspect Thought
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-1">
             <button
               type="button"
               onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
-              className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-earth-900 rounded-xl hover:bg-parchment-soft/80 transition-colors"
+              className="text-xs text-[#6e7d70] hover:text-[#233126]"
             >
               Dismiss for now
             </button>
-
             <button
               type="button"
               onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-700 hover:bg-sage-800 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3d5a45] hover:bg-[#344f3b] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
             >
               <span>Inspect Thought</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -291,80 +385,167 @@ export const GardenView: React.FC = () => {
         </section>
       )}
 
-      {/* Thought Stream or First-Run Empty State */}
-      {isLoading ? (
-        <div className="text-center py-12 text-stone-400 text-sm">
-          Tending the garden...
+      {/* Your Collections Section */}
+      <section className="space-y-3.5">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="font-serif text-lg font-semibold text-[#233126]">
+            Your Collections
+          </h3>
+          <button
+            type="button"
+            onClick={() => onNavigateTab && onNavigateTab('collections')}
+            className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
+          >
+            View all
+          </button>
         </div>
-      ) : thoughts.length > 0 ? (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="font-serif text-2xl font-semibold text-earth-900">
-              Recent Thoughts
-            </h2>
-            <span className="text-xs text-stone-400">
-              {thoughts.length} {thoughts.length === 1 ? 'thought' : 'thoughts'} in garden
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {thoughts.map((thought) => (
+        {/* Desktop & Tablet: 4 Pastel Collection Cards Grid */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {collections.slice(0, 4).map((col) => {
+            const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
+            const styles = getCollectionCardStyles(col);
+            const Icon = styles.Icon;
+
+            return (
               <div
-                key={thought.id}
-                onClick={() => setSelectedThoughtId(thought.id)}
-                className="group relative bg-white border border-parchment-border hover:border-sage-400/80 rounded-2xl p-5 shadow-soft hover:shadow-soft-md transition-all duration-200 flex flex-col justify-between cursor-pointer text-left"
+                key={col.id}
+                onClick={() => handleCollectionClick(col.id)}
+                className={`p-4 rounded-2xl border ${styles.cardBg} shadow-xs hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between min-h-[160px]`}
               >
-                {/* Verbatim thought text */}
-                <p className="text-earth-900 text-sm sm:text-base leading-relaxed whitespace-pre-wrap line-clamp-4 group-hover:text-earth-950">
-                  {thought.text}
-                </p>
-
-                {/* Footer metadata & actions */}
-                <div className="mt-4 pt-3 border-t border-parchment-border/60 flex items-center justify-between text-xs text-stone-400">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-stone-400" />
-                      {formatTimestamp(thought.createdAt)}
-                    </span>
-                    <GrowthStageBadge stage={thought.stage || 'seed'} size="sm" />
+                <div>
+                  <div className={`w-8 h-8 rounded-full ${styles.iconBg} flex items-center justify-center mb-3`}>
+                    <Icon className="w-4 h-4" />
                   </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteThought(thought.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 hover:text-rose-600 p-1 rounded-lg transition-all"
-                      title="Remove thought"
-                      aria-label="Remove thought"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-sage-500 group-hover:translate-x-0.5 transition-all" />
+                  <h4 className="font-serif text-base font-semibold text-[#233126] leading-snug">
+                    {col.name}
+                  </h4>
+                  <div className="text-[11px] text-[#718273] font-medium mt-0.5">
+                    {count} {count === 1 ? 'thought' : 'thoughts'}
                   </div>
+                  {col.description && (
+                    <p className="text-xs text-[#5d6d60] mt-1.5 line-clamp-2 leading-relaxed">
+                      {col.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2 flex justify-start">
+                  <span className={`${styles.arrowColor}`}>
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      ) : (
-        /* Gentle First-Run Empty Garden Banner */
-        <section className="text-center py-12 px-4 rounded-3xl bg-gradient-to-b from-parchment-soft/40 to-transparent border border-dashed border-parchment-border/80">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sage-50 border border-sage-100 text-sage-600 mb-4 shadow-soft">
-            <Sprout className="w-8 h-8 text-sage-500 animate-pulse" />
-          </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-earth-900 mb-2">
-            Your garden starts with one thought
-          </h2>
-          <p className="text-sm sm:text-base text-stone-400 max-w-md mx-auto leading-relaxed">
-            Put down any fleeting thought above. As ideas accumulate, gentle connections and natural collections will begin to sprout.
-          </p>
-        </section>
-      )}
+            );
+          })}
+        </div>
 
-      {/* Thought Detail & Edit Modal */}
+        {/* Mobile: Compact Rounded List Rows */}
+        <div className="sm:hidden space-y-2">
+          {collections.slice(0, 4).map((col) => {
+            const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
+            const styles = getCollectionCardStyles(col);
+            const Icon = styles.Icon;
+
+            return (
+              <div
+                key={col.id}
+                onClick={() => handleCollectionClick(col.id)}
+                className="bg-white border border-[#e4ded0] hover:border-[#b8caa0] p-3 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs active:bg-[#f6f4ed] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${styles.iconBg} flex items-center justify-center shrink-0`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-serif text-sm font-semibold text-[#233126] leading-tight">
+                      {col.name}
+                    </h4>
+                    <span className="text-[11px] text-[#7d8c7f]">
+                      {count} thoughts
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#a3b0a4]" />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Recent Thoughts Section */}
+      <section className="space-y-3.5">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="font-serif text-lg font-semibold text-[#233126]">
+            Recent Thoughts
+          </h3>
+          <button
+            type="button"
+            onClick={() => onNavigateTab && onNavigateTab('collections')}
+            className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
+          >
+            View all
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-xs text-[#8f9d90]">
+            Tending the garden...
+          </div>
+        ) : thoughts.length === 0 ? (
+          <div className="py-12 text-center bg-white border border-dashed border-[#e4ded0] rounded-2xl p-6">
+            <Sprout className="w-8 h-8 mx-auto text-[#628469] mb-2 opacity-80" />
+            <p className="font-serif text-base font-semibold text-[#253227]">
+              Your garden starts with one thought
+            </p>
+            <p className="text-xs text-[#718273] mt-1">
+              Capture any fragment above to begin your personal garden.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white border border-[#e2dcd0] rounded-2xl divide-y divide-[#f2ede3] shadow-xs overflow-hidden">
+            {thoughts.slice(0, 10).map((thought) => {
+              const meta = getThoughtCategoryMeta(thought);
+              const CategoryIcon = meta.Icon;
+
+              return (
+                <div
+                  key={thought.id}
+                  onClick={() => setSelectedThoughtId(thought.id)}
+                  className="p-3.5 sm:p-4 hover:bg-[#faf8f4] cursor-pointer transition-colors flex items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-full ${meta.iconBg} flex items-center justify-center shrink-0`}>
+                      <CategoryIcon className="w-4 h-4" />
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#233126] group-hover:text-[#18231a] truncate font-normal">
+                      {thought.text}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[11px] text-[#869688]">
+                      {formatRelativeTime(thought.createdAt)}
+                    </span>
+                    <span
+                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${meta.badgeBg}`}
+                    >
+                      {meta.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Decorative Rolling Hills Artwork on Mobile */}
+      <div className="sm:hidden pt-4 -mb-8">
+        <RollingHillsFooterArt className="w-full h-12 opacity-75" />
+      </div>
+
+      {/* Thought Detail Modal */}
       <ThoughtDetailModal
         thought={selectedThought}
         isOpen={Boolean(selectedThought)}
@@ -372,48 +553,6 @@ export const GardenView: React.FC = () => {
         onUpdate={updateThought}
         onDelete={deleteThought}
       />
-
-      {/* The 3 Pillars (from Product Flow Reference) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        <div className="bg-white/60 border border-parchment-border rounded-2xl p-6 shadow-soft hover:shadow-soft-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-sage-100/70 text-sage-700 flex items-center justify-center mb-4">
-            <Sprout className="w-5 h-5 text-sage-600" />
-          </div>
-          <h3 className="font-serif text-lg font-semibold text-earth-900 mb-1.5">
-            1. Plant a thought
-          </h3>
-          <p className="text-xs font-medium text-sage-600 mb-2">Capture first. Organize later.</p>
-          <p className="text-xs text-stone-400 leading-relaxed">
-            One simple writing surface. A thought can remain a tiny, unfinished fragment indefinitely without pressure.
-          </p>
-        </div>
-
-        <div className="bg-white/60 border border-parchment-border rounded-2xl p-6 shadow-soft hover:shadow-soft-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-moss-100/70 text-moss-600 flex items-center justify-center mb-4">
-            <Trees className="w-5 h-5 text-moss-600" />
-          </div>
-          <h3 className="font-serif text-lg font-semibold text-earth-900 mb-1.5">
-            2. Watch thoughts grow
-          </h3>
-          <p className="text-xs font-medium text-moss-600 mb-2">Collections emerge naturally.</p>
-          <p className="text-xs text-stone-400 leading-relaxed">
-            Transparent suggestions notice shared themes and explain why. Accept or dismiss them; your words stay intact.
-          </p>
-        </div>
-
-        <div className="bg-white/60 border border-parchment-border rounded-2xl p-6 shadow-soft hover:shadow-soft-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-clay-100/70 text-clay-600 flex items-center justify-center mb-4">
-            <History className="w-5 h-5 text-clay-600" />
-          </div>
-          <h3 className="font-serif text-lg font-semibold text-earth-900 mb-1.5">
-            3. Return to what matters
-          </h3>
-          <p className="text-xs font-medium text-clay-600 mb-2">Old ideas get another chance.</p>
-          <p className="text-xs text-stone-400 leading-relaxed">
-            Rediscover thoughts you wrote weeks ago. No streaks, no guilt, and no forced conversion into tasks.
-          </p>
-        </div>
-      </section>
     </div>
   );
 };

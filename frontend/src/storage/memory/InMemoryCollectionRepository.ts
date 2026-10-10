@@ -19,6 +19,8 @@ export class InMemoryCollectionRepository implements ICollectionRepository {
       id,
       name: trimmed,
       description: dto.description?.trim() || undefined,
+      colorVariant: dto.colorVariant,
+      iconType: dto.iconType,
       createdAt: now,
       updatedAt: now,
     };
@@ -51,6 +53,8 @@ export class InMemoryCollectionRepository implements ICollectionRepository {
       ...existing,
       name: dto.name !== undefined ? dto.name.trim() : existing.name,
       description: dto.description !== undefined ? dto.description.trim() || undefined : existing.description,
+      colorVariant: dto.colorVariant !== undefined ? dto.colorVariant : existing.colorVariant,
+      iconType: dto.iconType !== undefined ? dto.iconType : existing.iconType,
       updatedAt: new Date().toISOString(),
     };
 
