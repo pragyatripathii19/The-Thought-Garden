@@ -23,7 +23,7 @@ import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connecti
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
-import { syncPilotSignup, syncPilotPing, submitPilotFeedback } from '../lib/pilotApi';
+import { syncPilotSignup, syncPilotPing, submitPilotFeedback, deletePilotUser } from '../lib/pilotApi';
 import { computeTodayThoughtsCount, computeGardenStreak } from '../lib/analytics';
 
 interface StorageContextValue {
@@ -39,6 +39,7 @@ interface StorageContextValue {
   // Pilot user profile & feedback
   userProfile: PilotUserProfile | null;
   saveUserProfile: (name: string, reasons: string[], email?: string) => Promise<void>;
+  deleteAccountAndResetGarden: () => Promise<void>;
   feedbacks: PilotFeedback[];
   submitFeedback: (category: PilotFeedbackCategory, rating: number, message: string, email?: string) => Promise<void>;
   isOnboardingOpen: boolean;
@@ -186,6 +187,54 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     },
     [userProfile, feedbacks]
   );
+
+  const deleteAccountAndResetGarden = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // 1. If user is registered on backend, delete their record from SQLite
+      if (userProfile?.id) {
+        await deletePilotUser(userProfile.id);
+      }
+
+      // 2. Clear IndexedDB stores
+      await thoughtRepository.clear();
+      await connectionRepository.clear();
+      await collectionRepository.clear();
+
+      // 3. Re-seed default collections with 0 thoughts
+      for (const col of STARTER_COLLECTIONS) {
+        await collectionRepository.save(col);
+      }
+
+      // 4. Wipe localStorage and session items
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('thought_garden_pilot_profile');
+        localStorage.removeItem('thought_garden_pilot_feedback');
+        localStorage.removeItem('thought_garden_active_collection');
+        sessionStorage.removeItem('thought_garden_admin_pass');
+      }
+
+      // 5. Reset in-memory React states
+      setThoughts([]);
+      setConnections([]);
+      setDismissedRediscoveryIds(new Set());
+      const freshCollections = await collectionRepository.getAll();
+      setCollections(freshCollections);
+      setUserProfile(null);
+      setFeedbacks([]);
+      setActiveCollectionId(null);
+
+      // 6. Open Onboarding immediately
+      setIsOnboardingOpen(true);
+    } catch (err) {
+      console.error('Failed to reset garden and delete account:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userProfile, thoughtRepository, connectionRepository, collectionRepository]);
 
   // Background activity ping to central backend (debounced)
   const lastPingRef = useRef<string>('');
@@ -609,6 +658,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         error,
         userProfile,
         saveUserProfile,
+        deleteAccountAndResetGarden,
         feedbacks,
         submitFeedback,
         isOnboardingOpen,

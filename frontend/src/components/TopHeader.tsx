@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, Edit3, KeyRound } from 'lucide-react';
+import { Search, X, Edit3, KeyRound, Trash2 } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
@@ -203,6 +203,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
               >
                 <KeyRound className="w-3.5 h-3.5" />
                 <span>Open Pilot Admin Panel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  onTabChange('settings');
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-white hover:bg-[#fff5f5] text-red-600 border border-[#f3dada] rounded-xl text-xs font-semibold transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Account & Reset Garden</span>
               </button>
             </div>
           </div>

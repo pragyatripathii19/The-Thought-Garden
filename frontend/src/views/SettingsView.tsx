@@ -12,8 +12,11 @@ export const SettingsView: React.FC = () => {
     setIsAdminModalOpen,
     setIsFeedbackModalOpen,
     setIsOnboardingOpen,
+    deleteAccountAndResetGarden,
   } = useThoughts();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -195,6 +198,103 @@ export const SettingsView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Danger Zone: Account Deletion & Reset */}
+      <div className="bg-[#fff8f8] border border-[#f3d6d6] rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-serif text-base font-semibold text-red-950">
+              Danger Zone: Delete Account & Reset Garden
+            </h3>
+            <p className="text-xs text-[#825454] leading-relaxed">
+              Permanently wipe all thoughts, collections, and connections from this device's IndexedDB, and remove your user profile and feedback from the pilot server.
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setIsConfirmDeleteOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+          >
+            <span>Delete Account & Reset Garden</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {isConfirmDeleteOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => !isDeleting && setIsConfirmDeleteOpen(false)}
+        >
+          <div
+            className="bg-white border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="font-serif text-lg font-bold text-red-950">
+                Are you absolutely sure?
+              </h3>
+              <p className="text-xs text-[#6e5858] leading-relaxed">
+                This action is permanent and cannot be undone:
+              </p>
+            </div>
+
+            <ul className="text-xs text-[#715454] space-y-2 bg-[#fdf2f2] p-3.5 rounded-2xl border border-[#f5dada]">
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 font-bold">&bull;</span>
+                <span>All <strong>{thoughts.length} thoughts</strong> and notes will be deleted from your local device.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 font-bold">&bull;</span>
+                <span>All custom collections and connections will be wiped clean.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 font-bold">&bull;</span>
+                <span>Your pilot tester profile will be deleted from the server.</span>
+              </li>
+            </ul>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setIsConfirmDeleteOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#546255] hover:bg-[#f3f0e8] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  try {
+                    setIsDeleting(true);
+                    await deleteAccountAndResetGarden();
+                    setIsConfirmDeleteOpen(false);
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+              >
+                <span>{isDeleting ? 'Deleting Everything...' : 'Yes, Delete & Reset Everything'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import Backup Modal */}
       <ImportBackupModal

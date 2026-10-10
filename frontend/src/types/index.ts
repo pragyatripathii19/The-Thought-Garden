@@ -48,6 +48,16 @@ export interface PilotUserProfile {
   reasons: string[];
   createdAt: string;
   lastActiveAt?: string;
+  totalThoughts?: number;
+  thoughtsToday?: number;
+  streak?: number;
+  feedbackCount?: number;
+  activityHistory?: Array<{
+    date: string;
+    thoughts_count: number;
+    total_thoughts: number;
+    streak: number;
+  }>;
 }
 
 export type PilotFeedbackCategory = 'suggestion' | 'bug' | 'praise' | 'other';

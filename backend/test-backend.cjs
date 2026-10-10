@@ -55,7 +55,33 @@ const server = app.listen(4005, async () => {
       feedbackCount: adminData.feedback.length,
       dailyActivitiesCount: adminData.dailyActivities.length,
       summary: adminData.summary,
+      sampleUserStats: adminData.users[0]?.totalThoughts,
     });
+
+    // 7. Test self-delete user
+    const selfDel = await del('/api/pilot/users/usr_test_1');
+    console.log('✓ DELETE /api/pilot/users/usr_test_1:', selfDel.ok);
+
+    // 8. Create another test user for admin delete
+    await post('/api/pilot/signup', {
+      id: 'usr_test_admin_del',
+      name: 'To Be Admin Deleted',
+      email: 'delete_me@example.com',
+      reasons: ['Testing Admin Delete'],
+    });
+
+    // 9. Admin delete with invalid passcode
+    try {
+      await del('/api/pilot/admin/users/usr_test_admin_del', { 'x-admin-passcode': 'wrong' });
+      console.error('FAIL: Admin delete did not reject invalid passcode');
+      process.exit(1);
+    } catch {
+      console.log('✓ Admin delete correctly rejected invalid passcode');
+    }
+
+    // 10. Admin delete with valid passcode
+    const adminDel = await del('/api/pilot/admin/users/usr_test_admin_del', { 'x-admin-passcode': 'garden-admin-2026' });
+    console.log('✓ DELETE /api/pilot/admin/users/usr_test_admin_del:', adminDel.ok);
 
     console.log('ALL BACKEND TESTS PASSED!');
     server.close(() => process.exit(0));
@@ -102,6 +128,30 @@ function get(path, headers = {}) {
         port: 4005,
         path,
         method: 'GET',
+        headers,
+      },
+      (res) => {
+        let raw = '';
+        res.on('data', (c) => (raw += c));
+        res.on('end', () => {
+          if (res.statusCode >= 400) return reject(new Error(`HTTP ${res.statusCode}: ${raw}`));
+          resolve(JSON.parse(raw));
+        });
+      }
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function del(path, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(
+      {
+        hostname: 'localhost',
+        port: 4005,
+        path,
+        method: 'DELETE',
         headers,
       },
       (res) => {

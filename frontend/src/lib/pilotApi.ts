@@ -87,3 +87,41 @@ export async function fetchAdminOverview(passcode: string): Promise<AdminOvervie
   const data = await res.json();
   return data;
 }
+
+/**
+ * Self-service deletion of user account and records from central server.
+ */
+export async function deletePilotUser(userId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/pilot/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('Backend user delete deferred/failed (offline/local mode):', err);
+    return false;
+  }
+}
+
+/**
+ * Admin deletion of user account and associated records from central server.
+ */
+export async function adminDeletePilotUser(userId: string, passcode: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/pilot/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+    headers: {
+      'x-admin-passcode': passcode,
+    },
+  });
+
+  if (res.status === 401) {
+    throw new Error('Unauthorized: Invalid admin passcode');
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to delete user (HTTP ${res.status})`);
+  }
+
+  const data = await res.json();
+  return !!data.ok;
+}

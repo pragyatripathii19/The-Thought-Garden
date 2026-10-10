@@ -167,12 +167,60 @@ app.get('/api/pilot/admin/overview', (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: Invalid admin passcode' });
     }
 
-    // Get all registered users
+    // Get all registered users with enriched activity stats
+    const todayStr = new Date().toISOString().slice(0, 10);
     const rawUsers = db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
-    const users = rawUsers.map((u) => ({
-      ...u,
-      reasons: u.reasons ? JSON.parse(u.reasons) : [],
-    }));
+    const users = rawUsers.map((u) => {
+      let reasons = [];
+      try {
+        reasons = u.reasons ? JSON.parse(u.reasons) : [];
+      } catch {
+        reasons = [];
+      }
+
+      const userStats = db.prepare(`
+        SELECT MAX(total_thoughts) as max_total, SUM(thoughts_count) as sum_count
+        FROM daily_activity
+        WHERE user_id = ?
+      `).get(u.id);
+
+      const latestActivity = db.prepare(`
+        SELECT streak FROM daily_activity
+        WHERE user_id = ?
+        ORDER BY date DESC
+        LIMIT 1
+      `).get(u.id);
+
+      const todayActivity = db.prepare(`
+        SELECT thoughts_count FROM daily_activity
+        WHERE user_id = ? AND date = ?
+      `).get(u.id, todayStr);
+
+      const feedbackCount = db.prepare(`
+        SELECT COUNT(*) as count FROM feedback
+        WHERE user_id = ?
+      `).get(u.id)?.count || 0;
+
+      const userHistory = db.prepare(`
+        SELECT date, thoughts_count, total_thoughts, streak
+        FROM daily_activity
+        WHERE user_id = ?
+        ORDER BY date DESC
+        LIMIT 30
+      `).all(u.id);
+
+      return {
+        ...u,
+        createdAt: u.created_at || u.createdAt,
+        lastActiveAt: u.last_active_at || u.lastActiveAt,
+        reasons,
+        totalThoughts: Math.max(userStats?.max_total || 0, userStats?.sum_count || 0),
+        thoughtsToday: todayActivity?.thoughts_count || 0,
+        streak: latestActivity?.streak || 0,
+        feedbackCount,
+        activityHistory: userHistory,
+      };
+    });
 
     // Get all feedback
     const feedback = db.prepare('SELECT * FROM feedback ORDER BY created_at DESC').all();
@@ -193,7 +241,6 @@ app.get('/api/pilot/admin/overview', (req, res) => {
     `).all();
 
     // Summary KPIs
-    const todayStr = new Date().toISOString().slice(0, 10);
     const activeTodayCount = db.prepare(`
       SELECT COUNT(DISTINCT user_id) as count
       FROM daily_activity
@@ -223,6 +270,49 @@ app.get('/api/pilot/admin/overview', (req, res) => {
   } catch (err) {
     console.error('Error in /api/pilot/admin/overview:', err);
     res.status(500).json({ error: 'Failed to fetch admin overview' });
+  }
+});
+
+// 5. User Self-Service Account Deletion
+app.delete('/api/pilot/users/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'User id is required' });
+    }
+
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.prepare('DELETE FROM daily_activity WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM feedback WHERE user_id = ?').run(id);
+
+    res.json({ ok: true, deletedUserId: id });
+  } catch (err) {
+    console.error('Error in /api/pilot/users/:id delete:', err);
+    res.status(500).json({ error: 'Failed to delete user account' });
+  }
+});
+
+// 6. Admin Delete User (Passcode-Protected)
+app.delete('/api/pilot/admin/users/:id', (req, res) => {
+  try {
+    const providedPasscode = req.headers['x-admin-passcode'];
+    if (!providedPasscode || providedPasscode !== ADMIN_PASSCODE) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid admin passcode' });
+    }
+
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'User id is required' });
+    }
+
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.prepare('DELETE FROM daily_activity WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM feedback WHERE user_id = ?').run(id);
+
+    res.json({ ok: true, deletedUserId: id });
+  } catch (err) {
+    console.error('Error in /api/pilot/admin/users/:id delete:', err);
+    res.status(500).json({ error: 'Failed to delete user as admin' });
   }
 });
 
