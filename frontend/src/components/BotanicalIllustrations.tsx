@@ -44,9 +44,9 @@ export const LeafLogoIcon: React.FC<{ className?: string }> = ({ className = 'w-
  * Watering can watering delicate sprout leaves on a soft grassy mound.
  * Plant sprig subtly sways in the gentle breeze.
  */
-export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className = 'w-48 h-28' }) => (
+export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className = 'w-30 h-24' }) => (
   <svg
-    viewBox="0 0 220 120"
+    viewBox="0 0 136 100"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className={className}
@@ -54,95 +54,110 @@ export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className
   >
     {/* Soft grassy mound background */}
     <path
-      d="M0 120C40 102 110 98 220 115V120H0Z"
+      d="M5 100C25 86 75 86 130 96V100H5Z"
       fill="#e8f0e9"
     />
     <path
-      d="M60 120C110 106 170 108 220 118V120H60Z"
+      d="M20 100C45 88 85 89 125 98V100H20Z"
       fill="#dbe8dd"
     />
 
-    {/* Growing Plant Sprig (Left) — organic gentle breeze animation */}
-    <g transform="translate(42, 48)" className="animate-breeze-stem">
-      {/* Stem */}
+    {/* Grounding soil shadow beneath plant root */}
+    <ellipse cx="46" cy="95" rx="15" ry="3" fill="#cfded1" opacity="0.9" />
+
+    {/* Primary Focal Point: Growing Plant Sprig (grounded & centered) */}
+    <g className="animate-breeze-stem">
+      {/* Central Stem */}
       <path
-        d="M20 70C20 40 16 20 12 0"
+        d="M46 94C46 72 44 50 38 32"
         stroke="#4a6b53"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-      {/* Bottom Left Leaf */}
+      {/* Lower Left Leaf */}
       <path
-        d="M18 52C9 52 3 45 2 36C10 36 17 43 18 52Z"
+        d="M45 78C32 78 24 69 23 58C35 58 44 68 45 78Z"
         fill="#8cb896"
         stroke="#4a6b53"
         strokeWidth="1.5"
       />
-      {/* Bottom Right Leaf */}
+      {/* Lower Right Leaf */}
       <path
-        d="M18 42C26 40 33 33 34 24C26 24 19 32 18 42Z"
+        d="M45 67C56 65 65 55 66 44C55 44 46 54 45 67Z"
         fill="#9bc2a4"
         stroke="#4a6b53"
         strokeWidth="1.5"
       />
       {/* Upper Left Leaf */}
       <path
-        d="M15 28C8 26 4 19 4 11C11 12 15 19 15 28Z"
+        d="M42 52C31 50 25 41 26 31C36 32 42 41 42 52Z"
         fill="#7fae8a"
         stroke="#4a6b53"
         strokeWidth="1.5"
       />
-      {/* Top Leaf */}
+      {/* Upper Right Leaf (reaching directly beneath watering spout) */}
       <path
-        d="M12 4C9 -4 15 -10 17 -10C19 -10 21 -4 14 4"
+        d="M40 42C51 38 58 30 59 21C49 21 41 31 40 42Z"
+        fill="#9bc2a4"
+        stroke="#4a6b53"
+        strokeWidth="1.5"
+      />
+      {/* Top Sprout Tip */}
+      <path
+        d="M38 32C33 24 39 18 42 18C44 18 48 24 40 32Z"
         fill="#a9cfae"
         stroke="#4a6b53"
         strokeWidth="1.5"
       />
     </g>
 
-    {/* Watering Can (Right) */}
-    <g transform="translate(130, 24)">
+    {/* Secondary Element: Tilted Watering Can (positioned closely above-right, pouring down) */}
+    <g transform="translate(62, 10) rotate(-24 30 32)">
       {/* Watering Can Body */}
       <rect
-        x="24"
-        y="30"
-        width="38"
-        height="36"
-        rx="6"
+        x="22"
+        y="16"
+        width="28"
+        height="25"
+        rx="5"
         fill="#7d9e87"
         stroke="#4a6b53"
-        strokeWidth="2"
+        strokeWidth="1.8"
       />
       {/* Arch Handle */}
       <path
-        d="M62 38C75 42 75 58 62 62"
+        d="M50 20C60 23 60 35 50 38"
         stroke="#9db9a5"
-        strokeWidth="3.5"
+        strokeWidth="2.8"
         strokeLinecap="round"
       />
-      {/* Spout */}
+      {/* Spout angled towards the plant */}
       <path
-        d="M24 54L3 38"
+        d="M22 32L4 21"
         stroke="#7d9e87"
-        strokeWidth="4"
+        strokeWidth="3"
         strokeLinecap="round"
       />
-      {/* Spout Rose / Head */}
+      {/* Spout Rose / Head hovering right above plant leaves */}
       <path
-        d="M0 34L6 42"
+        d="M1 18L6 26"
         stroke="#5a7a63"
-        strokeWidth="3.5"
+        strokeWidth="3"
         strokeLinecap="round"
       />
     </g>
 
-    {/* Delicate Water Drops Falling from Spout toward plant */}
+    {/* Cascading Water Droplets: flowing directly from spout rose and landing on plant leaves */}
     <g fill="#9bc2a4">
-      <ellipse cx="118" cy="68" rx="2" ry="3" transform="rotate(-20 118 68)" />
-      <ellipse cx="106" cy="78" rx="2" ry="3.5" transform="rotate(-25 106 78)" />
-      <ellipse cx="96" cy="90" rx="1.8" ry="3" transform="rotate(-30 96 90)" />
-      <ellipse cx="112" cy="88" rx="1.5" ry="2.5" transform="rotate(-20 112 88)" />
+      {/* Leaving spout rose */}
+      <ellipse cx="53" cy="38" rx="1.6" ry="2.4" transform="rotate(-35 53 38)" />
+      {/* Reaching upper right leaf */}
+      <ellipse cx="48" cy="45" rx="1.6" ry="2.6" transform="rotate(-30 48 45)" />
+      {/* Landing on middle leaves */}
+      <ellipse cx="54" cy="50" rx="1.4" ry="2.2" transform="rotate(-25 54 50)" />
+      {/* Glistening droplets on plant surface */}
+      <ellipse cx="44" cy="58" rx="1.3" ry="1.8" transform="rotate(-20 44 58)" />
+      <ellipse cx="50" cy="62" rx="1.2" ry="1.2" />
     </g>
   </svg>
 );

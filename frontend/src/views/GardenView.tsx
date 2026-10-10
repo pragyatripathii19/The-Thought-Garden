@@ -200,8 +200,8 @@ export const GardenView: React.FC<GardenViewProps> = ({
           </div>
 
           {/* Botanical Illustration (Desktop & Tablet) */}
-          <div className="hidden sm:block shrink-0 -my-4 -mr-2">
-            <WateringCanHeroArt className="w-44 h-24 lg:w-52 lg:h-28" />
+          <div className="hidden sm:block shrink-0 -my-3 -mr-1">
+            <WateringCanHeroArt className="w-32 h-24 lg:w-36 lg:h-28" />
           </div>
         </section>
 
