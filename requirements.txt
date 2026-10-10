@@ -23,9 +23,10 @@
 # ------------------------------------------------------------------------------
 # 3. Frontend npm Dependencies (Managed in frontend/package.json)
 # ------------------------------------------------------------------------------
-# Core Framework & UI:
+# Core Framework, UI & Storage:
 #   react@18.3.1
 #   react-dom@18.3.1
+#   idb@8.0.4
 #   lucide-react@0.475.0
 #   clsx@2.1.1
 #   tailwind-merge@3.0.1
@@ -46,8 +47,8 @@
 # 4. Functional Product Milestones Tracked
 # ------------------------------------------------------------------------------
 # [x] Piece 1: Foundation, Botanical Design System & App Shell
-# [ ] Piece 2: Zero-metadata capture & browser IndexedDB persistence
-# [ ] Piece 3: Thought stream, botanical growth stages & thought detail editing
+# [x] Piece 2: Zero-metadata capture & browser IndexedDB persistence (pluggable repository pattern)
+# [x] Piece 3: Thought stream, botanical growth stages & thought detail editing
 # [ ] Piece 4: Collections management & local real-time search
 # [ ] Piece 5: Local explainable connection discovery engine
 # [ ] Piece 6: Gentle rediscovery & data portability (JSON export/import)

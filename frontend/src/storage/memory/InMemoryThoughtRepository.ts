@@ -1,0 +1,76 @@
+import { Thought } from '../../types';
+import { CreateThoughtDTO, IThoughtRepository, UpdateThoughtDTO } from '../types';
+
+export class InMemoryThoughtRepository implements IThoughtRepository {
+  private thoughts: Map<string, Thought> = new Map();
+
+  async create(dto: CreateThoughtDTO): Promise<Thought> {
+    const trimmed = dto.text.trim();
+    if (!trimmed) {
+      throw new Error('Thought text cannot be empty');
+    }
+
+    const now = new Date().toISOString();
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'thought-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+    const thought: Thought = {
+      id,
+      text: dto.text,
+      createdAt: now,
+      updatedAt: now,
+      collectionIds: dto.collectionIds ? [...dto.collectionIds] : [],
+      stage: dto.stage || 'seed',
+    };
+
+    this.thoughts.set(id, thought);
+    return { ...thought };
+  }
+
+  async getById(id: string): Promise<Thought | null> {
+    const item = this.thoughts.get(id);
+    return item ? { ...item } : null;
+  }
+
+  async getAll(): Promise<Thought[]> {
+    const list = Array.from(this.thoughts.values()).reverse();
+    // Reverse chronological order (newest first)
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async update(id: string, dto: UpdateThoughtDTO): Promise<Thought> {
+    const existing = this.thoughts.get(id);
+    if (!existing) {
+      throw new Error(`Thought not found with id: ${id}`);
+    }
+
+    if (dto.text !== undefined && !dto.text.trim()) {
+      throw new Error('Thought text cannot be empty');
+    }
+
+    const updated: Thought = {
+      ...existing,
+      text: dto.text !== undefined ? dto.text : existing.text,
+      collectionIds: dto.collectionIds !== undefined ? [...dto.collectionIds] : existing.collectionIds,
+      stage: dto.stage !== undefined ? dto.stage : existing.stage,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.thoughts.set(id, updated);
+    return { ...updated };
+  }
+
+  async delete(id: string): Promise<void> {
+    this.thoughts.delete(id);
+  }
+
+  async count(): Promise<number> {
+    return this.thoughts.size;
+  }
+
+  // Testing helper
+  clear(): void {
+    this.thoughts.clear();
+  }
+}

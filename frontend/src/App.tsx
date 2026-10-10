@@ -4,13 +4,15 @@ import { GardenView } from './views/GardenView';
 import { CollectionsView } from './views/CollectionsView';
 import { SearchView } from './views/SearchView';
 import { SettingsView } from './views/SettingsView';
+import { StorageProvider } from './context/StorageContext';
 import { NavTab } from './types';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('garden');
 
   return (
-    <div className="min-h-screen bg-parchment flex flex-col font-sans text-earth-800">
+    <StorageProvider>
+      <div className="min-h-screen bg-parchment flex flex-col font-sans text-earth-800">
       {/* Top Navigation & Local Status */}
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -27,6 +29,7 @@ export function App() {
         <p>The Thought Garden &bull; Plant a thought. Let the garden grow.</p>
       </footer>
     </div>
+    </StorageProvider>
   );
 }
 

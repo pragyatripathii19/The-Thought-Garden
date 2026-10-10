@@ -1,6 +1,8 @@
 import { Download, Upload, Shield, HardDrive, AlertTriangle } from 'lucide-react';
+import { useThoughts } from '../context/StorageContext';
 
 export const SettingsView: React.FC = () => {
+  const { thoughts } = useThoughts();
   return (
     <div className="space-y-8 pb-16 max-w-3xl mx-auto">
       <div>
@@ -90,7 +92,7 @@ export const SettingsView: React.FC = () => {
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
           <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60">
-            <div className="text-2xl font-serif font-bold text-earth-900">0</div>
+            <div className="text-2xl font-serif font-bold text-earth-900">{thoughts.length}</div>
             <div className="text-xs text-stone-400 mt-1">Saved Thoughts</div>
           </div>
           <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60">
