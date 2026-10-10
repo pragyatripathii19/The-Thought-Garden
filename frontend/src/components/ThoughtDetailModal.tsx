@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Edit3, Trash2, Check, AlertCircle } from 'lucide-react';
+import { X, Calendar, Clock, Edit3, Trash2, Check, AlertCircle, Library, Plus } from 'lucide-react';
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
+import { useThoughts } from '../context/StorageContext';
 
 interface ThoughtDetailModalProps {
   thought: Thought | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: string, updates: { text?: string; stage?: GrowthStage }) => Promise<Thought>;
+  onUpdate: (id: string, updates: { text?: string; stage?: GrowthStage; collectionIds?: string[] }) => Promise<Thought>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -18,6 +19,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const { collections, toggleThoughtCollection } = useThoughts();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -221,6 +223,46 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* Collections Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1.5">
+                <Library className="w-3.5 h-3.5 text-stone-400" />
+                <span>Collections</span>
+              </label>
+              <span className="text-[11px] text-stone-400">
+                {thought.collectionIds?.length || 0} assigned
+              </span>
+            </div>
+
+            {collections.length === 0 ? (
+              <p className="text-xs text-stone-400 p-3 bg-parchment-soft/40 rounded-xl border border-dashed border-parchment-border/70">
+                No collections yet. You can create one in the Collections tab.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {collections.map((col) => {
+                  const isMember = thought.collectionIds?.includes(col.id);
+                  return (
+                    <button
+                      key={col.id}
+                      type="button"
+                      onClick={() => toggleThoughtCollection(thought.id, col.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                        isMember
+                          ? 'bg-sage-600 text-white border-sage-600 shadow-soft'
+                          : 'bg-white hover:bg-parchment-soft text-earth-700 border-parchment-border hover:border-sage-300'
+                      }`}
+                    >
+                      {isMember ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5 text-stone-400" />}
+                      <span>{col.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Timestamps */}

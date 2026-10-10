@@ -1,8 +1,11 @@
-import { IThoughtRepository, StorageProviderType } from './types';
+import { IThoughtRepository, ICollectionRepository, StorageProviderType } from './types';
 import { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 import { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
+import { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
+import { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
 
-let repositoryInstance: IThoughtRepository | null = null;
+let thoughtRepoInstance: IThoughtRepository | null = null;
+let collectionRepoInstance: ICollectionRepository | null = null;
 let currentProvider: StorageProviderType = 'indexeddb';
 
 /**
@@ -11,32 +14,56 @@ let currentProvider: StorageProviderType = 'indexeddb';
  * only requires changing the provider type here.
  */
 export function getThoughtRepository(provider: StorageProviderType = currentProvider): IThoughtRepository {
-  if (!repositoryInstance || currentProvider !== provider) {
+  if (!thoughtRepoInstance || currentProvider !== provider) {
     currentProvider = provider;
     switch (provider) {
       case 'memory':
-        repositoryInstance = new InMemoryThoughtRepository();
+        thoughtRepoInstance = new InMemoryThoughtRepository();
         break;
       case 'indexeddb':
-        repositoryInstance = new IndexedDBThoughtRepository();
+        thoughtRepoInstance = new IndexedDBThoughtRepository();
         break;
       case 'postgres':
-        // Future adapter: e.g. new PostgresThoughtRepository()
         throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
       default:
-        repositoryInstance = new IndexedDBThoughtRepository();
+        thoughtRepoInstance = new IndexedDBThoughtRepository();
     }
   }
-  return repositoryInstance;
+  return thoughtRepoInstance;
+}
+
+export function setThoughtRepository(customRepo: IThoughtRepository): void {
+  thoughtRepoInstance = customRepo;
 }
 
 /**
- * Helper to override repository during tests or custom environments
+ * Factory function to retrieve or configure the collection repository.
  */
-export function setThoughtRepository(customRepo: IThoughtRepository): void {
-  repositoryInstance = customRepo;
+export function getCollectionRepository(provider: StorageProviderType = currentProvider): ICollectionRepository {
+  if (!collectionRepoInstance || currentProvider !== provider) {
+    currentProvider = provider;
+    switch (provider) {
+      case 'memory':
+        collectionRepoInstance = new InMemoryCollectionRepository();
+        break;
+      case 'indexeddb':
+        collectionRepoInstance = new IndexedDBCollectionRepository();
+        break;
+      case 'postgres':
+        throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
+      default:
+        collectionRepoInstance = new IndexedDBCollectionRepository();
+    }
+  }
+  return collectionRepoInstance;
+}
+
+export function setCollectionRepository(customRepo: ICollectionRepository): void {
+  collectionRepoInstance = customRepo;
 }
 
 export * from './types';
 export { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 export { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
+export { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
+export { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
