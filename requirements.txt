@@ -1,0 +1,53 @@
+# ==============================================================================
+# The Thought Garden — Unified Requirements & Docker Dependency Manifest
+# (Continuously maintained as the project evolves)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. System Runtime Requirements
+# ------------------------------------------------------------------------------
+# Node.js: >= 20.0.0 (Tested on v24.18.0)
+# npm: >= 10.0.0 (Tested on 11.16.0)
+# Python: >= 3.10.0 (Tested on 3.12.10 - reserved for future backend services)
+# Docker: Multi-stage build capable (Node build stage + Python/Nginx runtime stage)
+
+# ------------------------------------------------------------------------------
+# 2. Python Backend Dependencies (Pip installable for Docker / Local Backend)
+# ------------------------------------------------------------------------------
+# Note: Uncomment and add Python packages here as backend services are introduced.
+# Example:
+# fastapi>=0.110.0
+# uvicorn[standard]>=0.28.0
+# pydantic>=2.6.0
+
+# ------------------------------------------------------------------------------
+# 3. Frontend npm Dependencies (Managed in frontend/package.json)
+# ------------------------------------------------------------------------------
+# Core Framework & UI:
+#   react@18.3.1
+#   react-dom@18.3.1
+#   lucide-react@0.475.0
+#   clsx@2.1.1
+#   tailwind-merge@3.0.1
+#
+# Build Tooling & Types:
+#   vite@6.1.0
+#   typescript@5.7.3
+#   vitest@5.0.3
+#   @vitejs/plugin-react@4.3.4
+#   tailwindcss@3.4.17
+#   postcss@8.5.2
+#   autoprefixer@10.4.20
+#   @types/react@18.3.18
+#   @types/react-dom@18.3.5
+#   @types/node@22.13.4
+
+# ------------------------------------------------------------------------------
+# 4. Functional Product Milestones Tracked
+# ------------------------------------------------------------------------------
+# [x] Piece 1: Foundation, Botanical Design System & App Shell
+# [ ] Piece 2: Zero-metadata capture & browser IndexedDB persistence
+# [ ] Piece 3: Thought stream, botanical growth stages & thought detail editing
+# [ ] Piece 4: Collections management & local real-time search
+# [ ] Piece 5: Local explainable connection discovery engine
+# [ ] Piece 6: Gentle rediscovery & data portability (JSON export/import)
