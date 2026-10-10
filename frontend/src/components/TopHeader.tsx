@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, Shield, SlidersHorizontal } from 'lucide-react';
+import { Search, X, Edit3, KeyRound } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
@@ -10,8 +10,26 @@ interface TopHeaderProps {
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
-  const { thoughts, collections } = useThoughts();
+  const {
+    thoughts,
+    collections,
+    userProfile,
+    setIsFeedbackModalOpen,
+    setIsOnboardingOpen,
+    setIsAdminModalOpen,
+  } = useThoughts();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Compute initials from user's actual name
+  const getInitials = (name?: string) => {
+    if (!name) return 'PT';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const initials = getInitials(userProfile?.name);
+  const displayName = userProfile?.name || 'Pragya Tripathi';
 
   return (
     <>
@@ -30,6 +48,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Feedback Button */}
+          <button
+            type="button"
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#edf5ee] hover:bg-[#e2ede4] text-[#34593e] border border-[#d5e6d8] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+            title="Share Feedback"
+            aria-label="Share Feedback"
+          >
+            <span>🌱</span>
+            <span className="text-[11px]">Feedback</span>
+          </button>
+
           <button
             type="button"
             onClick={() => onTabChange('search')}
@@ -45,13 +75,24 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
             className="w-8 h-8 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#344f3b] transition-colors shadow-xs"
             aria-label="Open Profile"
           >
-            PT
+            {initials}
           </button>
         </div>
       </header>
 
       {/* Desktop Top Header Bar (>= md) */}
       <header className="hidden md:flex items-center justify-end px-8 py-5 border-b border-[#eee9dc]/60 gap-3">
+        {/* Feedback Button */}
+        <button
+          type="button"
+          onClick={() => setIsFeedbackModalOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#edf5ee] hover:bg-[#e0ebe2] text-[#34593e] border border-[#d4e4d7] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+          title="Share Pilot Feedback"
+        >
+          <span>🌱</span>
+          <span>Feedback</span>
+        </button>
+
         <button
           type="button"
           onClick={() => onTabChange('search')}
@@ -66,10 +107,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
           type="button"
           onClick={() => setIsProfileOpen(true)}
           className="w-9 h-9 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#344f3b] transition-transform active:scale-95 shadow-xs"
-          title="Pragya Tripathi (Profile)"
+          title={`${displayName} (Profile)`}
           aria-label="User Profile"
         >
-          PT
+          {initials}
         </button>
       </header>
 
@@ -82,19 +123,21 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
           onClick={() => setIsProfileOpen(false)}
         >
           <div
-            className="bg-[#fcfbf8] border border-[#e2dcce] rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-5"
+            className="bg-[#fcfbf8] border border-[#e2dcce] rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold">
-                  PT
+                  {initials}
                 </div>
                 <div>
                   <h3 className="font-serif text-lg font-medium text-[#253227] leading-tight">
-                    Pragya Tripathi
+                    {displayName}
                   </h3>
-                  <p className="text-[11px] text-[#788779]">Personal Garden</p>
+                  <p className="text-[11px] text-[#788779]">
+                    {userProfile?.email || 'Personal Pilot Garden'}
+                  </p>
                 </div>
               </div>
               <button
@@ -105,6 +148,25 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Reasons / Goals */}
+            {userProfile?.reasons && userProfile.reasons.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[#69786a]">
+                  Garden Intent
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {userProfile.reasons.map((r, i) => (
+                    <span
+                      key={i}
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-[#edf5ee] text-[#34593e] border border-[#d5e7d8]"
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="p-3 bg-[#f2f7f3] border border-[#dbe7dc] rounded-2xl">
@@ -117,27 +179,30 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
               </div>
             </div>
 
-            <div className="p-3 bg-[#f7f5ed] border border-[#e7e1d3] rounded-2xl text-xs text-[#59665b] space-y-1">
-              <div className="flex items-center gap-2 font-medium text-[#273a2b]">
-                <Shield className="w-4 h-4 text-[#4a6b53]" />
-                <span>Local-First & Completely Private</span>
-              </div>
-              <p className="text-[11px] text-[#6a796c] leading-relaxed">
-                Your thoughts live in your browser's IndexedDB. No server tracking or external databases.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   setIsProfileOpen(false);
-                  onTabChange('settings');
+                  setIsOnboardingOpen(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ede9dd] hover:bg-[#e4decb] text-[#2d3c2e] rounded-xl text-xs font-medium transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#f4f1e8] hover:bg-[#ede8dc] text-[#334636] border border-[#e2dcd0] rounded-xl text-xs font-semibold transition-colors"
               >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span>Open Data & Settings</span>
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Profile & Goals</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  setIsAdminModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e2eee4] text-[#34593e] border border-[#d2e4d5] rounded-xl text-xs font-semibold transition-colors"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Open Pilot Admin Panel</span>
               </button>
             </div>
           </div>

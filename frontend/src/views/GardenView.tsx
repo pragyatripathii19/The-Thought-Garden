@@ -42,6 +42,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
     setActiveCollectionId,
     isLoading,
     error,
+    userProfile,
   } = useThoughts();
 
   const [input, setInput] = useState('');
@@ -191,7 +192,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
                 <LeafLogoIcon className="w-5 h-5" />
               </span>
               <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#222c23]">
-                {getGreeting()}, Pragya
+                {getGreeting()}, {userProfile?.name ? userProfile.name.split(' ')[0] : 'Gardener'}
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-[#738274]">

@@ -1,5 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Thought, Collection, Connection, ThoughtCategory, GrowthStage, CollectionColorVariant, CollectionIconType } from '../types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import {
+  Thought,
+  Collection,
+  Connection,
+  ThoughtCategory,
+  GrowthStage,
+  CollectionColorVariant,
+  CollectionIconType,
+  PilotUserProfile,
+  PilotFeedback,
+  PilotFeedbackCategory,
+} from '../types';
 import {
   getThoughtRepository,
   getCollectionRepository,
@@ -12,6 +23,8 @@ import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connecti
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS, getStarterThoughts, getStarterConnections } from '../lib/defaults';
+import { syncPilotSignup, syncPilotPing, submitPilotFeedback } from '../lib/pilotApi';
+import { computeTodayThoughtsCount, computeGardenStreak } from '../lib/analytics';
 
 interface StorageContextValue {
   thoughts: Thought[];
@@ -23,6 +36,17 @@ interface StorageContextValue {
   setActiveCollectionId: (id: string | null) => void;
   isLoading: boolean;
   error: string | null;
+  // Pilot user profile & feedback
+  userProfile: PilotUserProfile | null;
+  saveUserProfile: (name: string, reasons: string[], email?: string) => Promise<void>;
+  feedbacks: PilotFeedback[];
+  submitFeedback: (category: PilotFeedbackCategory, rating: number, message: string, email?: string) => Promise<void>;
+  isOnboardingOpen: boolean;
+  setIsOnboardingOpen: (open: boolean) => void;
+  isFeedbackModalOpen: boolean;
+  setIsFeedbackModalOpen: (open: boolean) => void;
+  isAdminModalOpen: boolean;
+  setIsAdminModalOpen: (open: boolean) => void;
   // Thought actions
   createThought: (
     text: string,
@@ -83,6 +107,106 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pilot Profile State
+  const [userProfile, setUserProfile] = useState<PilotUserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('thought_garden_pilot_profile');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('thought_garden_pilot_profile');
+  });
+
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+
+  // Feedbacks State
+  const [feedbacks, setFeedbacks] = useState<PilotFeedback[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem('thought_garden_pilot_feedback');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveUserProfile = useCallback(
+    async (name: string, reasons: string[], email?: string) => {
+      const id = userProfile?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const profile: PilotUserProfile = {
+        id,
+        name: name.trim() || 'Gardener',
+        email: email?.trim() || undefined,
+        reasons: reasons.length > 0 ? reasons : ['General Note Taking'],
+        createdAt: userProfile?.createdAt || new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+      };
+
+      setUserProfile(profile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('thought_garden_pilot_profile', JSON.stringify(profile));
+      }
+      setIsOnboardingOpen(false);
+
+      // Background sync to central SQLite backend
+      syncPilotSignup(profile).catch((err) => console.warn('Background signup sync deferred:', err));
+    },
+    [userProfile]
+  );
+
+  const submitFeedback = useCallback(
+    async (category: PilotFeedbackCategory, rating: number, message: string, email?: string) => {
+      const newFb: PilotFeedback = {
+        id: `fb_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        userId: userProfile?.id,
+        userName: userProfile?.name || 'Anonymous Gardener',
+        category,
+        rating,
+        message,
+        email: email || userProfile?.email,
+        createdAt: new Date().toISOString(),
+      };
+
+      const updated = [newFb, ...feedbacks];
+      setFeedbacks(updated);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('thought_garden_pilot_feedback', JSON.stringify(updated));
+      }
+
+      // Background sync to central SQLite backend
+      submitPilotFeedback(newFb).catch((err) => console.warn('Background feedback sync deferred:', err));
+    },
+    [userProfile, feedbacks]
+  );
+
+  // Background activity ping to central backend (debounced)
+  const lastPingRef = useRef<string>('');
+  useEffect(() => {
+    if (!userProfile) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = computeTodayThoughtsCount(thoughts);
+    const streak = computeGardenStreak(thoughts);
+    const pingKey = `${today}_${todayCount}_${thoughts.length}`;
+
+    if (lastPingRef.current !== pingKey) {
+      lastPingRef.current = pingKey;
+      syncPilotPing({
+        userId: userProfile.id,
+        date: today,
+        thoughtsCount: todayCount,
+        totalThoughts: thoughts.length,
+        streak,
+      }).catch((err) => console.warn('Background activity ping deferred:', err));
+    }
+  }, [thoughts, userProfile]);
 
   const refreshThoughts = useCallback(async () => {
     try {
@@ -490,6 +614,16 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         setActiveCollectionId,
         isLoading,
         error,
+        userProfile,
+        saveUserProfile,
+        feedbacks,
+        submitFeedback,
+        isOnboardingOpen,
+        setIsOnboardingOpen,
+        isFeedbackModalOpen,
+        setIsFeedbackModalOpen,
+        isAdminModalOpen,
+        setIsAdminModalOpen,
         createThought,
         updateThought,
         deleteThought,

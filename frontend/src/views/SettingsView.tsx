@@ -4,7 +4,15 @@ import { useThoughts } from '../context/StorageContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
 
 export const SettingsView: React.FC = () => {
-  const { thoughts, collections, connections, exportBackup } = useThoughts();
+  const {
+    thoughts,
+    collections,
+    connections,
+    exportBackup,
+    setIsAdminModalOpen,
+    setIsFeedbackModalOpen,
+    setIsOnboardingOpen,
+  } = useThoughts();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -139,6 +147,52 @@ export const SettingsView: React.FC = () => {
             <div className="text-base font-serif font-bold text-[#233126] truncate">IndexedDB</div>
             <div className="text-[11px] text-[#718273] mt-0.5">Storage Engine</div>
           </div>
+        </div>
+      </div>
+
+      {/* Pilot Admin & Telemetry Card */}
+      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg font-semibold text-[#233126] flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-[#edf5ee] text-[#34593e] flex items-center justify-center text-xs">
+                🌱
+              </span>
+              <span>Pilot Testing & Admin</span>
+            </h3>
+            <p className="text-xs text-[#718273] leading-relaxed">
+              Track who registered, thoughts planted per day, and feedback submitted by pilot testers.
+            </p>
+          </div>
+          <span className="text-[10px] font-mono text-[#8a998c] bg-[#f5f2e9] px-2 py-1 rounded-md border border-[#e5dfd2]">
+            Ctrl + Shift + A
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setIsAdminModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#344e3b] hover:bg-[#2b4131] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+          >
+            <span>Open Pilot Admin Dashboard</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e0ebe2] text-[#34593e] border border-[#d4e4d7] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+          >
+            <span>🌱 Give Feedback</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsOnboardingOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#4d5d4f] rounded-xl text-xs font-medium transition-colors"
+          >
+            <span>Edit Profile & Intent</span>
+          </button>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Home, Library, Search, Bookmark, SlidersHorizontal, Compass, X } from 'lucide-react';
 import { NavTab } from '../types';
+import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 
 interface SidebarProps {
@@ -9,6 +10,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
+  const { setIsFeedbackModalOpen } = useThoughts();
   const [isLearnModalOpen, setIsLearnModalOpen] = useState(false);
 
   const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -76,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
             </button>
 
             {/* Learn & Explore Modal Trigger */}
-            <div className="pt-2">
+            <div className="pt-2 space-y-1.5">
               <button
                 type="button"
                 onClick={() => setIsLearnModalOpen(true)}
@@ -87,6 +89,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                   <span>Learn & Explore</span>
                 </div>
                 <span className="text-[#96a497]">&rsaquo;</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsFeedbackModalOpen(true)}
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold text-[#34593e] bg-[#edf5ee] hover:bg-[#e1ece2] border border-[#d4e4d7] transition-colors shadow-2xs"
+              >
+                <span>🌱</span>
+                <span>Share Pilot Feedback</span>
               </button>
             </div>
           </nav>

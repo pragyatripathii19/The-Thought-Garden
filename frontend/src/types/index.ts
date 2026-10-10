@@ -40,3 +40,57 @@ export interface Connection {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface PilotUserProfile {
+  id: string;
+  name: string;
+  email?: string;
+  reasons: string[];
+  createdAt: string;
+  lastActiveAt?: string;
+}
+
+export type PilotFeedbackCategory = 'suggestion' | 'bug' | 'praise' | 'other';
+
+export interface PilotFeedback {
+  id: string;
+  userId?: string;
+  userName?: string;
+  category: PilotFeedbackCategory;
+  rating: number;
+  message: string;
+  email?: string;
+  createdAt: string;
+}
+
+export interface PilotDailyActivity {
+  id: string;
+  userId: string;
+  date: string;
+  thoughtsCount: number;
+  totalThoughts: number;
+  streak: number;
+  updatedAt: string;
+}
+
+export interface AdminSummaryKPIs {
+  totalUsers: number;
+  totalFeedback: number;
+  totalThoughtsLogged: number;
+  activeToday: number;
+}
+
+export interface AdminThoughtsPerDayAgg {
+  date: string;
+  total_thoughts: number;
+  active_users: number;
+}
+
+export interface AdminOverviewData {
+  summary: AdminSummaryKPIs;
+  users: PilotUserProfile[];
+  feedback: PilotFeedback[];
+  dailyActivities: PilotDailyActivity[];
+  thoughtsPerDayAgg: AdminThoughtsPerDayAgg[];
+}
+
