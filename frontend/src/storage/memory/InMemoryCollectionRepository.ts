@@ -66,7 +66,12 @@ export class InMemoryCollectionRepository implements ICollectionRepository {
     return this.collections.size;
   }
 
-  clear(): void {
+  async save(collection: Collection): Promise<Collection> {
+    this.collections.set(collection.id, { ...collection });
+    return { ...collection };
+  }
+
+  async clear(): Promise<void> {
     this.collections.clear();
   }
 }

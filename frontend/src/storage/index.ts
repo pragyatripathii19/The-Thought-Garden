@@ -1,11 +1,19 @@
-import { IThoughtRepository, ICollectionRepository, StorageProviderType } from './types';
+import {
+  IThoughtRepository,
+  ICollectionRepository,
+  IConnectionRepository,
+  StorageProviderType,
+} from './types';
 import { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 import { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
 import { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
 import { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
+import { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';
+import { IndexedDBConnectionRepository } from './indexeddb/IndexedDBConnectionRepository';
 
 let thoughtRepoInstance: IThoughtRepository | null = null;
 let collectionRepoInstance: ICollectionRepository | null = null;
+let connectionRepoInstance: IConnectionRepository | null = null;
 let currentProvider: StorageProviderType = 'indexeddb';
 
 /**
@@ -62,8 +70,36 @@ export function setCollectionRepository(customRepo: ICollectionRepository): void
   collectionRepoInstance = customRepo;
 }
 
+/**
+ * Factory function to retrieve or configure the connection repository.
+ */
+export function getConnectionRepository(provider: StorageProviderType = currentProvider): IConnectionRepository {
+  if (!connectionRepoInstance || currentProvider !== provider) {
+    currentProvider = provider;
+    switch (provider) {
+      case 'memory':
+        connectionRepoInstance = new InMemoryConnectionRepository();
+        break;
+      case 'indexeddb':
+        connectionRepoInstance = new IndexedDBConnectionRepository();
+        break;
+      case 'postgres':
+        throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
+      default:
+        connectionRepoInstance = new IndexedDBConnectionRepository();
+    }
+  }
+  return connectionRepoInstance;
+}
+
+export function setConnectionRepository(customRepo: IConnectionRepository): void {
+  connectionRepoInstance = customRepo;
+}
+
 export * from './types';
 export { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 export { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
 export { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
 export { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
+export { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';
+export { IndexedDBConnectionRepository } from './indexeddb/IndexedDBConnectionRepository';

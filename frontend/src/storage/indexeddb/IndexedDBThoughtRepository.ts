@@ -73,4 +73,15 @@ export class IndexedDBThoughtRepository implements IThoughtRepository {
     const db = await getDatabase();
     return await db.count('thoughts');
   }
+
+  async save(thought: Thought): Promise<Thought> {
+    const db = await getDatabase();
+    await db.put('thoughts', thought);
+    return thought;
+  }
+
+  async clear(): Promise<void> {
+    const db = await getDatabase();
+    await db.clear('thoughts');
+  }
 }

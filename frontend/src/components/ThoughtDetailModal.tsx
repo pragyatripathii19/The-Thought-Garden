@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Edit3, Trash2, Check, AlertCircle, Library, Plus } from 'lucide-react';
+import { X, Calendar, Clock, Edit3, Trash2, Check, AlertCircle, Library, Plus, Link2 } from 'lucide-react';
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
@@ -10,6 +10,7 @@ interface ThoughtDetailModalProps {
   onClose: () => void;
   onUpdate: (id: string, updates: { text?: string; stage?: GrowthStage; collectionIds?: string[] }) => Promise<Thought>;
   onDelete: (id: string) => Promise<void>;
+  onSelectThought?: (thought: Thought) => void;
 }
 
 export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
@@ -18,8 +19,9 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   onClose,
   onUpdate,
   onDelete,
+  onSelectThought,
 }) => {
-  const { collections, toggleThoughtCollection } = useThoughts();
+  const { collections, toggleThoughtCollection, connections, thoughts } = useThoughts();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -53,6 +55,12 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   }, [isOpen, isEditing, showDeleteConfirm, thought, onClose]);
 
   if (!isOpen || !thought) return null;
+
+  // Find confirmed connected thoughts
+  const connectedThoughtIds = connections
+    .filter((c) => c.status === 'accepted' && (c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id))
+    .map((c) => (c.sourceThoughtId === thought.id ? c.targetThoughtId : c.sourceThoughtId));
+  const connectedThoughts = thoughts.filter((t) => connectedThoughtIds.includes(t.id));
 
   const handleSaveText = async () => {
     const trimmed = editText.trim();
@@ -264,6 +272,32 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* Connected Thoughts Section (Piece 5) */}
+          {connectedThoughts.length > 0 && (
+            <div>
+              <label className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1.5 mb-2.5">
+                <Link2 className="w-3.5 h-3.5 text-sage-600" />
+                <span>Connected Thoughts ({connectedThoughts.length})</span>
+              </label>
+              <div className="space-y-2">
+                {connectedThoughts.map((connected) => (
+                  <div
+                    key={connected.id}
+                    onClick={() => {
+                      if (onSelectThought) {
+                        onSelectThought(connected);
+                      }
+                    }}
+                    className="p-3 bg-parchment-soft/50 hover:bg-parchment-soft border border-parchment-border rounded-xl text-xs text-earth-800 cursor-pointer flex items-center justify-between transition-colors"
+                  >
+                    <p className="line-clamp-2 pr-3">{connected.text}</p>
+                    <GrowthStageBadge stage={connected.stage || 'seed'} size="sm" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Timestamps */}
           <div className="pt-2 border-t border-parchment-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-500">

@@ -69,8 +69,12 @@ export class InMemoryThoughtRepository implements IThoughtRepository {
     return this.thoughts.size;
   }
 
-  // Testing helper
-  clear(): void {
+  async save(thought: Thought): Promise<Thought> {
+    this.thoughts.set(thought.id, { ...thought });
+    return { ...thought };
+  }
+
+  async clear(): Promise<void> {
     this.thoughts.clear();
   }
 }

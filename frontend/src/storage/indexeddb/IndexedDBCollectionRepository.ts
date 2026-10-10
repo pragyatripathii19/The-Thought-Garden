@@ -70,4 +70,15 @@ export class IndexedDBCollectionRepository implements ICollectionRepository {
     const db = await getDatabase();
     return await db.count('collections');
   }
+
+  async save(collection: Collection): Promise<Collection> {
+    const db = await getDatabase();
+    await db.put('collections', collection);
+    return collection;
+  }
+
+  async clear(): Promise<void> {
+    const db = await getDatabase();
+    await db.clear('collections');
+  }
 }

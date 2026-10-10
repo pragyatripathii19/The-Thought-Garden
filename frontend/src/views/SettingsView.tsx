@@ -1,8 +1,32 @@
+import React, { useState, useRef } from 'react';
 import { Download, Upload, Shield, HardDrive, AlertTriangle } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
+import { ImportBackupModal } from '../components/ImportBackupModal';
 
 export const SettingsView: React.FC = () => {
-  const { thoughts, collections } = useThoughts();
+  const { thoughts, collections, connections, exportBackup } = useThoughts();
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setIsImportModalOpen(true);
+    }
+    // reset input so the same file can be reselected if needed
+    e.target.value = '';
+  };
+
+  const handleOpenImport = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      setIsImportModalOpen(true);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-16 max-w-3xl mx-auto">
       <div>
@@ -55,7 +79,8 @@ export const SettingsView: React.FC = () => {
             </div>
             <button
               type="button"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-sage-600 hover:bg-sage-700 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+              onClick={exportBackup}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-sage-600 hover:bg-sage-700 text-white rounded-xl text-xs font-semibold shadow-soft transition-all active:scale-95"
             >
               <Download className="w-4 h-4" />
               <span>Export as JSON</span>
@@ -73,9 +98,17 @@ export const SettingsView: React.FC = () => {
                 Restore a previously exported Thought Garden backup with validation safeguards.
               </p>
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json,application/json"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
             <button
               type="button"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-parchment-soft border border-parchment-border text-earth-800 rounded-xl text-xs font-semibold shadow-soft transition-all"
+              onClick={handleOpenImport}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-parchment-soft border border-parchment-border text-earth-800 rounded-xl text-xs font-semibold shadow-soft transition-all active:scale-95"
             >
               <Upload className="w-4 h-4 text-stone-500" />
               <span>Choose Backup File</span>
@@ -90,7 +123,7 @@ export const SettingsView: React.FC = () => {
           <HardDrive className="w-5 h-5 text-stone-400" />
           <span>Storage Information</span>
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60">
             <div className="text-2xl font-serif font-bold text-earth-900">{thoughts.length}</div>
             <div className="text-xs text-stone-400 mt-1">Saved Thoughts</div>
@@ -99,12 +132,27 @@ export const SettingsView: React.FC = () => {
             <div className="text-2xl font-serif font-bold text-earth-900">{collections.length}</div>
             <div className="text-xs text-stone-400 mt-1">Collections</div>
           </div>
-          <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60 col-span-2 sm:col-span-1">
+          <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60">
+            <div className="text-2xl font-serif font-bold text-earth-900">{connections.length}</div>
+            <div className="text-xs text-stone-400 mt-1">Connections</div>
+          </div>
+          <div className="p-4 rounded-xl bg-parchment-soft/40 border border-parchment-border/60">
             <div className="text-2xl font-serif font-bold text-earth-900">IndexedDB</div>
             <div className="text-xs text-stone-400 mt-1">Storage Engine</div>
           </div>
         </div>
       </div>
+
+      {/* Import Backup Modal */}
+      <ImportBackupModal
+        isOpen={isImportModalOpen}
+        onClose={() => {
+          setIsImportModalOpen(false);
+          setSelectedFile(null);
+        }}
+        initialFile={selectedFile}
+      />
     </div>
   );
 };
+

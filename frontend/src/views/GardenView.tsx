@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sprout, Trees, History, Check, Trash2, Clock, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sprout, Trees, History, Check, Trash2, Clock, ChevronRight, Sparkles, X, Link2 } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { GrowthStageBadge } from '../components/GrowthStageBadge';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 
 export const GardenView: React.FC = () => {
-  const { thoughts, createThought, updateThought, deleteThought, isLoading, error } = useThoughts();
+  const {
+    thoughts,
+    suggestedConnection,
+    rediscoveredThought,
+    dismissRediscoveredThought,
+    createThought,
+    updateThought,
+    deleteThought,
+    acceptConnection,
+    dismissConnection,
+    isLoading,
+    error,
+  } = useThoughts();
+
   const [input, setInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [justPlanted, setJustPlanted] = useState(false);
@@ -111,6 +124,172 @@ export const GardenView: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Suggested Connection Card (Piece 5) */}
+      {suggestedConnection && (
+        <section className="bg-gradient-to-tr from-sage-50/90 to-moss-50/70 border border-sage-200/90 rounded-3xl p-6 sm:p-7 shadow-soft animate-fade-in space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
+                <Sparkles className="w-4 h-4" />
+              </span>
+              <div>
+                <h3 className="font-serif text-lg font-semibold text-earth-900">
+                  This might connect to…
+                </h3>
+                <p className="text-xs text-sage-800 font-medium mt-0.5">
+                  {suggestedConnection.reason}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                dismissConnection(
+                  suggestedConnection.sourceThought.id,
+                  suggestedConnection.targetThought.id
+                )
+              }
+              className="p-1 text-stone-400 hover:text-earth-900 rounded-lg"
+              title="Dismiss suggestion"
+              aria-label="Dismiss suggestion"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Two Connected Thought Snippets */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div
+              onClick={() => setSelectedThoughtId(suggestedConnection.sourceThought.id)}
+              className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-sage-200/80 cursor-pointer shadow-soft transition-all"
+            >
+              <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                {suggestedConnection.sourceThought.text}
+              </p>
+              <div className="mt-2 text-[10px] text-stone-400 flex items-center justify-between">
+                <span>{formatTimestamp(suggestedConnection.sourceThought.createdAt)}</span>
+                <GrowthStageBadge stage={suggestedConnection.sourceThought.stage || 'seed'} size="sm" />
+              </div>
+            </div>
+
+            <div
+              onClick={() => setSelectedThoughtId(suggestedConnection.targetThought.id)}
+              className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-sage-200/80 cursor-pointer shadow-soft transition-all"
+            >
+              <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                {suggestedConnection.targetThought.text}
+              </p>
+              <div className="mt-2 text-[10px] text-stone-400 flex items-center justify-between">
+                <span>{formatTimestamp(suggestedConnection.targetThought.createdAt)}</span>
+                <GrowthStageBadge stage={suggestedConnection.targetThought.stage || 'seed'} size="sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Accept / Dismiss Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() =>
+                dismissConnection(
+                  suggestedConnection.sourceThought.id,
+                  suggestedConnection.targetThought.id
+                )
+              }
+              className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-earth-900 rounded-xl hover:bg-parchment-soft/80 transition-colors"
+            >
+              Dismiss for now
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                acceptConnection(
+                  suggestedConnection.sourceThought.id,
+                  suggestedConnection.targetThought.id,
+                  suggestedConnection.reason
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-700 hover:bg-sage-800 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              <span>Confirm Connection</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Gentle Rediscovery Card (Piece 6) */}
+      {rediscoveredThought && (
+        <section className="bg-gradient-to-tr from-[#fcfbf7] to-[#f7f5ed] border border-[#e3decb] rounded-3xl p-6 sm:p-7 shadow-soft animate-fade-in space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-[#e8e4d8] text-[#556354] flex items-center justify-center">
+                <History className="w-4 h-4" />
+              </span>
+              <div>
+                <h3 className="font-serif text-lg font-semibold text-earth-900">
+                  A thought to revisit
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Planted on {new Date(rediscoveredThought.createdAt).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
+              className="p-1 text-stone-400 hover:text-earth-900 rounded-lg"
+              title="Dismiss for now"
+              aria-label="Dismiss for now"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div
+            onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
+            className="p-4 bg-white/90 hover:bg-white rounded-2xl border border-[#e3decb] cursor-pointer shadow-soft transition-all"
+          >
+            <p className="text-earth-900 text-xs sm:text-sm line-clamp-3 leading-relaxed whitespace-pre-wrap">
+              {rediscoveredThought.text}
+            </p>
+            <div className="mt-3 flex items-center justify-between">
+              <GrowthStageBadge stage={rediscoveredThought.stage || 'seed'} size="sm" />
+              <span className="text-xs text-sage-600 font-medium inline-flex items-center gap-1">
+                Inspect Thought
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
+              className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-earth-900 rounded-xl hover:bg-parchment-soft/80 transition-colors"
+            >
+              Dismiss for now
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-sage-700 hover:bg-sage-800 text-white rounded-xl text-xs font-semibold shadow-soft transition-all"
+            >
+              <span>Inspect Thought</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Thought Stream or First-Run Empty State */}
       {isLoading ? (
