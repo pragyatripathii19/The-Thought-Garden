@@ -16,8 +16,9 @@ import {
 import { useThoughts } from '../context/StorageContext';
 import { NavTab, Thought, Collection } from '../types';
 import { formatRelativeTime } from '../lib/time';
-import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon } from '../components/BotanicalIllustrations';
+import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon, SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
+import { FallingLeaves } from '../components/FallingLeaves';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -45,6 +46,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
 
   const [input, setInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [justPlanted, setJustPlanted] = useState(false);
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
@@ -65,6 +67,10 @@ export const GardenView: React.FC<GardenViewProps> = ({
       setIsSaving(true);
       await createThought(trimmed);
       setInput('');
+      setJustPlanted(true);
+      setTimeout(() => {
+        setJustPlanted(false);
+      }, 1200);
     } catch (err) {
       console.error(err);
     } finally {
@@ -172,75 +178,88 @@ export const GardenView: React.FC<GardenViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Top Greeting Section with Botanical Illustration */}
-      <section className="flex items-center justify-between pt-1">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[#3d5a45]">
-              <LeafLogoIcon className="w-5 h-5" />
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#222c23]">
-              {getGreeting()}, Pragya
-            </h2>
+    <>
+      {/* Delicate falling sage-green leaves ambient background */}
+      <FallingLeaves />
+
+      <div className="relative z-10 space-y-8 pb-16">
+        {/* Top Greeting Section with Botanical Illustration */}
+        <section className="flex items-center justify-between pt-1">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[#3d5a45]">
+                <LeafLogoIcon className="w-5 h-5" />
+              </span>
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#222c23]">
+                {getGreeting()}, Pragya
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-[#738274]">
+              Your thoughts are growing.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-[#738274]">
-            Your thoughts are growing.
-          </p>
-        </div>
 
-        {/* Botanical Illustration (Desktop & Tablet) */}
-        <div className="hidden sm:block shrink-0 -my-4 -mr-2">
-          <WateringCanHeroArt className="w-44 h-24 lg:w-52 lg:h-28" />
-        </div>
-      </section>
+          {/* Botanical Illustration (Desktop & Tablet) */}
+          <div className="hidden sm:block shrink-0 -my-4 -mr-2">
+            <WateringCanHeroArt className="w-44 h-24 lg:w-52 lg:h-28" />
+          </div>
+        </section>
 
-      {/* Prominent Quick Capture Card */}
-      <section className="bg-white border border-[#e2dcd0] rounded-2xl p-4 sm:p-5 shadow-xs focus-within:border-[#7a9d83] focus-within:ring-2 focus-within:ring-[#e4ede6] transition-all">
-        <div className="space-y-2">
-          <label
-            htmlFor="home-capture-input"
-            className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]"
-          >
-            What's on your mind?
-          </label>
-          <textarea
-            id="home-capture-input"
-            rows={2}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isSaving}
-            placeholder="e.g. A startup idea, a question, a note, anything..."
-            className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
-          />
-        </div>
-
-        {error && (
-          <p className="text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 mt-2">
-            {error}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t border-[#f4f0e6] mt-2">
-          <span className="text-[11px] text-[#97a599] hidden sm:inline">
-            Press <kbd className="px-1.5 py-0.5 bg-[#f5f2e9] rounded border border-[#e4ded2] font-mono text-[10px] text-[#6b786c]">Ctrl + Enter</kbd> to plant
-          </span>
-
-          <div className="ml-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handlePlant}
-              disabled={!input.trim() || isSaving}
-              className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
-              title="Plant thought"
-              aria-label="Plant thought"
+        {/* Prominent Quick Capture Card */}
+        <section className="bg-white border border-[#e2dcd0] rounded-2xl p-4 sm:p-5 shadow-xs focus-within:border-[#7a9d83] focus-within:ring-2 focus-within:ring-[#e4ede6] transition-all">
+          <div className="space-y-2">
+            <label
+              htmlFor="home-capture-input"
+              className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]"
             >
-              <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
-            </button>
+              What's on your mind?
+            </label>
+            <textarea
+              id="home-capture-input"
+              rows={2}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isSaving}
+              placeholder="e.g. A startup idea, a question, a note, anything..."
+              className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
+            />
           </div>
-        </div>
-      </section>
+
+          {error && (
+            <p className="text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 mt-2">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between pt-2 border-t border-[#f4f0e6] mt-2">
+            <span className="text-[11px] text-[#97a599] hidden sm:inline">
+              Press <kbd className="px-1.5 py-0.5 bg-[#f5f2e9] rounded border border-[#e4ded2] font-mono text-[10px] text-[#6b786c]">Ctrl + Enter</kbd> to plant
+            </span>
+
+            <div className="ml-auto flex items-center gap-3">
+              {justPlanted && (
+                <div
+                  className="flex items-center gap-1.5 text-xs font-semibold text-[#344e3b] animate-fade-in pointer-events-none select-none"
+                  aria-live="polite"
+                >
+                  <SeedToSproutAnimation className="w-5 h-5 text-[#344e3b]" />
+                  <span>Planted</span>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handlePlant}
+                disabled={!input.trim() || isSaving || justPlanted}
+                className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
+                title="Plant thought"
+                aria-label="Plant thought"
+              >
+                <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+        </section>
 
       {/* Suggested Connection Card (Piece 5) */}
       {suggestedConnection && (
@@ -329,16 +348,21 @@ export const GardenView: React.FC<GardenViewProps> = ({
 
       {/* Gentle Rediscovery Card (Piece 6) */}
       {rediscoveredThought && (
-        <section className="bg-[#fbfaf6] border border-[#e4ded0] rounded-2xl p-5 shadow-xs animate-fade-in space-y-3">
+        <section className="bg-[#fbfaf6] border border-[#e4ded0] rounded-2xl p-5 shadow-xs animate-fade-in animate-rediscovery-accent space-y-3 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-[#e8e2d4] text-[#556958] flex items-center justify-center">
                 <History className="w-3.5 h-3.5" />
               </span>
               <div>
-                <h3 className="font-serif text-base font-semibold text-[#233126]">
-                  A thought to revisit
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif text-base font-semibold text-[#233126]">
+                    A thought to revisit
+                  </h3>
+                  <span className="inline-flex items-center text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#edf4ee] text-[#34593e] border border-[#d2e2d5]">
+                    Resurfaced
+                  </span>
+                </div>
                 <p className="text-xs text-[#788779]">
                   Planted {formatRelativeTime(rediscoveredThought.createdAt)}
                 </p>
@@ -553,6 +577,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
         onUpdate={updateThought}
         onDelete={deleteThought}
       />
-    </div>
+      </div>
+    </>
   );
 };

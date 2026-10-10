@@ -42,6 +42,7 @@ export const LeafLogoIcon: React.FC<{ className?: string }> = ({ className = 'w-
 /**
  * Desktop & Tablet Greeting Banner Botanical Artwork:
  * Watering can watering delicate sprout leaves on a soft grassy mound.
+ * Plant sprig subtly sways in the gentle breeze.
  */
 export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className = 'w-48 h-28' }) => (
   <svg
@@ -61,8 +62,8 @@ export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className
       fill="#dbe8dd"
     />
 
-    {/* Growing Plant Sprig (Left) */}
-    <g transform="translate(42, 48)">
+    {/* Growing Plant Sprig (Left) — organic gentle breeze animation */}
+    <g transform="translate(42, 48)" className="animate-breeze-stem">
       {/* Stem */}
       <path
         d="M20 70C20 40 16 20 12 0"
@@ -149,13 +150,14 @@ export const WateringCanHeroArt: React.FC<{ className?: string }> = ({ className
 /**
  * Centered Sprout Leaf Cluster Artwork for "New Thought" screen:
  * "Just plant the thought. The garden will take care of the rest."
+ * Organic gentle breeze animation rooted at base of stem.
  */
 export const SproutLeafClusterArt: React.FC<{ className?: string }> = ({ className = 'w-16 h-20' }) => (
   <svg
     viewBox="0 0 64 80"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    className={className}
+    className={`${className} animate-breeze-sprout`}
     aria-hidden="true"
   >
     {/* Central Stem */}
@@ -224,12 +226,61 @@ export const RollingHillsFooterArt: React.FC<{ className?: string }> = ({ classN
       d="M0 60C80 48 180 38 280 48C340 54 380 50 400 45V60H0Z"
       fill="#dce7dd"
     />
-    {/* Small decorative sprout silhouettes on the hill */}
-    <g stroke="#6b8c73" strokeWidth="1.5" strokeLinecap="round" fill="#8cae94">
+    {/* Small decorative sprout silhouettes on the hill swaying gently */}
+    <g
+      stroke="#6b8c73"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      fill="#8cae94"
+      className="animate-breeze-stem"
+    >
       <path d="M70 52C70 47 68 44 65 42C68 42 70 44 70 47" />
       <path d="M70 48C72 45 75 45 76 43C74 45 72 46 70 48" />
       <path d="M310 52C310 46 308 42 305 40C308 40 310 43 310 46" />
       <path d="M310 47C312 44 315 44 316 42C314 44 312 45 310 47" />
     </g>
+  </svg>
+);
+
+/**
+ * Seed to Sprout Blooming Animation (800–1200ms):
+ * Shown upon successful thought persistence.
+ */
+export const SeedToSproutAnimation: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`${className} animate-sprout-bloom`}
+    aria-hidden="true"
+  >
+    {/* Soil Mound */}
+    <ellipse cx="16" cy="27" rx="8" ry="2" fill="#cdd8ce" />
+    {/* Seed Shell opening */}
+    <path
+      d="M13 26C13 24 19 24 19 26C19 28 13 28 13 26Z"
+      fill="#8a735c"
+    />
+    {/* Emerging Green Stem */}
+    <path
+      d="M16 25V12"
+      stroke="#466450"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    {/* Left Sprout Leaf */}
+    <path
+      d="M16 16C12 16 9 13 9 9C13 9 16 12 16 16Z"
+      fill="#88b593"
+      stroke="#3d5a45"
+      strokeWidth="1.2"
+    />
+    {/* Right Sprout Leaf */}
+    <path
+      d="M16 13C20 13 23 10 23 6C19 6 16 9 16 13Z"
+      fill="#9fc6a9"
+      stroke="#3d5a45"
+      strokeWidth="1.2"
+    />
   </svg>
 );

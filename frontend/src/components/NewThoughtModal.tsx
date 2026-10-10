@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, X, ArrowUpRight } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
-import { SproutLeafClusterArt } from './BotanicalIllustrations';
+import { SproutLeafClusterArt, SeedToSproutAnimation } from './BotanicalIllustrations';
 
 interface NewThoughtModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
   const { createThought } = useThoughts();
   const [text, setText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [justPlanted, setJustPlanted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -24,6 +25,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
     if (isOpen) {
       setText('');
       setError(null);
+      setJustPlanted(false);
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 50);
@@ -50,8 +52,12 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
       await createThought(trimmed, {
         collectionIds: defaultCollectionId ? [defaultCollectionId] : undefined,
       });
-      setText('');
-      onClose();
+      setJustPlanted(true);
+      setTimeout(() => {
+        setText('');
+        setJustPlanted(false);
+        onClose();
+      }, 950);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to plant thought');
     } finally {
@@ -137,16 +143,27 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
                 {charCount}/1000
               </span>
 
-              <button
-                type="button"
-                onClick={handlePlant}
-                disabled={!text.trim() || isSaving}
-                className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
-                title="Plant thought (Ctrl + Enter)"
-                aria-label="Plant thought"
-              >
-                <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
-              </button>
+              <div className="flex items-center gap-3">
+                {justPlanted && (
+                  <div
+                    className="flex items-center gap-1.5 text-xs font-semibold text-[#344e3b] animate-fade-in pointer-events-none select-none"
+                    aria-live="polite"
+                  >
+                    <SeedToSproutAnimation className="w-5 h-5 text-[#344e3b]" />
+                    <span>Planted in garden</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handlePlant}
+                  disabled={!text.trim() || isSaving || justPlanted}
+                  className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
+                  title="Plant thought (Ctrl + Enter)"
+                  aria-label="Plant thought"
+                >
+                  <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
             </div>
           </div>
 
