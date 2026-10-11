@@ -7,6 +7,7 @@ import {
   GrowthStage,
   CollectionColorVariant,
   CollectionIconType,
+  CollectionOrigin,
   PilotUserProfile,
   PilotFeedback,
   PilotFeedbackCategory,
@@ -18,7 +19,13 @@ import {
   IThoughtRepository,
   ICollectionRepository,
   IConnectionRepository,
+  IEmbeddingRepository,
+  IOrganizeEventRepository,
+  UpdateThoughtDTO,
+  getEmbeddingRepository,
+  getOrganizeEventRepository,
 } from '../storage';
+import { ORGANIZER_STORAGE_KEYS } from '../lib/organize/settings';
 import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connections';
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
@@ -53,10 +60,7 @@ interface StorageContextValue {
     text: string,
     options?: { collectionIds?: string[]; category?: ThoughtCategory; stage?: GrowthStage }
   ) => Promise<Thought>;
-  updateThought: (
-    id: string,
-    updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds' | 'isSaved' | 'category'>>
-  ) => Promise<Thought>;
+  updateThought: (id: string, updates: UpdateThoughtDTO) => Promise<Thought>;
   deleteThought: (id: string) => Promise<void>;
   refreshThoughts: () => Promise<void>;
   toggleThoughtCollection: (thoughtId: string, collectionId: string) => Promise<Thought>;
@@ -66,7 +70,7 @@ interface StorageContextValue {
   createCollection: (
     name: string,
     description?: string,
-    options?: { colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+    options?: CollectionCreateOptions
   ) => Promise<Collection>;
   updateCollection: (
     id: string,
@@ -85,7 +89,16 @@ interface StorageContextValue {
   thoughtRepository: IThoughtRepository;
   collectionRepository: ICollectionRepository;
   connectionRepository: IConnectionRepository;
+  embeddingRepository: IEmbeddingRepository;
+  organizeEventRepository: IOrganizeEventRepository;
 }
+
+type CollectionCreateOptions = {
+  colorVariant?: CollectionColorVariant;
+  iconType?: CollectionIconType;
+  origin?: CollectionOrigin;
+  autoReason?: string;
+};
 
 const StorageContext = createContext<StorageContextValue | undefined>(undefined);
 
@@ -94,6 +107,8 @@ export interface StorageProviderProps {
   thoughtRepository?: IThoughtRepository;
   collectionRepository?: ICollectionRepository;
   connectionRepository?: IConnectionRepository;
+  embeddingRepository?: IEmbeddingRepository;
+  organizeEventRepository?: IOrganizeEventRepository;
 }
 
 export const StorageProvider: React.FC<StorageProviderProps> = ({
@@ -101,6 +116,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   thoughtRepository = getThoughtRepository(),
   collectionRepository = getCollectionRepository(),
   connectionRepository = getConnectionRepository(),
+  embeddingRepository = getEmbeddingRepository(),
+  organizeEventRepository = getOrganizeEventRepository(),
 }) => {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -202,6 +219,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       await thoughtRepository.clear();
       await connectionRepository.clear();
       await collectionRepository.clear();
+      await embeddingRepository.clear();
+      await organizeEventRepository.clear();
 
       // 3. Re-seed default collections with 0 thoughts
       for (const col of STARTER_COLLECTIONS) {
@@ -214,6 +233,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         localStorage.removeItem('thought_garden_pilot_feedback');
         localStorage.removeItem('thought_garden_active_collection');
         sessionStorage.removeItem('thought_garden_admin_pass');
+        ORGANIZER_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
       }
 
       // 5. Reset in-memory React states
@@ -234,7 +254,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [userProfile, thoughtRepository, connectionRepository, collectionRepository]);
+  }, [userProfile, thoughtRepository, connectionRepository, collectionRepository, embeddingRepository, organizeEventRepository]);
 
   // Background activity ping to central backend (debounced)
   const lastPingRef = useRef<string>('');
@@ -256,6 +276,10 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       }).catch((err) => console.warn('Background activity ping deferred:', err));
     }
   }, [thoughts, userProfile]);
+
+  // Latest thoughts for callbacks that must not re-create on every change.
+  const thoughtsRef = useRef<Thought[]>(thoughts);
+  thoughtsRef.current = thoughts;
 
   const refreshThoughts = useCallback(async () => {
     try {
@@ -336,6 +360,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
           collectionIds: options?.collectionIds,
           category: options?.category,
           stage: options?.stage,
+          // Queue for automatic organising unless the user already placed it in a collection.
+          classifyState: options?.collectionIds?.length ? undefined : 'pending',
         });
         setThoughts((prev) => [newThought, ...prev]);
         return newThought;
@@ -350,13 +376,22 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   );
 
   const updateThought = useCallback(
-    async (
-      id: string,
-      updates: Partial<Pick<Thought, 'text' | 'stage' | 'collectionIds' | 'isSaved' | 'category'>>
-    ): Promise<Thought> => {
+    async (id: string, updates: UpdateThoughtDTO): Promise<Thought> => {
       try {
         setError(null);
-        const updated = await thoughtRepository.update(id, updates);
+        // Re-organise an edited thought only if it is still ungrouped and not hand-organised.
+        const current = thoughtsRef.current.find((t) => t.id === id);
+        const reclassify =
+          current !== undefined &&
+          updates.text !== undefined &&
+          updates.text !== current.text &&
+          !current.organizeLocked &&
+          current.collectionIds.length === 0 &&
+          updates.collectionIds === undefined;
+        const updated = await thoughtRepository.update(
+          id,
+          reclassify ? { ...updates, classifyState: 'pending' } : updates
+        );
         setThoughts((prev) => prev.map((t) => (t.id === id ? updated : t)));
         return updated;
       } catch (err) {
@@ -385,6 +420,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       try {
         setError(null);
         await thoughtRepository.delete(id);
+        await embeddingRepository.delete(id);
         setThoughts((prev) => prev.filter((t) => t.id !== id));
         // Also remove any connections referencing this thought
         const affectedConnections = connections.filter(
@@ -401,7 +437,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         throw err;
       }
     },
-    [thoughtRepository, connectionRepository, connections]
+    [thoughtRepository, connectionRepository, embeddingRepository, connections]
   );
 
   const toggleThoughtCollection = useCallback(
@@ -417,7 +453,12 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         ? existingCollections.filter((id) => id !== collectionId)
         : [...existingCollections, collectionId];
 
-      return await updateThought(thoughtId, { collectionIds: updatedCollectionIds });
+      // A manual change means the user owns this thought's organisation from now on.
+      return await updateThought(thoughtId, {
+        collectionIds: updatedCollectionIds,
+        autoCollectionIds: (thought.autoCollectionIds || []).filter((id) => id !== collectionId),
+        organizeLocked: true,
+      });
     },
     [thoughts, updateThought]
   );
@@ -426,7 +467,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     async (
       name: string,
       description?: string,
-      options?: { colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+      options?: CollectionCreateOptions
     ): Promise<Collection> => {
       try {
         setError(null);
@@ -435,6 +476,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
           description,
           colorVariant: options?.colorVariant,
           iconType: options?.iconType,
+          origin: options?.origin ?? 'manual',
+          autoReason: options?.autoReason,
         });
         setCollections((prev) => [newCollection, ...prev]);
         return newCollection;
@@ -477,18 +520,14 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
 
         const affectedThoughts = thoughts.filter((t) => t.collectionIds?.includes(id));
         for (const t of affectedThoughts) {
-          const cleaned = t.collectionIds.filter((cid) => cid !== id);
-          await thoughtRepository.update(t.id, { collectionIds: cleaned });
-        }
-
-        if (affectedThoughts.length > 0) {
-          setThoughts((prev) =>
-            prev.map((t) =>
-              t.collectionIds?.includes(id)
-                ? { ...t, collectionIds: t.collectionIds.filter((cid) => cid !== id) }
-                : t
-            )
-          );
+          // Deleting a collection is a manual reorganisation: lock members so the
+          // organiser does not immediately regroup them.
+          const updated = await thoughtRepository.update(t.id, {
+            collectionIds: t.collectionIds.filter((cid) => cid !== id),
+            autoCollectionIds: (t.autoCollectionIds || []).filter((cid) => cid !== id),
+            organizeLocked: true,
+          });
+          setThoughts((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
         }
       } catch (err) {
         console.error('Failed to delete collection:', err);
@@ -579,6 +618,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
           await connectionRepository.clear();
           await collectionRepository.clear();
           await thoughtRepository.clear();
+          await embeddingRepository.clear();
+          await organizeEventRepository.clear();
 
           for (const c of backup.garden.collections) {
             await collectionRepository.save(c);
@@ -641,7 +682,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         throw err;
       }
     },
-    [thoughtRepository, collectionRepository, connectionRepository, loadAll]
+    [thoughtRepository, collectionRepository, connectionRepository, embeddingRepository, organizeEventRepository, loadAll]
   );
 
   return (
@@ -686,6 +727,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         thoughtRepository,
         collectionRepository,
         connectionRepository,
+        embeddingRepository,
+        organizeEventRepository,
       }}
     >
       {children}

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Download, Upload, Shield, HardDrive, AlertTriangle } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
+import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -59,7 +60,7 @@ export const SettingsView: React.FC = () => {
               Local-First &amp; Private
             </h3>
             <p className="text-xs text-[#596d5e] leading-relaxed">
-              Your thoughts are stored only on this device using IndexedDB — no thought content is ever uploaded or shared. As part of the Thought Garden pilot, we collect a small amount of usage data (your name, activity patterns, and any feedback you choose to submit) to help us improve the product.
+              Your thoughts are stored only on this device using IndexedDB. Thought content is never uploaded unless you turn on Smart organising below. As part of the Thought Garden pilot, we collect a small amount of usage data (your name, activity patterns, and any feedback you choose to submit) to help us improve the product.
             </p>
             <div className="flex items-center gap-1.5 pt-1 text-[11px] text-amber-800 font-medium">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -68,6 +69,9 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Automatic organising */}
+      <OrganizingSettingsCard />
 
       {/* Data Backup & Restore */}
       <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">

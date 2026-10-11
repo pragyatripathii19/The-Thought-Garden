@@ -20,6 +20,7 @@ import { useThoughts } from '../context/StorageContext';
 import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
+import { AutoBadge } from '../components/OrganizeToast';
 
 export const CollectionsView: React.FC = () => {
   const {
@@ -154,11 +155,17 @@ export const CollectionsView: React.FC = () => {
             <div>
               <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
                 {activeCollection.name}
+                {activeCollection.origin === 'auto' && <AutoBadge className="ml-2 align-middle" />}
               </h2>
               <p className="text-xs text-[#718273] mt-0.5">
                 {activeThoughts.length} thoughts
                 {activeCollection.description && ` • ${activeCollection.description}`}
               </p>
+              {activeCollection.origin === 'auto' && activeCollection.autoReason && (
+                <p className="text-[11px] text-[#36618c] mt-1">
+                  Created automatically: {activeCollection.autoReason}
+                </p>
+              )}
             </div>
           </div>
 
@@ -347,6 +354,7 @@ export const CollectionsView: React.FC = () => {
                 <div className="min-w-0">
                   <h3 className="font-serif text-base font-semibold text-[#233126] leading-tight">
                     {col.name}
+                    {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
                   </h3>
                   <div className="text-[11px] text-[#788779] font-medium mt-0.5">
                     {count} thoughts

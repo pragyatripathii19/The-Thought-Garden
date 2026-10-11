@@ -15,6 +15,7 @@
 - Suggested collections and connections must be reviewable and reversible. Never silently move, merge, rewrite, or delete thoughts.
 - A thought does not need to become a task. Avoid streaks, productivity guilt, forced goals, or excessive notifications.
 - Do not describe keyword similarity as semantic AI understanding.
+- Automatic organising (added after the MVP) must stay visible and reversible: every automatic change carries an "Auto" marker, an Undo, and an activity-log entry; thoughts the user organised by hand are never changed again. Thought text may only leave the browser when the user has explicitly turned on Smart organising.
 - Clearly communicate that data is stored in the current browser and can be lost if browser storage is cleared. Provide export and import.
 
 ## Scope discipline

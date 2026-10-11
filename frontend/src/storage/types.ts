@@ -7,6 +7,10 @@ import {
   ThoughtCategory,
   CollectionColorVariant,
   CollectionIconType,
+  CollectionOrigin,
+  ClassifyState,
+  ThoughtEmbedding,
+  OrganizeEvent,
 } from '../types';
 
 export interface CreateThoughtDTO {
@@ -15,6 +19,7 @@ export interface CreateThoughtDTO {
   stage?: GrowthStage;
   isSaved?: boolean;
   category?: ThoughtCategory;
+  classifyState?: ClassifyState;
 }
 
 export interface UpdateThoughtDTO {
@@ -23,6 +28,41 @@ export interface UpdateThoughtDTO {
   stage?: GrowthStage;
   isSaved?: boolean;
   category?: ThoughtCategory;
+  autoCollectionIds?: string[];
+  organizeLocked?: boolean;
+  classifyState?: ClassifyState;
+  classifiedAt?: string;
+}
+
+/**
+ * Applies an update DTO to a thought. Shared by every thought repository so
+ * adapters stay consistent. Only user-visible changes refresh `updatedAt`;
+ * organiser bookkeeping (classifyState etc.) does not count as "tending".
+ */
+export function applyThoughtUpdate(existing: Thought, dto: UpdateThoughtDTO): Thought {
+  if (dto.text !== undefined && !dto.text.trim()) {
+    throw new Error('Thought text cannot be empty');
+  }
+
+  const touchesContent =
+    dto.text !== undefined ||
+    dto.collectionIds !== undefined ||
+    dto.stage !== undefined ||
+    dto.isSaved !== undefined ||
+    dto.category !== undefined;
+
+  const updated: Thought = { ...existing };
+  if (dto.text !== undefined) updated.text = dto.text;
+  if (dto.collectionIds !== undefined) updated.collectionIds = [...dto.collectionIds];
+  if (dto.stage !== undefined) updated.stage = dto.stage;
+  if (dto.isSaved !== undefined) updated.isSaved = dto.isSaved;
+  if (dto.category !== undefined) updated.category = dto.category;
+  if (dto.autoCollectionIds !== undefined) updated.autoCollectionIds = [...dto.autoCollectionIds];
+  if (dto.organizeLocked !== undefined) updated.organizeLocked = dto.organizeLocked;
+  if (dto.classifyState !== undefined) updated.classifyState = dto.classifyState;
+  if (dto.classifiedAt !== undefined) updated.classifiedAt = dto.classifiedAt;
+  if (touchesContent) updated.updatedAt = new Date().toISOString();
+  return updated;
 }
 
 /**
@@ -46,6 +86,8 @@ export interface CreateCollectionDTO {
   description?: string;
   colorVariant?: CollectionColorVariant;
   iconType?: CollectionIconType;
+  origin?: CollectionOrigin;
+  autoReason?: string;
 }
 
 export interface UpdateCollectionDTO {
@@ -100,6 +142,27 @@ export interface IConnectionRepository {
   findPair(sourceId: string, targetId: string): Promise<Connection | null>;
   count(): Promise<number>;
   save(connection: Connection): Promise<Connection>;
+  clear(): Promise<void>;
+}
+
+/**
+ * Storage contract for locally computed thought embeddings (one per thought).
+ */
+export interface IEmbeddingRepository {
+  get(thoughtId: string): Promise<ThoughtEmbedding | null>;
+  getAll(): Promise<ThoughtEmbedding[]>;
+  put(embedding: ThoughtEmbedding): Promise<ThoughtEmbedding>;
+  delete(thoughtId: string): Promise<void>;
+  clear(): Promise<void>;
+}
+
+/**
+ * Storage contract for the organiser's activity log.
+ */
+export interface IOrganizeEventRepository {
+  add(event: OrganizeEvent): Promise<OrganizeEvent>;
+  getAll(): Promise<OrganizeEvent[]>;
+  update(id: string, patch: Partial<Pick<OrganizeEvent, 'undoneAt'>>): Promise<OrganizeEvent>;
   clear(): Promise<void>;
 }
 

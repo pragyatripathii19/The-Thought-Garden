@@ -8,12 +8,20 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'garden-admin-2026';
 
+// Smart organising: any OpenAI-compatible chat completions API (Groq by default).
+const LLM_BASE_URL = (process.env.LLM_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/, '');
+const LLM_API_KEY = process.env.LLM_API_KEY || '';
+const LLM_MODEL = process.env.LLM_MODEL || 'llama-3.1-8b-instant';
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 15000;
+const CLASSIFY_RATE_LIMIT = Number(process.env.CLASSIFY_RATE_LIMIT) || 10; // requests per user per window
+const CLASSIFY_RATE_WINDOW_MS = 60 * 1000;
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Initialize SQLite Database
-const dbPath = path.join(__dirname, 'pilot_garden.sqlite');
+const dbPath = process.env.PILOT_DB_PATH || path.join(__dirname, 'pilot_garden.sqlite');
 const db = new DatabaseSync(dbPath);
 
 // Create Tables
@@ -55,7 +63,119 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     service: 'thought-garden-pilot-backend',
     timestamp: new Date().toISOString(),
+    smartOrganizing: Boolean(LLM_API_KEY),
   });
+});
+
+// Smart organising: classify a new thought against its retrieved candidates.
+// Stateless — thought text is forwarded to the LLM and never stored or logged here.
+const classifyHits = new Map(); // userId -> request timestamps
+
+function isRateLimited(userId) {
+  const now = Date.now();
+  const recent = (classifyHits.get(userId) || []).filter((t) => now - t < CLASSIFY_RATE_WINDOW_MS);
+  if (recent.length >= CLASSIFY_RATE_LIMIT) {
+    classifyHits.set(userId, recent);
+    return true;
+  }
+  recent.push(now);
+  classifyHits.set(userId, recent);
+  return false;
+}
+
+const clip = (value, max) => (typeof value === 'string' ? value.slice(0, max) : '');
+
+const CLASSIFY_SYSTEM_PROMPT = [
+  'You help organise a person\'s private notes ("thoughts") into collections.',
+  'Decide what to do with the NEW thought only. Choose exactly one action:',
+  '- "assign": the new thought genuinely fits 1 or 2 EXISTING collections from the list. Use their ids.',
+  '- "create": the new thought and exactly ONE similar thought marked "ungrouped": true share a meaningful theme',
+  '  (an idea, project or question — not just a shared word). Give a concise 2-4 word name and a one-line description.',
+  '- "none": no clear fit. This is the default. When unsure, choose "none".',
+  'Rules: never merge, rename or delete collections; never invent ids; prefer an existing collection over creating one;',
+  'never create a collection with a name that already exists.',
+  'Reply with JSON only, in this shape:',
+  '{"action":"assign"|"create"|"none","collectionIds":["..."],',
+  '"newCollection":{"name":"...","description":"...","partnerThoughtId":"..."},"reason":"one short sentence"}',
+].join('\n');
+
+app.post('/api/classify', async (req, res) => {
+  try {
+    if (!LLM_API_KEY) {
+      return res.status(503).json({ error: 'Smart organising is not configured on this server' });
+    }
+
+    const { userId, thought, similarThoughts, collections } = req.body || {};
+    if (!userId || !thought || typeof thought.id !== 'string' || typeof thought.text !== 'string') {
+      return res.status(400).json({ error: 'userId and thought are required' });
+    }
+    if (!db.prepare('SELECT id FROM users WHERE id = ?').get(userId)) {
+      return res.status(403).json({ error: 'Unknown pilot user' });
+    }
+    if (isRateLimited(userId)) {
+      return res.status(429).json({ error: 'Too many requests, try again shortly' });
+    }
+
+    const input = {
+      newThought: { id: clip(thought.id, 100), text: clip(thought.text, 1000) },
+      similarThoughts: (Array.isArray(similarThoughts) ? similarThoughts : []).slice(0, 10).map((t) => ({
+        id: clip(t && t.id, 100),
+        text: clip(t && t.text, 1000),
+        collections: (Array.isArray(t && t.collections) ? t.collections : []).slice(0, 10).map((c) => clip(c, 80)),
+        ungrouped: Boolean(t && t.ungrouped),
+        similarity: Number(t && t.similarity) || 0,
+      })),
+      collections: (Array.isArray(collections) ? collections : []).slice(0, 40).map((c) => ({
+        id: clip(c && c.id, 100),
+        name: clip(c && c.name, 80),
+        description: clip(c && c.description, 200),
+        similarity: c && typeof c.similarity === 'number' ? c.similarity : null,
+      })),
+    };
+
+    const llmRes = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${LLM_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: LLM_MODEL,
+        temperature: 0,
+        max_tokens: 300,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: CLASSIFY_SYSTEM_PROMPT },
+          { role: 'user', content: JSON.stringify(input) },
+        ],
+      }),
+      signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+    });
+
+    if (!llmRes.ok) {
+      console.error(`Classify: LLM provider returned HTTP ${llmRes.status}`);
+      return res.status(502).json({ error: 'Classification provider error' });
+    }
+
+    const data = await llmRes.json();
+    const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    let decision;
+    try {
+      decision = JSON.parse(content);
+    } catch {
+      return res.status(502).json({ error: 'Classification provider returned invalid JSON' });
+    }
+    if (!decision || !['assign', 'create', 'none'].includes(decision.action)) {
+      return res.status(502).json({ error: 'Classification provider returned an unknown action' });
+    }
+
+    // The client validates ids and names against its own data before applying anything.
+    res.json({ ok: true, decision });
+  } catch (err) {
+    // Log only the error type — never the request body.
+    console.error('Classify failed:', err && err.name ? err.name : 'Error');
+    res.status(502).json({ error: 'Classification failed' });
+  }
 });
 
 // 1. Pilot Signup / Profile Sync

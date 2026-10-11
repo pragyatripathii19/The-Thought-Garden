@@ -1,8 +1,9 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { Thought, Collection, Connection } from '../../types';
+import { Thought, Collection, Connection, ThoughtEmbedding, OrganizeEvent } from '../../types';
 
 export const DB_NAME = 'ThoughtGardenDB';
-export const DB_VERSION = 1;
+// v2: adds `embeddings` and `organizeEvents` stores for automatic organising.
+export const DB_VERSION = 2;
 
 export interface ThoughtGardenSchema extends DBSchema {
   thoughts: {
@@ -26,6 +27,17 @@ export interface ThoughtGardenSchema extends DBSchema {
       'by-source': string;
       'by-target': string;
       'by-status': string;
+    };
+  };
+  embeddings: {
+    key: string;
+    value: ThoughtEmbedding;
+  };
+  organizeEvents: {
+    key: string;
+    value: OrganizeEvent;
+    indexes: {
+      'by-createdAt': string;
     };
   };
 }
@@ -54,6 +66,17 @@ export function getDatabase(): Promise<IDBPDatabase<ThoughtGardenSchema>> {
           connectionStore.createIndex('by-source', 'sourceThoughtId');
           connectionStore.createIndex('by-target', 'targetThoughtId');
           connectionStore.createIndex('by-status', 'status');
+        }
+
+        // Embeddings store (v2, automatic organising)
+        if (!db.objectStoreNames.contains('embeddings')) {
+          db.createObjectStore('embeddings', { keyPath: 'thoughtId' });
+        }
+
+        // Organiser activity log (v2)
+        if (!db.objectStoreNames.contains('organizeEvents')) {
+          const eventStore = db.createObjectStore('organizeEvents', { keyPath: 'id' });
+          eventStore.createIndex('by-createdAt', 'createdAt');
         }
       },
     });

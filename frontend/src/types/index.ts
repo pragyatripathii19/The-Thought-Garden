@@ -4,6 +4,9 @@ export type GrowthStage = 'seed' | 'sprout' | 'bloom' | 'mature';
 
 export type ThoughtCategory = 'idea' | 'research' | 'writing' | 'task' | 'connection' | 'thought';
 
+/** Lifecycle of automatic collection classification for a thought. */
+export type ClassifyState = 'pending' | 'done' | 'skipped' | 'failed';
+
 export interface Thought {
   id: string;
   text: string;
@@ -13,10 +16,17 @@ export interface Thought {
   stage?: GrowthStage;
   isSaved?: boolean;
   category?: ThoughtCategory;
+  /** Memberships added by the organiser (subset of collectionIds); shown with an "auto" badge. */
+  autoCollectionIds?: string[];
+  /** Set once the user organises this thought by hand; the organiser never changes it again. */
+  organizeLocked?: boolean;
+  classifyState?: ClassifyState;
+  classifiedAt?: string;
 }
 
 export type CollectionColorVariant = 'green' | 'rose' | 'purple' | 'amber';
 export type CollectionIconType = 'sprout' | 'pencil' | 'search' | 'check' | 'leaf' | 'flower';
+export type CollectionOrigin = 'manual' | 'auto' | 'starter';
 
 export interface Collection {
   id: string;
@@ -26,6 +36,34 @@ export interface Collection {
   updatedAt: string;
   colorVariant?: CollectionColorVariant;
   iconType?: CollectionIconType;
+  origin?: CollectionOrigin;
+  /** Why the organiser created this collection. */
+  autoReason?: string;
+}
+
+/** Locally computed text embedding for a thought. Never exported or sent anywhere. */
+export interface ThoughtEmbedding {
+  thoughtId: string;
+  modelId: string;
+  textHash: string;
+  vector: number[];
+  updatedAt: string;
+}
+
+export type OrganizeEventSource = 'llm' | 'local' | 'user-accepted';
+
+/** Record of an automatic organising action, used for the activity log and Undo. */
+export interface OrganizeEvent {
+  id: string;
+  thoughtId: string;
+  action: 'assign' | 'create';
+  collectionId: string;
+  collectionName: string;
+  partnerThoughtId?: string;
+  reason: string;
+  source: OrganizeEventSource;
+  createdAt: string;
+  undoneAt?: string;
 }
 
 export type ConnectionStatus = 'suggested' | 'accepted' | 'dismissed';

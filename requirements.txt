@@ -24,6 +24,7 @@
 # 3. Frontend npm Dependencies (Managed in frontend/package.json)
 # ------------------------------------------------------------------------------
 # Core Framework, UI & Storage:
+#   @huggingface/transformers@3 (on-device embeddings for automatic organising)
 #   react@18.3.1
 #   react-dom@18.3.1
 #   idb@8.0.4

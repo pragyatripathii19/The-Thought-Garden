@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sprout, Check, ArrowRight } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
+import { useOrganizer } from '../context/OrganizerContext';
 import { SeedToSproutAnimation } from './BotanicalIllustrations';
 
 const REASON_OPTIONS = [
@@ -14,6 +15,8 @@ const REASON_OPTIONS = [
 
 export const OnboardingModal: React.FC = () => {
   const { isOnboardingOpen, saveUserProfile } = useThoughts();
+  const { smartAvailable, settings, updateSettings } = useOrganizer();
+  const [smartOptIn, setSmartOptIn] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
@@ -40,6 +43,9 @@ export const OnboardingModal: React.FC = () => {
         selectedReasons.length > 0 ? selectedReasons : ['Daily Brain Dump'],
         email.trim() || undefined
       );
+      if (smartOptIn && !settings.smartOrganizing) {
+        updateSettings({ smartOrganizing: true });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -142,6 +148,23 @@ export const OnboardingModal: React.FC = () => {
               className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
             />
           </div>
+
+          {/* Optional: Smart organising consent (only when the server supports it) */}
+          {smartAvailable && !settings.smartOrganizing && (
+            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-[#e6e1d5] text-xs text-[#556557] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={smartOptIn}
+                onChange={(e) => setSmartOptIn(e.target.checked)}
+                className="mt-0.5 accent-[#3d5a45]"
+              />
+              <span>
+                <span className="font-semibold text-[#253e2a]">Turn on Smart organising (optional).</span>{' '}
+                New thoughts and your collection names are sent through our server to an AI service to group them
+                into collections. You can change this anytime in Data &amp; Settings.
+              </span>
+            </label>
+          )}
 
           {/* Submit Action */}
           <div className="pt-2">
