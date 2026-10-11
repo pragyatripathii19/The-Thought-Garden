@@ -2,8 +2,14 @@ import {
   IThoughtRepository,
   ICollectionRepository,
   IConnectionRepository,
+  IEmbeddingRepository,
+  IOrganizeEventRepository,
   StorageProviderType,
 } from './types';
+import { InMemoryEmbeddingRepository } from './memory/InMemoryEmbeddingRepository';
+import { IndexedDBEmbeddingRepository } from './indexeddb/IndexedDBEmbeddingRepository';
+import { InMemoryOrganizeEventRepository } from './memory/InMemoryOrganizeEventRepository';
+import { IndexedDBOrganizeEventRepository } from './indexeddb/IndexedDBOrganizeEventRepository';
 import { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 import { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
 import { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
@@ -96,6 +102,31 @@ export function setConnectionRepository(customRepo: IConnectionRepository): void
   connectionRepoInstance = customRepo;
 }
 
+let embeddingRepoInstance: IEmbeddingRepository | null = null;
+let organizeEventRepoInstance: IOrganizeEventRepository | null = null;
+
+/**
+ * Factory for the local embedding store. Embeddings stay on-device for every provider.
+ */
+export function getEmbeddingRepository(provider: StorageProviderType = currentProvider): IEmbeddingRepository {
+  if (!embeddingRepoInstance) {
+    embeddingRepoInstance =
+      provider === 'memory' ? new InMemoryEmbeddingRepository() : new IndexedDBEmbeddingRepository();
+  }
+  return embeddingRepoInstance;
+}
+
+/**
+ * Factory for the organiser activity log.
+ */
+export function getOrganizeEventRepository(provider: StorageProviderType = currentProvider): IOrganizeEventRepository {
+  if (!organizeEventRepoInstance) {
+    organizeEventRepoInstance =
+      provider === 'memory' ? new InMemoryOrganizeEventRepository() : new IndexedDBOrganizeEventRepository();
+  }
+  return organizeEventRepoInstance;
+}
+
 export * from './types';
 export { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 export { IndexedDBThoughtRepository } from './indexeddb/IndexedDBThoughtRepository';
@@ -103,3 +134,5 @@ export { InMemoryCollectionRepository } from './memory/InMemoryCollectionReposit
 export { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
 export { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';
 export { IndexedDBConnectionRepository } from './indexeddb/IndexedDBConnectionRepository';
+export { InMemoryEmbeddingRepository, IndexedDBEmbeddingRepository };
+export { InMemoryOrganizeEventRepository, IndexedDBOrganizeEventRepository };

@@ -78,6 +78,10 @@ A responsive single-page app is sufficient. Avoid adding a large navigation syst
 
 Voice, transcription, login, cloud sync, collaboration, reminders, external integrations, AI-generated summaries, AI chat, automatic content rewriting, public sharing, subscriptions/payments, and complex graph visualizations.
 
+## 7a. Post-MVP addition: automatic organising
+
+Added during the pilot: on-device embeddings group thoughts into collections, with an optional, opt-in LLM ("Smart organising") routed through the pilot server. It follows the rules above — suggestions are explainable and reversible, no thought content leaves the browser without consent, and manual organisation always wins. See the root `README.md`.
+
 ## 8. Prototype validation
 
 Use the app personally with at least 30 real thoughts from different areas of life. Then recruit around 5-10 people who experience scattered notes. Watch them capture, search, judge suggestions, and return to an older idea. Ask what they would use it for and what they would stop using; do not lead them toward praise. Offer paid early access only after being clear about the prototype's actual limitations.

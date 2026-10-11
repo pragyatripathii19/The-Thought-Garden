@@ -19,6 +19,9 @@ import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon, SeedToSproutAn
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { FallingLeaves } from '../components/FallingLeaves';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
+import { useOrganizer } from '../context/OrganizerContext';
+import { GroupSuggestionCard } from '../components/GroupSuggestionCard';
+import { AutoBadge } from '../components/OrganizeToast';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -46,6 +49,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
     userProfile,
   } = useThoughts();
 
+  const { groupSuggestions } = useOrganizer();
   const [input, setInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [justPlanted, setJustPlanted] = useState(false);
@@ -308,6 +312,11 @@ export const GardenView: React.FC<GardenViewProps> = ({
         </section>
       )}
 
+      {/* Automatic organising: "group these two thoughts?" (on-device rule) */}
+      {groupSuggestions.slice(0, 1).map((s) => (
+        <GroupSuggestionCard key={s.id} suggestion={s} onOpenThought={setSelectedThoughtId} />
+      ))}
+
       {/* Gentle Rediscovery Card (Piece 6) */}
       {rediscoveredThought && (
         <section className="bg-[#fbfaf6] border border-[#e4ded0] rounded-2xl p-5 shadow-xs animate-fade-in animate-rediscovery-accent space-y-3 relative overflow-hidden">
@@ -405,6 +414,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
                   </div>
                   <h4 className="font-serif text-base font-semibold text-[#233126] leading-snug">
                     {col.name}
+                    {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
                   </h4>
                   <div className="text-[11px] text-[#718273] font-medium mt-0.5">
                     {count} {count === 1 ? 'thought' : 'thoughts'}
@@ -457,6 +467,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
                   <div>
                     <h4 className="font-serif text-sm font-semibold text-[#233126] leading-tight">
                       {col.name}
+                      {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
                     </h4>
                     <span className="text-[11px] text-[#7d8c7f]">
                       {count} thoughts

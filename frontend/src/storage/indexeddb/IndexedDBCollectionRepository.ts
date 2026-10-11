@@ -20,6 +20,8 @@ export class IndexedDBCollectionRepository implements ICollectionRepository {
       description: dto.description?.trim() || undefined,
       colorVariant: dto.colorVariant,
       iconType: dto.iconType,
+      ...(dto.origin ? { origin: dto.origin } : {}),
+      ...(dto.autoReason ? { autoReason: dto.autoReason } : {}),
       createdAt: now,
       updatedAt: now,
     };

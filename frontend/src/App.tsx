@@ -16,6 +16,8 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { AdminPilotModal } from './components/AdminPilotModal';
 import { useThoughts } from './context/StorageContext';
+import { OrganizerProvider } from './context/OrganizerContext';
+import { OrganizeToast } from './components/OrganizeToast';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<NavTab>('garden');
@@ -84,6 +86,9 @@ function AppContent() {
         onClose={() => setIsNewThoughtModalOpen(false)}
       />
 
+      {/* Automatic organising notice with Undo */}
+      <OrganizeToast />
+
       {/* Pilot Modals */}
       <OnboardingModal />
       <FeedbackModal />
@@ -95,7 +100,9 @@ function AppContent() {
 export function App() {
   return (
     <StorageProvider>
-      <AppContent />
+      <OrganizerProvider>
+        <AppContent />
+      </OrganizerProvider>
     </StorageProvider>
   );
 }

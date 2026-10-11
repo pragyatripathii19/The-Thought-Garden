@@ -1,5 +1,5 @@
 import { Thought } from '../../types';
-import { CreateThoughtDTO, IThoughtRepository, UpdateThoughtDTO } from '../types';
+import { CreateThoughtDTO, IThoughtRepository, UpdateThoughtDTO, applyThoughtUpdate } from '../types';
 
 export class InMemoryThoughtRepository implements IThoughtRepository {
   private thoughts: Map<string, Thought> = new Map();
@@ -24,6 +24,7 @@ export class InMemoryThoughtRepository implements IThoughtRepository {
       stage: dto.stage || 'seed',
       isSaved: dto.isSaved || false,
       category: dto.category,
+      ...(dto.classifyState ? { classifyState: dto.classifyState } : {}),
     };
 
     this.thoughts.set(id, thought);
@@ -47,20 +48,7 @@ export class InMemoryThoughtRepository implements IThoughtRepository {
       throw new Error(`Thought not found with id: ${id}`);
     }
 
-    if (dto.text !== undefined && !dto.text.trim()) {
-      throw new Error('Thought text cannot be empty');
-    }
-
-    const updated: Thought = {
-      ...existing,
-      text: dto.text !== undefined ? dto.text : existing.text,
-      collectionIds: dto.collectionIds !== undefined ? [...dto.collectionIds] : existing.collectionIds,
-      stage: dto.stage !== undefined ? dto.stage : existing.stage,
-      isSaved: dto.isSaved !== undefined ? dto.isSaved : existing.isSaved,
-      category: dto.category !== undefined ? dto.category : existing.category,
-      updatedAt: new Date().toISOString(),
-    };
-
+    const updated = applyThoughtUpdate(existing, dto);
     this.thoughts.set(id, updated);
     return { ...updated };
   }

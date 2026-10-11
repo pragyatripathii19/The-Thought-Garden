@@ -20,6 +20,7 @@ import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
 import { formatRelativeTime } from '../lib/time';
+import { AutoBadge } from './OrganizeToast';
 
 interface ThoughtDetailModalProps {
   thought: Thought | null;
@@ -405,6 +406,9 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#f2ede4] text-[#2c3d2e] border border-[#e4ded0]"
                     >
                       <span>{col.name}</span>
+                      {thought.autoCollectionIds?.includes(cid) && (
+                        <AutoBadge title="Added automatically — remove it with × if it doesn't fit" />
+                      )}
                       <button
                         type="button"
                         onClick={() => toggleThoughtCollection(thought.id, cid)}
