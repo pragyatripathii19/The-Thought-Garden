@@ -1,4 +1,5 @@
 import { Thought, PilotUserProfile, PilotFeedback } from '../types';
+import { localDateKey } from './date';
 
 export interface DailyThoughtMetric {
   date: string;
@@ -7,7 +8,7 @@ export interface DailyThoughtMetric {
 }
 
 /**
- * Groups thoughts by YYYY-MM-DD for the last N days (default 14).
+ * Groups thoughts by local calendar day (YYYY-MM-DD) for the last N days (default 14).
  */
 export function computeThoughtsPerDay(thoughts: Thought[], days = 14): DailyThoughtMetric[] {
   const result: DailyThoughtMetric[] = [];
@@ -16,7 +17,7 @@ export function computeThoughtsPerDay(thoughts: Thought[], days = 14): DailyThou
   // Count by date string
   for (const t of thoughts) {
     if (!t.createdAt) continue;
-    const dateStr = t.createdAt.slice(0, 10);
+    const dateStr = localDateKey(t.createdAt);
     map[dateStr] = (map[dateStr] || 0) + 1;
   }
 
@@ -24,7 +25,7 @@ export function computeThoughtsPerDay(thoughts: Thought[], days = 14): DailyThou
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = localDateKey(d);
     const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     result.push({
       date: dateStr,
@@ -43,12 +44,12 @@ export function computeGardenStreak(thoughts: Thought[]): number {
   if (!thoughts || thoughts.length === 0) return 0;
 
   const datesSet = new Set(
-    thoughts.map((t) => t.createdAt.slice(0, 10)).filter(Boolean)
+    thoughts.filter((t) => t.createdAt).map((t) => localDateKey(t.createdAt))
   );
 
   let streak = 0;
   const current = new Date();
-  const todayStr = current.toISOString().slice(0, 10);
+  const todayStr = localDateKey(current);
 
   // If active today, start from today, else start from yesterday
   if (datesSet.has(todayStr)) {
@@ -58,7 +59,7 @@ export function computeGardenStreak(thoughts: Thought[]): number {
     // Check if planted yesterday
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yStr = yesterday.toISOString().slice(0, 10);
+    const yStr = localDateKey(yesterday);
     if (datesSet.has(yStr)) {
       streak = 1;
       current.setDate(current.getDate() - 2);
@@ -68,7 +69,7 @@ export function computeGardenStreak(thoughts: Thought[]): number {
   }
 
   while (true) {
-    const dStr = current.toISOString().slice(0, 10);
+    const dStr = localDateKey(current);
     if (datesSet.has(dStr)) {
       streak++;
       current.setDate(current.getDate() - 1);
@@ -84,8 +85,8 @@ export function computeGardenStreak(thoughts: Thought[]): number {
  * Counts thoughts created today.
  */
 export function computeTodayThoughtsCount(thoughts: Thought[]): number {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  return thoughts.filter((t) => t.createdAt && t.createdAt.startsWith(todayStr)).length;
+  const todayStr = localDateKey();
+  return thoughts.filter((t) => t.createdAt && localDateKey(t.createdAt) === todayStr).length;
 }
 
 /**

@@ -47,7 +47,7 @@ export const SavedView: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter saved thoughts..."
-            className="w-full pl-10 pr-9 py-2.5 bg-white border border-[#e4ded0] rounded-2xl text-xs text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-hidden shadow-xs"
+            className="w-full pl-10 pr-9 py-2.5 bg-white border border-[#e4ded0] rounded-2xl text-xs text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-none shadow-xs"
           />
           {query && (
             <button
@@ -123,6 +123,7 @@ export const SavedView: React.FC = () => {
         onClose={() => setSelectedThoughtId(null)}
         onUpdate={updateThought}
         onDelete={deleteThought}
+        onSelectThought={(t) => setSelectedThoughtId(t.id)}
       />
     </div>
   );

@@ -8,11 +8,14 @@ import { Thought } from '../types';
  * 1. Requires at least 3 thoughts in the garden.
  * 2. Excludes thoughts that the user dismissed during the current session.
  * 3. Never surfaces the 2 most recently created thoughts (gives space before rediscovery).
- * 4. Selects a candidate from the remaining older thoughts.
+ * 4. Keeps the current pick while it is still eligible, so the card doesn't
+ *    change every time a thought is added or edited.
+ * 5. Otherwise selects a random candidate from the remaining older thoughts.
  */
 export function pickThoughtToRevisit(
   thoughts: Thought[],
-  dismissedIds: Set<string> = new Set()
+  dismissedIds: Set<string> = new Set(),
+  currentId: string | null = null
 ): Thought | null {
   if (!thoughts || thoughts.length < 3) {
     return null;
@@ -31,6 +34,11 @@ export function pickThoughtToRevisit(
 
   if (eligible.length === 0) {
     return null;
+  }
+
+  const current = currentId ? eligible.find((t) => t.id === currentId) : undefined;
+  if (current) {
+    return current;
   }
 
   // Pick randomly from eligible candidates for variety

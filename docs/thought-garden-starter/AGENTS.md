@@ -18,6 +18,10 @@
 - Automatic organising (added after the MVP) must stay visible and reversible: every automatic change carries an "Auto" marker, an Undo, and an activity-log entry; thoughts the user organised by hand are never changed again. Thought text may only leave the browser when the user has explicitly turned on Smart organising.
 - Clearly communicate that data is stored in the current browser and can be lost if browser storage is cleared. Provide export and import.
 
+## Pilot exception (current state)
+
+For the pilot, the repository deliberately adds a small optional server layer: a pilot profile (name, optional email, reasons), daily activity counts, feedback, an admin dashboard, and opt-in Smart organising. Thought content still never leaves the browser unless the user turns on Smart organising. Streak numbers are internal telemetry only and must not be shown to users. Keep this layer disclosed in the UI (Data & Settings) and documented in the root `README.md` ("Pilot Layer & Privacy"); do not expand it without updating both.
+
 ## Scope discipline
 
 Implement only the MVP in `docs/MVP_SPEC.md`. Do not add accounts, cloud sync, paid AI APIs, voice capture, collaboration, mobile apps, browser extensions, or elaborate graph visualizations unless explicitly requested.

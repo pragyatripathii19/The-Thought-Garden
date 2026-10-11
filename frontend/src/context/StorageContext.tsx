@@ -30,8 +30,15 @@ import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connecti
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
-import { syncPilotSignup, syncPilotPing, submitPilotFeedback, deletePilotUser } from '../lib/pilotApi';
+import {
+  syncPilotSignup,
+  syncPilotPing,
+  submitPilotFeedback,
+  deletePilotUser,
+  generateUserSecret,
+} from '../lib/pilotApi';
 import { computeTodayThoughtsCount, computeGardenStreak } from '../lib/analytics';
+import { localDateKey } from '../lib/date';
 
 interface StorageContextValue {
   thoughts: Thought[];
@@ -46,7 +53,11 @@ interface StorageContextValue {
   // Pilot user profile & feedback
   userProfile: PilotUserProfile | null;
   saveUserProfile: (name: string, reasons: string[], email?: string) => Promise<void>;
-  deleteAccountAndResetGarden: () => Promise<void>;
+  /**
+   * Deletes the pilot profile on the server, then wipes this device. Throws (and
+   * deletes nothing) if the server step fails, unless `localOnly` is set.
+   */
+  deleteAccountAndResetGarden: (options?: { localOnly?: boolean }) => Promise<void>;
   feedbacks: PilotFeedback[];
   submitFeedback: (category: PilotFeedbackCategory, rating: number, message: string, email?: string) => Promise<void>;
   isOnboardingOpen: boolean;
@@ -161,6 +172,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       const id = userProfile?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const profile: PilotUserProfile = {
         id,
+        secret: userProfile?.secret || generateUserSecret(),
         name: name.trim() || 'Gardener',
         email: email?.trim() || undefined,
         reasons: reasons.length > 0 ? reasons : ['General Note Taking'],
@@ -200,20 +212,37 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       }
 
       // Background sync to central SQLite backend
-      submitPilotFeedback(newFb).catch((err) => console.warn('Background feedback sync deferred:', err));
+      submitPilotFeedback(newFb, userProfile?.secret).catch((err) =>
+        console.warn('Background feedback sync deferred:', err)
+      );
     },
     [userProfile, feedbacks]
   );
 
-  const deleteAccountAndResetGarden = useCallback(async () => {
+  const deleteAccountAndResetGarden = useCallback(async (options?: { localOnly?: boolean }) => {
+    // 1. Delete the server record first. If that fails, stop before touching
+    //    local data so the user isn't told their account is gone when it isn't.
+    if (userProfile?.id && !options?.localOnly) {
+      const result = await deletePilotUser(userProfile.id, userProfile.secret);
+      if (result === 'unreachable') {
+        throw new Error(
+          "Couldn't reach the pilot server, so your profile there wasn't deleted. Nothing has been deleted yet."
+        );
+      }
+      if (result === 'forbidden') {
+        throw new Error(
+          "The pilot server didn't accept this browser as the owner of your profile, so it wasn't deleted there. Nothing has been deleted yet."
+        );
+      }
+      if (result === 'failed') {
+        throw new Error("The pilot server couldn't delete your profile. Nothing has been deleted yet.");
+      }
+      // 'deleted' or 'not-found' (never synced) — safe to continue.
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-
-      // 1. If user is registered on backend, delete their record from SQLite
-      if (userProfile?.id) {
-        await deletePilotUser(userProfile.id);
-      }
 
       // 2. Clear IndexedDB stores
       await thoughtRepository.clear();
@@ -251,6 +280,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     } catch (err) {
       console.error('Failed to reset garden and delete account:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete account');
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -260,22 +290,39 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const lastPingRef = useRef<string>('');
   useEffect(() => {
     if (!userProfile) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateKey();
     const todayCount = computeTodayThoughtsCount(thoughts);
     const streak = computeGardenStreak(thoughts);
     const pingKey = `${today}_${todayCount}_${thoughts.length}`;
 
     if (lastPingRef.current !== pingKey) {
       lastPingRef.current = pingKey;
-      syncPilotPing({
-        userId: userProfile.id,
-        date: today,
-        thoughtsCount: todayCount,
-        totalThoughts: thoughts.length,
-        streak,
-      }).catch((err) => console.warn('Background activity ping deferred:', err));
+      syncPilotPing(
+        {
+          userId: userProfile.id,
+          date: today,
+          thoughtsCount: todayCount,
+          totalThoughts: thoughts.length,
+          streak,
+        },
+        userProfile.secret
+      ).catch((err) => console.warn('Background activity ping deferred:', err));
     }
   }, [thoughts, userProfile]);
+
+  // Profiles created before per-user secrets existed get one now and re-sync,
+  // which lets the server attach it to the existing record.
+  useEffect(() => {
+    if (!userProfile || userProfile.secret) return;
+    const upgraded: PilotUserProfile = { ...userProfile, secret: generateUserSecret() };
+    setUserProfile(upgraded);
+    try {
+      localStorage.setItem('thought_garden_pilot_profile', JSON.stringify(upgraded));
+    } catch {
+      // Storage unavailable: the secret lives for this session only.
+    }
+    syncPilotSignup(upgraded).catch((err) => console.warn('Background signup sync deferred:', err));
+  }, [userProfile]);
 
   // Latest thoughts for callbacks that must not re-create on every change.
   const thoughtsRef = useRef<Thought[]>(thoughts);
@@ -586,8 +633,13 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   // Rediscovery state & actions
   const [dismissedRediscoveryIds, setDismissedRediscoveryIds] = useState<Set<string>>(() => new Set());
 
+  // Remember the current pick so it stays put across edits and new thoughts;
+  // it only changes when dismissed or no longer eligible.
+  const rediscoveryIdRef = useRef<string | null>(null);
   const rediscoveredThought = useMemo(() => {
-    return pickThoughtToRevisit(thoughts, dismissedRediscoveryIds);
+    const picked = pickThoughtToRevisit(thoughts, dismissedRediscoveryIds, rediscoveryIdRef.current);
+    rediscoveryIdRef.current = picked?.id ?? null;
+    return picked;
   }, [thoughts, dismissedRediscoveryIds]);
 
   const dismissRediscoveredThought = useCallback((id: string) => {

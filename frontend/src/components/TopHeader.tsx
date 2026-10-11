@@ -22,14 +22,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
 
   // Compute initials from user's actual name
   const getInitials = (name?: string) => {
-    if (!name) return 'PT';
+    if (!name) return 'G';
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   const initials = getInitials(userProfile?.name);
-  const displayName = userProfile?.name || 'Pragya Tripathi';
+  const displayName = userProfile?.name || 'Gardener';
 
   return (
     <>

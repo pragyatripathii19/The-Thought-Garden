@@ -267,7 +267,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   onChange={(e) => setEditText(e.target.value)}
                   disabled={isSaving}
                   placeholder="Thought cannot be empty..."
-                  className="w-full p-4 bg-white rounded-2xl border border-[#7a9d83] text-[#253227] text-base leading-relaxed resize-none focus:outline-hidden"
+                  className="w-full p-4 bg-white rounded-2xl border border-[#7a9d83] text-[#253227] text-base leading-relaxed resize-none focus:outline-none"
                   autoFocus
                 />
                 <div className="flex items-center justify-end gap-2">

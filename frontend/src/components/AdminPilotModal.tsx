@@ -22,6 +22,7 @@ import { useThoughts } from '../context/StorageContext';
 import { AdminOverviewData, PilotUserProfile } from '../types';
 import { fetchAdminOverview, adminDeletePilotUser } from '../lib/pilotApi';
 import { generatePilotSummaryReport } from '../lib/analytics';
+import { localDateKey } from '../lib/date';
 
 export const AdminPilotModal: React.FC = () => {
   const { isAdminModalOpen, setIsAdminModalOpen, thoughts, userProfile, feedbacks: localFeedbacks } = useThoughts();
@@ -103,7 +104,7 @@ export const AdminPilotModal: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pilot-garden-diagnostic-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `pilot-garden-diagnostic-${localDateKey()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -171,7 +172,7 @@ export const AdminPilotModal: React.FC = () => {
                   Enter Admin Passcode
                 </h3>
                 <p className="text-xs text-[#718273] mt-1">
-                  Default passcode is <code className="px-1.5 py-0.5 bg-[#f3f0e8] rounded font-mono text-[11px]">garden-admin-2026</code>
+                  Use the passcode set in the server's <code className="px-1.5 py-0.5 bg-[#f3f0e8] rounded font-mono text-[11px]">ADMIN_PASSCODE</code> environment variable.
                 </p>
               </div>
 
@@ -194,7 +195,7 @@ export const AdminPilotModal: React.FC = () => {
                   placeholder="Admin passcode"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#ded8cb] text-[#233126] text-sm focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#ded8cb] text-[#233126] text-sm focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4]"
                   autoFocus
                 />
                 <button

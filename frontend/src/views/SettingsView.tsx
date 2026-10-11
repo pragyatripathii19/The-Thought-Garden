@@ -18,6 +18,26 @@ export const SettingsView: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const runDelete = async (localOnly: boolean) => {
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      await deleteAccountAndResetGarden({ localOnly });
+      setIsConfirmDeleteOpen(false);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Something went wrong. Nothing was deleted.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const closeDeleteDialog = () => {
+    if (isDeleting) return;
+    setIsConfirmDeleteOpen(false);
+    setDeleteError(null);
+  };
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -236,7 +256,7 @@ export const SettingsView: React.FC = () => {
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/60 backdrop-blur-sm animate-fade-in"
-          onClick={() => !isDeleting && setIsConfirmDeleteOpen(false)}
+          onClick={closeDeleteDialog}
         >
           <div
             className="bg-white border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
@@ -270,11 +290,29 @@ export const SettingsView: React.FC = () => {
               </li>
             </ul>
 
+            {deleteError && (
+              <div role="alert" className="text-xs text-[#7a2e2e] bg-[#fff1f1] border border-[#f1c9c9] rounded-2xl p-3.5 space-y-2">
+                <p>{deleteError}</p>
+                <p className="text-[#8a5a5a]">
+                  You can try again later, or erase this device only. Your profile and feedback would then stay on the
+                  pilot server until it can be removed.
+                </p>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => runDelete(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#fff5f5] border border-[#f1c9c9] text-red-700 rounded-xl text-xs font-semibold disabled:opacity-50"
+                >
+                  Erase this device only
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={() => setIsConfirmDeleteOpen(false)}
+                onClick={closeDeleteDialog}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-[#546255] hover:bg-[#f3f0e8] transition-colors"
               >
                 Cancel
@@ -282,15 +320,7 @@ export const SettingsView: React.FC = () => {
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={async () => {
-                  try {
-                    setIsDeleting(true);
-                    await deleteAccountAndResetGarden();
-                    setIsConfirmDeleteOpen(false);
-                  } finally {
-                    setIsDeleting(false);
-                  }
-                }}
+                onClick={() => runDelete(false)}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
               >
                 <span>{isDeleting ? 'Deleting Everything...' : 'Yes, Delete & Reset Everything'}</span>
