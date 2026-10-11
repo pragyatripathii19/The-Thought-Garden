@@ -169,7 +169,7 @@ export const FeedbackModal: React.FC = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="What felt great? Was anything confusing, slow, or missing?"
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs sm:text-sm focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all resize-none shadow-xs"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs sm:text-sm focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all resize-none shadow-xs"
               />
             </div>
 
@@ -184,7 +184,7 @@ export const FeedbackModal: React.FC = () => {
                 placeholder={userProfile?.email || 'you@example.com'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
+                className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
               />
             </div>
 

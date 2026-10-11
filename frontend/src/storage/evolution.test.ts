@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { STARTER_COLLECTIONS, getStarterThoughts, getStarterConnections } from '../lib/defaults';
+import { STARTER_COLLECTIONS } from '../lib/defaults';
+import { getStarterThoughts, getStarterConnections } from '../test/starterFixtures';
 import { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
 import { InMemoryCollectionRepository } from './memory/InMemoryCollectionRepository';
 import { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';

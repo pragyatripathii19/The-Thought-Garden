@@ -76,7 +76,25 @@ export default {
         'soft': '0 2px 10px rgba(46, 38, 32, 0.04)',
         'soft-md': '0 4px 16px rgba(46, 38, 32, 0.07)',
         'soft-lg': '0 8px 24px rgba(46, 38, 32, 0.09)',
-      }
+        // Tailwind v4 scale names used across components (not built into v3).
+        '2xs': '0 1px rgb(0 0 0 / 0.05)',
+        'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      zIndex: {
+        60: '60',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 180ms ease-out both',
+      },
     },
   },
   plugins: [],

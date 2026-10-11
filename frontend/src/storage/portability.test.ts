@@ -353,6 +353,11 @@ describe('Piece 6: Data Portability & Rediscovery', () => {
       ];
 
       const dismissed = new Set(['t-old-1']);
+      // A still-eligible current pick is kept rather than re-rolled
+      expect(pickThoughtToRevisit(thoughts, new Set(), 't-old-2')?.id).toBe('t-old-2');
+      // A current pick that became ineligible (too recent) is replaced
+      expect(pickThoughtToRevisit(thoughts, new Set(['t-old-1']), 't-recent-2')?.id).toBe('t-old-2');
+
       const selected = pickThoughtToRevisit(thoughts, dismissed);
       expect(selected).not.toBeNull();
       expect(selected?.id).toBe('t-old-2');

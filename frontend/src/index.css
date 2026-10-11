@@ -179,6 +179,7 @@
   .animate-breeze-sprout,
   .animate-sprout-bloom,
   .animate-rediscovery-accent,
+  .animate-fade-in,
   .leaf-falling-ambient {
     animation: none !important;
     transform: none !important;

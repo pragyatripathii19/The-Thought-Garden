@@ -6,45 +6,66 @@ import {
   generatePilotSummaryReport,
 } from './analytics';
 import { Thought } from '../types';
+import { localDateKey } from './date';
+
+/** ISO timestamp for a local wall-clock time `daysAgo` days back. */
+function localIso(daysAgo: number, hours: number, minutes = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(hours, minutes, 0, 0);
+  return d.toISOString();
+}
 
 describe('Local Usage Analytics Engine', () => {
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  const twoDaysAgo = new Date(Date.now() - 86400000 * 2).toISOString().slice(0, 10);
+  const today = localDateKey();
+  const yesterday = localDateKey(localIso(1, 12));
 
   const mockThoughts: Thought[] = [
     {
       id: '1',
       text: 'Today thought 1',
-      createdAt: `${today}T10:00:00.000Z`,
-      updatedAt: `${today}T10:00:00.000Z`,
+      createdAt: localIso(0, 10),
+      updatedAt: localIso(0, 10),
       collectionIds: [],
     },
     {
       id: '2',
       text: 'Today thought 2',
-      createdAt: `${today}T12:00:00.000Z`,
-      updatedAt: `${today}T12:00:00.000Z`,
+      createdAt: localIso(0, 12),
+      updatedAt: localIso(0, 12),
       collectionIds: [],
     },
     {
       id: '3',
       text: 'Yesterday thought',
-      createdAt: `${yesterday}T09:00:00.000Z`,
-      updatedAt: `${yesterday}T09:00:00.000Z`,
+      createdAt: localIso(1, 9),
+      updatedAt: localIso(1, 9),
       collectionIds: [],
     },
     {
       id: '4',
       text: 'Two days ago thought',
-      createdAt: `${twoDaysAgo}T08:00:00.000Z`,
-      updatedAt: `${twoDaysAgo}T08:00:00.000Z`,
+      createdAt: localIso(2, 8),
+      updatedAt: localIso(2, 8),
       collectionIds: [],
     },
   ];
 
   it('computes today thought count accurately', () => {
     expect(computeTodayThoughtsCount(mockThoughts)).toBe(2);
+  });
+
+  it('counts a thought planted just after local midnight as today', () => {
+    // In IST this is the previous day in UTC — the old toISOString() logic got it wrong.
+    const justAfterMidnight: Thought = {
+      id: 'night',
+      text: 'Late-night idea',
+      createdAt: localIso(0, 0, 30),
+      updatedAt: localIso(0, 0, 30),
+      collectionIds: [],
+    };
+    expect(computeTodayThoughtsCount([justAfterMidnight])).toBe(1);
+    expect(computeGardenStreak([justAfterMidnight])).toBe(1);
   });
 
   it('computes consecutive streak correctly', () => {
@@ -76,7 +97,7 @@ describe('Local Usage Analytics Engine', () => {
           category: 'suggestion',
           rating: 5,
           message: 'Love the zen feel',
-          createdAt: `${today}T11:00:00.000Z`,
+          createdAt: localIso(0, 11),
         },
       ]
     );

@@ -89,7 +89,7 @@ export const OnboardingModal: React.FC = () => {
               placeholder="e.g. Pragya, Alex, or your preferred name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-sm focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all shadow-xs"
+              className="w-full px-4 py-3 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-sm focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all shadow-xs"
             />
           </div>
 
@@ -145,7 +145,7 @@ export const OnboardingModal: React.FC = () => {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-hidden focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
+              className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
             />
           </div>
 

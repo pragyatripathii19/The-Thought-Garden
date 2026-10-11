@@ -15,14 +15,18 @@ import {
   Leaf,
   Flower2,
 } from 'lucide-react';
-import { CollectionColorVariant, CollectionIconType, Collection } from '../types';
+import { CollectionColorVariant, CollectionIconType, Collection, NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { AutoBadge } from '../components/OrganizeToast';
 
-export const CollectionsView: React.FC = () => {
+interface CollectionsViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab }) => {
   const {
     collections,
     thoughts,
@@ -250,6 +254,7 @@ export const CollectionsView: React.FC = () => {
           onClose={() => setSelectedThoughtId(null)}
           onUpdate={updateThought}
           onDelete={deleteThought}
+          onSelectThought={(t) => setSelectedThoughtId(t.id)}
         />
 
         {/* Delete Collection Modal */}
@@ -298,9 +303,9 @@ export const CollectionsView: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => onNavigateTab?.('garden')}
             className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors sm:hidden"
-            aria-label="Back"
+            aria-label="Back to Home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -328,7 +333,7 @@ export const CollectionsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search collections..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e4ded0] rounded-xl text-xs text-[#233126] focus:border-[#7a9d83] focus:outline-hidden"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e4ded0] rounded-xl text-xs text-[#233126] focus:border-[#7a9d83] focus:outline-none"
             autoFocus
           />
         </div>
@@ -419,7 +424,7 @@ export const CollectionsView: React.FC = () => {
                   onChange={(e) => setNewColName(e.target.value)}
                   placeholder="e.g. Work Reflections, Book Notes..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2.5 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-hidden text-[#233126] text-sm"
+                  className="w-full px-4 py-2.5 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-none text-[#233126] text-sm"
                   autoFocus
                 />
               </div>
@@ -434,7 +439,7 @@ export const CollectionsView: React.FC = () => {
                   onChange={(e) => setNewColDesc(e.target.value)}
                   placeholder="Brief note on what belongs here..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-hidden text-[#233126] text-sm resize-none"
+                  className="w-full px-4 py-2 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-none text-[#233126] text-sm resize-none"
                 />
               </div>
 

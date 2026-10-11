@@ -2,11 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'garden-admin-2026';
+// Admin endpoints are disabled unless a passcode is configured. There is no default.
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || '';
+const ADMIN_MAX_FAILURES = 10;
+const ADMIN_FAILURE_WINDOW_MS = 15 * 60 * 1000;
 
 // Smart organising: any OpenAI-compatible chat completions API (Groq by default).
 const LLM_BASE_URL = (process.env.LLM_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/, '');
@@ -56,6 +60,68 @@ db.exec(`
     created_at TEXT NOT NULL
   );
 `);
+
+// Migration: per-user secret (stored only as a SHA-256 hash) authorises user-scoped requests.
+const userColumns = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+if (!userColumns.includes('secret_hash')) {
+  db.exec('ALTER TABLE users ADD COLUMN secret_hash TEXT');
+}
+
+const sha256 = (value) => crypto.createHash('sha256').update(String(value)).digest();
+
+function safeEqual(a, b) {
+  // Hash both sides so lengths match and comparison time doesn't leak the value.
+  return crypto.timingSafeEqual(sha256(a), sha256(b));
+}
+
+const MIN_SECRET_LENGTH = 32;
+
+/**
+ * Checks the caller owns `userId` via the `x-user-secret` header.
+ * Returns 'ok', 'unknown-user', or 'forbidden'.
+ */
+function verifyUser(userId, secret) {
+  if (!userId) return 'unknown-user';
+  const user = db.prepare('SELECT secret_hash FROM users WHERE id = ?').get(userId);
+  if (!user) return 'unknown-user';
+  if (!user.secret_hash || typeof secret !== 'string' || !secret) return 'forbidden';
+  return safeEqual(sha256(secret).toString('hex'), user.secret_hash) ? 'ok' : 'forbidden';
+}
+
+function rejectUnverified(res, status) {
+  if (status === 'unknown-user') return res.status(404).json({ error: 'Unknown pilot user' });
+  return res.status(403).json({ error: 'Not authorised for this user' });
+}
+
+// Admin authentication with a per-IP lockout after repeated failures.
+const adminFailures = new Map(); // ip -> { count, firstAt }
+
+function requireAdmin(req, res) {
+  if (!ADMIN_PASSCODE) {
+    res.status(503).json({ error: 'Admin dashboard is disabled: set ADMIN_PASSCODE on the server' });
+    return false;
+  }
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const record = adminFailures.get(ip);
+  if (record && now - record.firstAt > ADMIN_FAILURE_WINDOW_MS) adminFailures.delete(ip);
+  const current = adminFailures.get(ip);
+  if (current && current.count >= ADMIN_MAX_FAILURES) {
+    res.status(429).json({ error: 'Too many failed attempts, try again later' });
+    return false;
+  }
+
+  const provided = req.headers['x-admin-passcode'];
+  if (typeof provided !== 'string' || !safeEqual(provided, ADMIN_PASSCODE)) {
+    const entry = adminFailures.get(ip) || { count: 0, firstAt: now };
+    entry.count++;
+    adminFailures.set(ip, entry);
+    res.status(401).json({ error: 'Unauthorized: Invalid admin passcode' });
+    return false;
+  }
+  adminFailures.delete(ip);
+  return true;
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -109,8 +175,9 @@ app.post('/api/classify', async (req, res) => {
     if (!userId || !thought || typeof thought.id !== 'string' || typeof thought.text !== 'string') {
       return res.status(400).json({ error: 'userId and thought are required' });
     }
-    if (!db.prepare('SELECT id FROM users WHERE id = ?').get(userId)) {
-      return res.status(403).json({ error: 'Unknown pilot user' });
+    const verified = verifyUser(userId, req.headers['x-user-secret']);
+    if (verified !== 'ok') {
+      return res.status(403).json({ error: 'Not authorised for this user' });
     }
     if (isRateLimited(userId)) {
       return res.status(429).json({ error: 'Too many requests, try again shortly' });
@@ -181,27 +248,36 @@ app.post('/api/classify', async (req, res) => {
 // 1. Pilot Signup / Profile Sync
 app.post('/api/pilot/signup', (req, res) => {
   try {
-    const { id, name, email, reasons } = req.body;
+    const { id, name, email, reasons, secret } = req.body;
     if (!id || !name) {
       return res.status(400).json({ error: 'id and name are required' });
+    }
+    if (typeof secret !== 'string' || secret.length < MIN_SECRET_LENGTH) {
+      return res.status(400).json({ error: 'A user secret is required' });
     }
 
     const now = new Date().toISOString();
     const reasonsStr = Array.isArray(reasons) ? JSON.stringify(reasons) : (reasons || '[]');
+    const secretHash = sha256(secret).toString('hex');
 
-    const existingUser = db.prepare('SELECT id, created_at FROM users WHERE id = ?').get(id);
+    const existingUser = db.prepare('SELECT id, secret_hash FROM users WHERE id = ?').get(id);
 
     if (existingUser) {
+      // Profiles created before secrets existed claim one on their next sync;
+      // after that, only the holder of the secret can update the profile.
+      if (existingUser.secret_hash && !safeEqual(secretHash, existingUser.secret_hash)) {
+        return res.status(403).json({ error: 'Not authorised for this user' });
+      }
       db.prepare(`
         UPDATE users
-        SET name = ?, email = ?, reasons = ?, last_active_at = ?
+        SET name = ?, email = ?, reasons = ?, last_active_at = ?, secret_hash = ?
         WHERE id = ?
-      `).run(name, email || null, reasonsStr, now, id);
+      `).run(name, email || null, reasonsStr, now, secretHash, id);
     } else {
       db.prepare(`
-        INSERT INTO users (id, name, email, reasons, created_at, last_active_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(id, name, email || null, reasonsStr, now, now);
+        INSERT INTO users (id, name, email, reasons, created_at, last_active_at, secret_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(id, name, email || null, reasonsStr, now, now, secretHash);
     }
 
     res.json({ ok: true, id, name });
@@ -218,6 +294,8 @@ app.post('/api/pilot/ping', (req, res) => {
     if (!userId || !date) {
       return res.status(400).json({ error: 'userId and date are required' });
     }
+    const verified = verifyUser(userId, req.headers['x-user-secret']);
+    if (verified !== 'ok') return rejectUnverified(res, verified);
 
     const now = new Date().toISOString();
     const activityId = `${userId}_${date}`;
@@ -254,6 +332,11 @@ app.post('/api/pilot/feedback', (req, res) => {
     if (!category || !message) {
       return res.status(400).json({ error: 'category and message are required' });
     }
+    // Feedback can be anonymous; if it names a user, the caller must own that user.
+    if (userId) {
+      const verified = verifyUser(userId, req.headers['x-user-secret']);
+      if (verified !== 'ok') return rejectUnverified(res, verified);
+    }
 
     const feedbackId = id || `fb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
@@ -282,10 +365,7 @@ app.post('/api/pilot/feedback', (req, res) => {
 // 4. Central Admin Dashboard Overview
 app.get('/api/pilot/admin/overview', (req, res) => {
   try {
-    const providedPasscode = req.headers['x-admin-passcode'];
-    if (!providedPasscode || providedPasscode !== ADMIN_PASSCODE) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid admin passcode' });
-    }
+    if (!requireAdmin(req, res)) return;
 
     // Get all registered users with enriched activity stats
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -329,8 +409,10 @@ app.get('/api/pilot/admin/overview', (req, res) => {
         LIMIT 30
       `).all(u.id);
 
+      // Never expose secret hashes, even to admins.
+      const { secret_hash: _secretHash, ...publicUser } = u;
       return {
-        ...u,
+        ...publicUser,
         createdAt: u.created_at || u.createdAt,
         lastActiveAt: u.last_active_at || u.lastActiveAt,
         reasons,
@@ -400,6 +482,8 @@ app.delete('/api/pilot/users/:id', (req, res) => {
     if (!id) {
       return res.status(400).json({ error: 'User id is required' });
     }
+    const verified = verifyUser(id, req.headers['x-user-secret']);
+    if (verified !== 'ok') return rejectUnverified(res, verified);
 
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
     db.prepare('DELETE FROM daily_activity WHERE user_id = ?').run(id);
@@ -415,10 +499,7 @@ app.delete('/api/pilot/users/:id', (req, res) => {
 // 6. Admin Delete User (Passcode-Protected)
 app.delete('/api/pilot/admin/users/:id', (req, res) => {
   try {
-    const providedPasscode = req.headers['x-admin-passcode'];
-    if (!providedPasscode || providedPasscode !== ADMIN_PASSCODE) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid admin passcode' });
-    }
+    if (!requireAdmin(req, res)) return;
 
     const { id } = req.params;
     if (!id) {

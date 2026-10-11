@@ -188,7 +188,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
               onKeyDown={handleKeyDown}
               disabled={isSaving}
               placeholder="e.g. an idea, a feeling to express, or perhaps a whim?"
-              className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-hidden leading-relaxed"
+              className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-none leading-relaxed"
             />
           </div>
 
@@ -607,6 +607,7 @@ export const GardenView: React.FC<GardenViewProps> = ({
         onClose={() => setSelectedThoughtId(null)}
         onUpdate={updateThought}
         onDelete={deleteThought}
+        onSelectThought={(t) => setSelectedThoughtId(t.id)}
       />
       </div>
     </>

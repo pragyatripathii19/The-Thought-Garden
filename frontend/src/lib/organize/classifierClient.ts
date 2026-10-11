@@ -22,10 +22,14 @@ export async function fetchSmartOrganizingAvailable(): Promise<boolean> {
  * them to the configured LLM. Only called when the user enabled Smart organising.
  * Returns the raw (untrusted) decision; validate before applying.
  */
-export async function requestClassification(userId: string, payload: ClassifyPayload): Promise<unknown> {
+export async function requestClassification(
+  userId: string,
+  secret: string,
+  payload: ClassifyPayload
+): Promise<unknown> {
   const res = await fetch(`${API_BASE}/classify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-user-secret': secret },
     body: JSON.stringify({ userId, ...payload }),
   });
   if (!res.ok) {

@@ -25,3 +25,13 @@ lerna-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Local databases (pilot data: names, emails, feedback)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment / secrets
+.env
+.env.*

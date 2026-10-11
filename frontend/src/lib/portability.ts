@@ -1,4 +1,5 @@
 import { Thought, Collection, Connection } from '../types';
+import { localDateKey } from './date';
 
 export interface GardenBackupV1 {
   version: 1;
@@ -35,7 +36,7 @@ export function downloadBackupFile(
   const jsonString = serializeGardenBackup(thoughts, collections, connections);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = localDateKey();
 
   const link = document.createElement('a');
   link.href = url;

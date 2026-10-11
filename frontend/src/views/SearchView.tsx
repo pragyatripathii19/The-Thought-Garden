@@ -5,9 +5,13 @@ import { searchGarden } from '../lib/search';
 import { formatRelativeTime } from '../lib/time';
 import { GrowthStageBadge } from '../components/GrowthStageBadge';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
-import { Thought, Collection } from '../types';
+import { Thought, Collection, NavTab } from '../types';
 
-export const SearchView: React.FC = () => {
+interface SearchViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
   const { thoughts, collections, setActiveCollectionId, updateThought, deleteThought } = useThoughts();
   const [query, setQuery] = useState('');
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
@@ -40,7 +44,7 @@ export const SearchView: React.FC = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by keywords, phrases, or collection titles..."
-          className="w-full pl-12 pr-10 py-3.5 bg-white border border-[#e4ded0] rounded-2xl text-sm text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-hidden shadow-xs"
+          className="w-full pl-12 pr-10 py-3.5 bg-white border border-[#e4ded0] rounded-2xl text-sm text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-none shadow-xs"
           autoFocus
         />
         {query && (
@@ -72,7 +76,10 @@ export const SearchView: React.FC = () => {
                     return (
                       <div
                         key={col.id}
-                        onClick={() => setActiveCollectionId(col.id)}
+                        onClick={() => {
+                          setActiveCollectionId(col.id);
+                          onNavigateTab?.('collections');
+                        }}
                         className="p-4 bg-white border border-[#e2dcd0] hover:border-[#b8caa0] rounded-2xl shadow-xs cursor-pointer transition-colors"
                       >
                         <h4 className="font-serif text-base font-semibold text-[#233126]">
@@ -172,6 +179,7 @@ export const SearchView: React.FC = () => {
         onClose={() => setSelectedThoughtId(null)}
         onUpdate={updateThought}
         onDelete={deleteThought}
+        onSelectThought={(t) => setSelectedThoughtId(t.id)}
       />
     </div>
   );

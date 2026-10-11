@@ -17,8 +17,9 @@ A calm, local-first personal space for capturing unfinished thoughts and discove
 │   ├── src/                  # Components, views, design system, and domain types
 │   ├── package.json          # Frontend dependencies & scripts
 │   └── ...
-└── backend/                  # Backend services and utilities (reserved for future extensions)
-    └── README.md
+└── backend/                  # Pilot server: Express + SQLite (profiles, activity, feedback, Smart organising)
+    ├── server.cjs
+    └── test-backend.cjs
 ```
 
 ---
@@ -38,6 +39,29 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 npm install          # root: express + cors
 npm run dev:backend  # http://localhost:3001 (Vite proxies /api to it)
 ```
+
+The app works without the backend; pilot sync, feedback and Smart organising simply stay offline.
+
+To use the admin dashboard, set a passcode first (there is no default; without it the admin API is disabled):
+```powershell
+$env:ADMIN_PASSCODE = "choose-a-long-passcode"; npm run dev:backend
+```
+
+Run the backend tests with `node backend/test-backend.cjs` (uses a temporary database).
+
+## Pilot Layer & Privacy
+
+The original MVP had no accounts or analytics. For the pilot, a small optional layer was added — this is a deliberate, disclosed exception to the rules in `docs/thought-garden-starter/AGENTS.md`:
+
+| Data | Where it goes | Notes |
+|---|---|---|
+| Thoughts, collections, connections | This browser only (IndexedDB) | Never sent to the server, except the opt-in Smart organising request below |
+| Name, optional email, "why I'm here" reasons | Pilot server (SQLite) | Collected at onboarding |
+| Daily counts (thoughts today, total, consecutive active days) | Pilot server | Numbers only, no text. Streaks are internal telemetry and are never shown to users |
+| Feedback messages | Pilot server | Only what the user submits |
+| Smart organising requests | Pilot server → LLM provider | Opt-in; forwarded, not stored or logged |
+
+**Access control.** Each browser generates a random secret when the profile is created; the server stores only its SHA-256 hash and requires it (`x-user-secret` header) for profile updates, activity pings, attributed feedback, Smart organising and self-service deletion. Admin endpoints require `ADMIN_PASSCODE` and lock out an IP after 10 wrong attempts for 15 minutes. Users can delete their profile and all server-side records from **Data & Settings**.
 
 ### Automatic Organising
 New thoughts are grouped into collections automatically, with an "Auto" badge and Undo on every change.

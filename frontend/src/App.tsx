@@ -66,8 +66,8 @@ function AppContent() {
             />
           )}
           {activeTab === 'thoughts' && <AllThoughtsView />}
-          {activeTab === 'collections' && <CollectionsView />}
-          {activeTab === 'search' && <SearchView />}
+          {activeTab === 'collections' && <CollectionsView onNavigateTab={setActiveTab} />}
+          {activeTab === 'search' && <SearchView onNavigateTab={setActiveTab} />}
           {activeTab === 'saved' && <SavedView />}
           {activeTab === 'settings' && <SettingsView />}
         </main>
