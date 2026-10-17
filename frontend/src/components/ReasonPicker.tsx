@@ -78,7 +78,7 @@ export const ReasonPicker: React.FC<ReasonPickerProps> = ({ selected, onChange, 
             type="text"
             autoFocus
             maxLength={CUSTOM_REASON_MAX}
-            placeholder="I'm here for… e.g. learning Spanish"
+            placeholder="I'm here for storing thoughts on…"
             value={custom}
             onChange={(e) => onCustomChange(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl bg-garden-card border border-garden-line text-sm text-garden-ink placeholder-garden-ink-faint focus:outline-none focus:border-[#BFB38F]"

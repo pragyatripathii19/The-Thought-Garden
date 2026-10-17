@@ -14,13 +14,13 @@ describe('profile reasons', () => {
 
   it('keeps free text as free text, even when it mentions a preset word', () => {
     expect(normalizeReason('writing a novel')).toBe('writing a novel');
-    expect(normalizeReason('learning Spanish')).toBe('learning Spanish');
+    expect(normalizeReason('book notes')).toBe('book notes');
   });
 
   it('splits and joins ids and the free-text answer', () => {
-    expect(splitReasons(['writing', 'learning Spanish', 'tasks'])).toEqual({ ids: ['writing', 'tasks'], custom: 'learning Spanish' });
+    expect(splitReasons(['writing', 'book notes', 'tasks'])).toEqual({ ids: ['writing', 'tasks'], custom: 'book notes' });
     expect(splitReasons(['\u{1F331} Daily Brain Dump', 'brain-dump'])).toEqual({ ids: ['brain-dump'], custom: '' });
-    expect(joinReasons(['writing'], '  learning Spanish  ')).toEqual(['writing', 'learning Spanish']);
+    expect(joinReasons(['writing'], '  book notes  ')).toEqual(['writing', 'book notes']);
     expect(joinReasons([], '   ')).toEqual([]);
     expect(joinReasons([], 'x'.repeat(100))[0]).toHaveLength(CUSTOM_REASON_MAX);
   });
@@ -28,7 +28,7 @@ describe('profile reasons', () => {
   it('describes reasons with a readable label', () => {
     expect(describeReason('writing').label).toBe('Writing & journaling');
     expect(describeReason('\u{1F331} Daily Brain Dump').label).toBe('Daily brain dump');
-    expect(describeReason('learning Spanish').label).toBe('learning Spanish');
+    expect(describeReason('book notes').label).toBe('book notes');
   });
 });
 
@@ -39,9 +39,9 @@ describe('capture prompts', () => {
   });
 
   it('adds prompts for each reason and one for the free-text answer', () => {
-    const prompts = capturePrompts(['writing', 'Learning Spanish.']);
+    const prompts = capturePrompts(['writing', 'Book notes.']);
     expect(prompts).toContain('A line, a draft, a story idea…');
-    expect(prompts).toContain('A thought about learning Spanish?');
+    expect(prompts).toContain('A thought about book notes?');
     expect(prompts[0]).toBe(DEFAULT_CAPTURE_PROMPT);
   });
 
