@@ -6,6 +6,7 @@ import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { GrowthStageBadge } from '../components/GrowthStageBadge';
 import { CollectionIcon } from '../components/CollectionIcon';
 import { AutoBadge } from '../components/OrganizeToast';
+import { ART } from '../lib/art';
 import { NavTab } from '../types';
 
 type SavedFilter = 'all' | 'thoughts' | 'collections';
@@ -55,8 +56,16 @@ export const SavedView: React.FC<SavedViewProps> = ({ onNavigateTab }) => {
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Header */}
-      <div className="pb-1">
+      {/* Header, with a dove flying in towards the title. The right padding keeps
+          the text clear of it on narrow screens. */}
+      <div className="relative pb-1 pr-24 sm:pr-40">
+        <img
+          src={ART.bird}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="absolute right-0 -top-3 sm:-top-6 w-20 sm:w-28 -rotate-6 pointer-events-none select-none"
+        />
         <h2 className="font-serif text-[36px] sm:text-[42px] leading-tight font-semibold text-garden-ink tracking-tight">
           Saved
         </h2>

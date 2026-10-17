@@ -6,6 +6,7 @@ import sun from '../assets/art/sun.webp';
 import cat from '../assets/art/cat.webp';
 import meadow from '../assets/art/meadow.webp';
 import branch from '../assets/art/branch.webp';
+import bird from '../assets/art/bird.webp';
 
 /** Hand-coloured engravings (cut out, transparent backgrounds). */
-export const ART = { tree, butterfly, bee, moon, sun, cat, meadow, branch };
+export const ART = { tree, butterfly, bee, moon, sun, cat, meadow, branch, bird };
