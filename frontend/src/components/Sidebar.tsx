@@ -107,56 +107,56 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
           onClick={() => setIsLearnModalOpen(false)}
         >
           <div
-            className="bg-[#fcfbf8] border border-[#e2dcce] rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-xl space-y-5"
+            className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-xl space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc]">
+            <div className="flex items-center justify-between pb-3 border-b border-garden-line">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#e8efe9] flex items-center justify-center text-[#4a6b53]">
+                <div className="w-8 h-8 rounded-full bg-garden-pill/60 flex items-center justify-center text-garden-moss">
                   <Compass className="w-4 h-4" />
                 </div>
-                <h3 className="font-serif text-xl font-medium text-[#253227]">
+                <h3 className="font-serif text-[26px] font-semibold text-garden-ink">
                   The Thought Garden Philosophy
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLearnModalOpen(false)}
-                className="p-1 text-[#7c8779] hover:text-[#2d3a2e] rounded-lg"
+                className="p-1 text-garden-ink-faint hover:text-garden-ink rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm text-[#4d5b4f] leading-relaxed">
-              <div className="p-3.5 rounded-2xl bg-[#f2f7f3] border border-[#dbe7dc] space-y-1">
-                <h4 className="font-semibold text-[#273c2d]">1. Capture First. Organize Later.</h4>
-                <p className="text-xs text-[#526355]">
+              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                <h4 className="font-serif text-xl font-semibold text-garden-ink">1. Capture First. Organize Later.</h4>
+                <p className="text-sm text-garden-ink-soft">
                   Thoughts don't need categories, titles, or tags right away. Plant them as raw fragments.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#fdf2f2] border border-[#f4dede] space-y-1">
-                <h4 className="font-semibold text-[#542d32]">2. Natural Growth</h4>
-                <p className="text-xs text-[#634e51]">
+              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                <h4 className="font-serif text-xl font-semibold text-garden-ink">2. Natural Growth</h4>
+                <p className="text-sm text-garden-ink-soft">
                   Watch unfinished thoughts mature from Seeds into Sprouts, Blooms, and Mature reflections.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#f4f3fa] border border-[#e3e1f3] space-y-1">
-                <h4 className="font-semibold text-[#353154]">3. Gentle Rediscovery</h4>
-                <p className="text-xs text-[#535166]">
+              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                <h4 className="font-serif text-xl font-semibold text-garden-ink">3. Gentle Rediscovery</h4>
+                <p className="text-sm text-garden-ink-soft">
                   No streaks, no pressure, and no guilt. The garden gently surfaces older insights when you're ready.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#fdf6ee] border border-[#fae8d4] space-y-1">
-                <h4 className="font-semibold text-[#543b23]">4. Safe in Your Account</h4>
-                <p className="text-xs text-[#665646]">
+              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                <h4 className="font-serif text-xl font-semibold text-garden-ink">4. Safe in Your Account</h4>
+                <p className="text-sm text-garden-ink-soft">
                   Your garden is saved to your account, so it's there on any device you log in from. Export a JSON backup anytime under Data & Settings.
                 </p>
               </div>
@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
               <button
                 type="button"
                 onClick={() => setIsLearnModalOpen(false)}
-                className="px-5 py-2 bg-[#3f5f47] hover:bg-[#344f3b] text-white rounded-xl text-xs font-medium shadow-xs"
+                className="px-5 py-2 bg-[#3f5f47] hover:bg-garden-moss text-garden-paper rounded-xl text-xs font-medium"
               >
                 Return to Garden
               </button>

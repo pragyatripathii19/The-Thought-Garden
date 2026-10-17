@@ -33,21 +33,21 @@ export const OrganizeToast: React.FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className="fixed z-40 left-4 right-4 bottom-24 md:left-auto md:right-6 md:bottom-6 md:max-w-sm bg-[#fcfbf8] border border-[#d6e5d8] rounded-2xl shadow-lg p-3.5 flex items-start gap-3"
+      className="fixed z-40 left-4 right-4 bottom-24 md:left-auto md:right-6 md:bottom-6 md:max-w-sm bg-[#FDFBF3] border border-[#CBD5AE] rounded-2xl shadow-lg p-3.5 flex items-start gap-3"
     >
-      <div className="w-7 h-7 rounded-full bg-[#e3ece4] text-[#3d5a45] flex items-center justify-center shrink-0">
+      <div className="w-7 h-7 rounded-full bg-garden-pill/60 text-garden-moss flex items-center justify-center shrink-0">
         <Leaf className="w-3.5 h-3.5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-[#233126]">Organised automatically</p>
-        <p className="text-xs text-[#5d6d60] mt-0.5 leading-relaxed">{notice.message}</p>
+        <p className="text-xs font-semibold text-garden-ink">Organised automatically</p>
+        <p className="text-xs text-garden-ink-soft mt-0.5 leading-relaxed">{notice.message}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
           onClick={handleUndo}
           disabled={isUndoing}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#34593e] bg-[#edf5ee] hover:bg-[#e0ebe2] border border-[#d4e4d7] disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-garden-moss bg-garden-pill/60 hover:bg-garden-pill/60 border border-[#CBD5AE] disabled:opacity-50 transition-colors"
         >
           <Undo2 className="w-3.5 h-3.5" />
           <span>{isUndoing ? 'Undoing…' : 'Undo'}</span>
@@ -55,7 +55,7 @@ export const OrganizeToast: React.FC = () => {
         <button
           type="button"
           onClick={dismissNotice}
-          className="p-1.5 text-[#869688] hover:text-[#233126] rounded-lg"
+          className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
           aria-label="Dismiss notice"
         >
           <X className="w-3.5 h-3.5" />

@@ -88,16 +88,16 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="import-backup-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-[#fcfbf7] border border-[#e2dcce] rounded-2xl w-full max-w-lg p-6 shadow-xl relative overflow-hidden"
+        className="bg-[#FDFBF3] border border-garden-line rounded-2xl w-full max-w-lg p-6 shadow-xl relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc] mb-4">
+        <div className="flex items-center justify-between pb-3 border-b border-garden-line mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#e8efe9] flex items-center justify-center text-[#4a6b53]">
+            <div className="w-8 h-8 rounded-full bg-garden-pill/60 flex items-center justify-center text-garden-moss">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -107,13 +107,13 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                 />
               </svg>
             </div>
-            <h2 id="import-backup-title" className="font-serif text-xl font-medium text-[#253227]">
+            <h2 id="import-backup-title" className="font-serif text-[26px] font-semibold text-garden-ink">
               Restore Garden Data
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-[#7c8779] hover:text-[#2d3a2e] transition-colors p-1 rounded-lg hover:bg-[#ede9dc]"
+            className="text-garden-ink-faint hover:text-garden-ink transition-colors p-1 rounded-lg hover:bg-garden-line"
             aria-label="Close modal"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,15 +124,15 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
 
         {importSuccess ? (
           <div className="py-6 text-center space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-full bg-[#e8efe9] text-[#4a6b53] flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto rounded-full bg-garden-pill/60 text-garden-moss flex items-center justify-center">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="font-serif text-lg font-medium text-[#2d3a2e]">
+            <p className="font-serif text-2xl font-semibold text-garden-ink">
               Garden restored successfully
             </p>
-            <p className="text-xs text-[#556354]">
+            <p className="text-xs text-garden-ink-soft">
               Added {importSuccess.thoughtsAdded} thoughts, {importSuccess.collectionsAdded} collections, and {importSuccess.connectionsAdded} connections.
             </p>
           </div>
@@ -141,20 +141,20 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
             {/* File selection if not selected */}
             {!file && (
               <div>
-                <label className="block text-xs font-medium text-[#556354] mb-1.5">
+                <label className="block text-xs font-medium text-garden-ink-soft mb-1.5">
                   Select Backup JSON File
                 </label>
                 <input
                   type="file"
                   accept=".json,application/json"
                   onChange={handleFileChange}
-                  className="block w-full text-xs text-[#556354] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-medium file:bg-[#ede9dc] file:text-[#4a6b53] hover:file:bg-[#e2dcce] cursor-pointer"
+                  className="block w-full text-xs text-garden-ink-soft file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-medium file:bg-garden-line file:text-garden-moss hover:file:bg-garden-line cursor-pointer"
                 />
               </div>
             )}
 
             {isValidating && (
-              <div className="py-4 text-center text-xs text-[#7c8779]">
+              <div className="py-4 text-center text-xs text-garden-ink-faint">
                 Verifying backup file integrity...
               </div>
             )}
@@ -176,33 +176,33 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
             {/* Valid backup preview */}
             {validBackup && (
               <div className="space-y-4">
-                <div className="bg-[#f5f3ec] border border-[#e5dfd2] rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-[#556354]">
-                    <span className="font-medium text-[#2d3a2e]">File: {file?.name}</span>
+                <div className="bg-[#FDFBF3] border border-garden-line rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-garden-ink-soft">
+                    <span className="font-medium text-garden-ink">File: {file?.name}</span>
                     <span>Version {validBackup.version}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#ebe5d6] text-center">
-                    <div className="bg-[#fcfbf7] p-2 rounded-lg border border-[#e8e2d4]">
-                      <div className="font-serif text-base font-medium text-[#2d3a2e]">
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-garden-line text-center">
+                    <div className="bg-[#FDFBF3] p-2 rounded-lg border border-garden-line">
+                      <div className="font-serif text-xl font-semibold text-garden-ink">
                         {validBackup.garden.thoughts.length}
                       </div>
-                      <div className="text-[11px] text-[#7c8779]">Thoughts</div>
+                      <div className="text-[11px] text-garden-ink-faint">Thoughts</div>
                     </div>
-                    <div className="bg-[#fcfbf7] p-2 rounded-lg border border-[#e8e2d4]">
-                      <div className="font-serif text-base font-medium text-[#2d3a2e]">
+                    <div className="bg-[#FDFBF3] p-2 rounded-lg border border-garden-line">
+                      <div className="font-serif text-xl font-semibold text-garden-ink">
                         {validBackup.garden.collections.length}
                       </div>
-                      <div className="text-[11px] text-[#7c8779]">Collections</div>
+                      <div className="text-[11px] text-garden-ink-faint">Collections</div>
                     </div>
-                    <div className="bg-[#fcfbf7] p-2 rounded-lg border border-[#e8e2d4]">
-                      <div className="font-serif text-base font-medium text-[#2d3a2e]">
+                    <div className="bg-[#FDFBF3] p-2 rounded-lg border border-garden-line">
+                      <div className="font-serif text-xl font-semibold text-garden-ink">
                         {validBackup.garden.connections.length}
                       </div>
-                      <div className="text-[11px] text-[#7c8779]">Connections</div>
+                      <div className="text-[11px] text-garden-ink-faint">Connections</div>
                     </div>
                   </div>
                   {validBackup.exportedAt && (
-                    <div className="text-[11px] text-[#7c8779] pt-1">
+                    <div className="text-[11px] text-garden-ink-faint pt-1">
                       Exported on {new Date(validBackup.exportedAt).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
@@ -216,13 +216,13 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
 
                 {/* Import Strategy Selection */}
                 <div className="space-y-2">
-                  <span className="block text-xs font-medium text-[#2d3a2e]">Choose Import Method</span>
+                  <span className="block text-xs font-medium text-garden-ink">Choose Import Method</span>
                   <div className="space-y-2">
                     <label
                       className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                         strategy === 'merge'
-                          ? 'border-[#4a6b53] bg-[#f0f4f1]'
-                          : 'border-[#e2dcce] bg-[#fcfbf7] hover:bg-[#f7f5ed]'
+                          ? 'border-garden-moss bg-[#FDFBF3]'
+                          : 'border-garden-line bg-[#FDFBF3] hover:bg-[#FDFBF3]'
                       }`}
                     >
                       <input
@@ -231,13 +231,13 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                         value="merge"
                         checked={strategy === 'merge'}
                         onChange={() => setStrategy('merge')}
-                        className="mt-0.5 text-[#4a6b53] focus:ring-[#4a6b53]"
+                        className="mt-0.5 text-garden-moss focus:ring-garden-moss"
                       />
                       <div>
-                        <div className="text-xs font-medium text-[#2d3a2e]">
+                        <div className="text-xs font-medium text-garden-ink">
                           Merge (Recommended)
                         </div>
-                        <div className="text-[11px] text-[#556354] mt-0.5">
+                        <div className="text-[11px] text-garden-ink-soft mt-0.5">
                           Adds backup thoughts and collections alongside your current garden without overwriting or creating duplicates.
                         </div>
                       </div>
@@ -247,7 +247,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                       className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                         strategy === 'replace'
                           ? 'border-[#b85d39] bg-[#fdf5f2]'
-                          : 'border-[#e2dcce] bg-[#fcfbf7] hover:bg-[#f7f5ed]'
+                          : 'border-garden-line bg-[#FDFBF3] hover:bg-[#FDFBF3]'
                       }`}
                     >
                       <input
@@ -262,7 +262,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                         <div className="text-xs font-medium text-[#b85d39]">
                           Replace Entire Garden
                         </div>
-                        <div className="text-[11px] text-[#7c8779] mt-0.5">
+                        <div className="text-[11px] text-garden-ink-faint mt-0.5">
                           Erases current garden data and restores exactly what is inside this backup file.
                         </div>
                       </div>
@@ -271,11 +271,11 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#eee9dc]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-garden-line">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-xs font-medium text-[#556354] hover:text-[#2d3a2e] rounded-xl hover:bg-[#ede9dc] transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-garden-ink-soft hover:text-garden-ink rounded-xl hover:bg-garden-line transition-colors"
                   >
                     Cancel
                   </button>
@@ -283,10 +283,10 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                     type="button"
                     onClick={handleImport}
                     disabled={isImporting}
-                    className={`px-4 py-2 text-xs font-medium text-white rounded-xl shadow-sm transition-all disabled:opacity-50 ${
+                    className={`px-4 py-2 text-xs font-medium text-garden-paper rounded-xl transition-all disabled:opacity-50 ${
                       strategy === 'replace'
                         ? 'bg-[#b85d39] hover:bg-[#a24e2d]'
-                        : 'bg-[#4a6b53] hover:bg-[#3d5844]'
+                        : 'bg-garden-moss hover:bg-[#3d5844]'
                     }`}
                   >
                     {isImporting

@@ -100,24 +100,24 @@ export const AdminPilotModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#233126]/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
       onClick={() => setIsAdminModalOpen(false)}
     >
       <div
-        className="bg-[#faf8f4] border border-[#e3ded2] rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[#eee9dc] bg-[#f5f2e9]/70 shrink-0">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-garden-line bg-garden-paper-deep/70 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#3d5a45] text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-garden-moss text-garden-paper flex items-center justify-center">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="admin-title" className="font-serif text-xl font-bold text-[#233126]">
+              <h2 id="admin-title" className="font-serif text-[26px] font-semibold text-garden-ink">
                 Pilot Insights & Admin
               </h2>
-              <p className="text-xs text-[#6e7d70]">
+              <p className="text-xs text-garden-ink-soft">
                 Live telemetry, usage trends & pilot feedback
               </p>
             </div>
@@ -129,7 +129,7 @@ export const AdminPilotModal: React.FC = () => {
                 type="button"
                 onClick={() => handleLoadOverview()}
                 disabled={isLoading}
-                className="p-2 text-[#5e6f60] hover:text-[#233126] hover:bg-[#ede8dc] rounded-xl transition-colors"
+                className="p-2 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
                 title="Refresh Overview"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -138,7 +138,7 @@ export const AdminPilotModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAdminModalOpen(false)}
-              className="p-2 text-[#7a877a] hover:text-[#233126] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              className="p-2 text-garden-ink-faint hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -148,7 +148,7 @@ export const AdminPilotModal: React.FC = () => {
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           {!data ? (
-            <div className="max-w-sm mx-auto my-8 p-6 bg-white border border-[#e2dcd0] rounded-3xl shadow-sm text-center space-y-4">
+            <div className="max-w-sm mx-auto my-8 p-6 bg-garden-card border border-garden-line rounded-3xl text-center space-y-4">
               {error ? (
                 <>
                   <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs text-left">
@@ -159,13 +159,13 @@ export const AdminPilotModal: React.FC = () => {
                     type="button"
                     onClick={() => handleLoadOverview()}
                     disabled={isLoading}
-                    className="w-full py-2.5 rounded-xl bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors"
+                    className="w-full py-2.5 rounded-xl bg-garden-moss hover:bg-garden-moss-dark disabled:opacity-40 text-garden-paper font-medium text-xs sm:text-sm transition-colors"
                   >
                     Try again
                   </button>
                 </>
               ) : (
-                <p className="text-sm text-[#718273]" role="status">Loading the dashboard…</p>
+                <p className="text-sm text-garden-ink-soft" role="status">Loading the dashboard…</p>
               )}
             </div>
           ) : (
@@ -173,68 +173,68 @@ export const AdminPilotModal: React.FC = () => {
             <>
               {/* Top KPI Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                <div className="p-4 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-1">
-                  <div className="flex items-center justify-between text-[#718273]">
+                <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                  <div className="flex items-center justify-between text-garden-ink-soft">
                     <span className="text-xs font-semibold uppercase tracking-wider">Pilot Users</span>
-                    <Users className="w-4 h-4 text-[#3d5a45]" />
+                    <Users className="w-4 h-4 text-garden-moss" />
                   </div>
-                  <div className="text-2xl font-serif font-bold text-[#233126]">
+                  <div className="text-[32px] font-serif font-semibold text-garden-ink">
                     {data.summary.totalUsers}
                   </div>
-                  <div className="text-[11px] text-[#556958]">Registered accounts</div>
+                  <div className="text-[11px] text-garden-ink-soft">Registered accounts</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-1">
-                  <div className="flex items-center justify-between text-[#718273]">
+                <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                  <div className="flex items-center justify-between text-garden-ink-soft">
                     <span className="text-xs font-semibold uppercase tracking-wider">Thoughts Logged</span>
-                    <Sprout className="w-4 h-4 text-[#3d5a45]" />
+                    <Sprout className="w-4 h-4 text-garden-moss" />
                   </div>
-                  <div className="text-2xl font-serif font-bold text-[#233126]">
+                  <div className="text-[32px] font-serif font-semibold text-garden-ink">
                     {data.summary.totalThoughtsLogged}
                   </div>
-                  <div className="text-[11px] text-[#556958]">Across all pilot users</div>
+                  <div className="text-[11px] text-garden-ink-soft">Across all pilot users</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-1">
-                  <div className="flex items-center justify-between text-[#718273]">
+                <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                  <div className="flex items-center justify-between text-garden-ink-soft">
                     <span className="text-xs font-semibold uppercase tracking-wider">Feedback Items</span>
-                    <MessageSquare className="w-4 h-4 text-[#3d5a45]" />
+                    <MessageSquare className="w-4 h-4 text-garden-moss" />
                   </div>
-                  <div className="text-2xl font-serif font-bold text-[#233126]">
+                  <div className="text-[32px] font-serif font-semibold text-garden-ink">
                     {data.summary.totalFeedback}
                   </div>
-                  <div className="text-[11px] text-[#556958]">Submitted messages</div>
+                  <div className="text-[11px] text-garden-ink-soft">Submitted messages</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-1">
-                  <div className="flex items-center justify-between text-[#718273]">
+                <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
+                  <div className="flex items-center justify-between text-garden-ink-soft">
                     <span className="text-xs font-semibold uppercase tracking-wider">Active Today</span>
-                    <Activity className="w-4 h-4 text-[#3d5a45]" />
+                    <Activity className="w-4 h-4 text-garden-moss" />
                   </div>
-                  <div className="text-2xl font-serif font-bold text-[#233126]">
+                  <div className="text-[32px] font-serif font-semibold text-garden-ink">
                     {data.summary.activeToday}
                   </div>
-                  <div className="text-[11px] text-[#556958]">Users active today</div>
+                  <div className="text-[11px] text-garden-ink-soft">Users active today</div>
                 </div>
               </div>
 
               {/* Thoughts Per Day Chart */}
-              <div className="p-5 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-4">
+              <div className="p-5 rounded-2xl bg-garden-card border border-garden-line space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-base font-semibold text-[#233126] flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#3d5a45]" />
+                  <h3 className="font-serif text-xl font-semibold text-garden-ink flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-garden-moss" />
                     <span>Thoughts Planted Per Day (All Users)</span>
                   </h3>
-                  <span className="text-xs text-[#718273]">Daily Activity</span>
+                  <span className="text-xs text-garden-ink-soft">Daily Activity</span>
                 </div>
 
                 {data.thoughtsPerDayAgg.length === 0 ? (
-                  <p className="text-xs text-[#8c9c8e] italic py-4 text-center">
+                  <p className="text-xs text-garden-ink-faint italic py-4 text-center">
                     No thoughts logged yet. Plant thoughts to see daily activity.
                   </p>
                 ) : (
                   <div className="space-y-2 pt-2">
-                    <div className="flex items-end gap-2 h-36 px-2 border-b border-[#eee9dc]">
+                    <div className="flex items-end gap-2 h-36 px-2 border-b border-garden-line">
                       {data.thoughtsPerDayAgg.map((item) => {
                         const maxVal = Math.max(...data.thoughtsPerDayAgg.map((x) => x.total_thoughts), 1);
                         const heightPct = Math.max(Math.round((item.total_thoughts / maxVal) * 100), 10);
@@ -243,12 +243,12 @@ export const AdminPilotModal: React.FC = () => {
                             key={item.date}
                             className="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end"
                           >
-                            <span className="text-[10px] font-mono text-[#526354] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] font-mono text-garden-ink-soft opacity-0 group-hover:opacity-100 transition-opacity">
                               {item.total_thoughts}
                             </span>
                             <div
                               style={{ height: `${heightPct}%` }}
-                              className="w-full max-w-[28px] rounded-t-lg bg-[#53775c] group-hover:bg-[#344e3b] transition-all shadow-xs"
+                              className="w-full max-w-[28px] rounded-t-lg bg-[#53775c] group-hover:bg-garden-moss transition-all"
                               title={`${item.date}: ${item.total_thoughts} thoughts (${item.active_users} active users)`}
                             />
                             <span className="text-[9px] font-mono text-[#8b9b8d] truncate w-full text-center">
@@ -263,19 +263,19 @@ export const AdminPilotModal: React.FC = () => {
               </div>
 
               {/* Registered Pilot Users Table */}
-              <div className="p-5 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-3">
+              <div className="p-5 rounded-2xl bg-garden-card border border-garden-line space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-base font-semibold text-[#233126] flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#3d5a45]" />
+                  <h3 className="font-serif text-xl font-semibold text-garden-ink flex items-center gap-2">
+                    <Users className="w-4 h-4 text-garden-moss" />
                     <span>Registered Pilot Users ({data.users.length})</span>
                   </h3>
-                  <span className="text-xs text-[#718273]">Live User Telemetry</span>
+                  <span className="text-xs text-garden-ink-soft">Live User Telemetry</span>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#eee9dc] text-[#6d7f6f]">
+                      <tr className="border-b border-garden-line text-[#6d7f6f]">
                         <th className="pb-2 font-semibold">User</th>
                         <th className="pb-2 font-semibold">Goal / Intent</th>
                         <th className="pb-2 font-semibold">Thoughts</th>
@@ -284,22 +284,22 @@ export const AdminPilotModal: React.FC = () => {
                         <th className="pb-2 font-semibold text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#f4f0e6]">
+                    <tbody className="divide-y divide-garden-line-soft">
                       {data.users.map((u) => {
                         const isExpanded = expandedUserId === u.id;
                         return (
                           <React.Fragment key={u.id}>
-                            <tr className="hover:bg-[#faf8f4] transition-colors">
+                            <tr className="hover:bg-[#FDFBF3] transition-colors">
                               <td className="py-2.5">
-                                <div className="font-medium text-[#233126]">{u.name}</div>
-                                <div className="text-[10px] text-[#788879]">{u.email || 'No email provided'}</div>
+                                <div className="font-medium text-garden-ink">{u.name}</div>
+                                <div className="text-[10px] text-garden-ink-faint">{u.email || 'No email provided'}</div>
                               </td>
                               <td className="py-2.5 max-w-[200px]">
                                 <div className="flex flex-wrap gap-1">
                                   {u.reasons?.map((r, i) => (
                                     <span
                                       key={i}
-                                      className="text-[10px] px-2 py-0.5 rounded-full bg-[#edf5ee] text-[#34593e] border border-[#d5e7d8]"
+                                      className="text-[10px] px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]"
                                     >
                                       {r}
                                     </span>
@@ -308,7 +308,7 @@ export const AdminPilotModal: React.FC = () => {
                               </td>
                               <td className="py-2.5">
                                 <div className="inline-flex items-center gap-1 font-semibold text-[#2d4d33]">
-                                  <Sprout className="w-3.5 h-3.5 text-[#3d5a45]" />
+                                  <Sprout className="w-3.5 h-3.5 text-garden-moss" />
                                   <span>{u.totalThoughts || 0}</span>
                                 </div>
                               </td>
@@ -318,9 +318,9 @@ export const AdminPilotModal: React.FC = () => {
                                   <span>{u.streak ? `${u.streak}d` : '0d'}</span>
                                 </div>
                               </td>
-                              <td className="py-2.5 text-[#6e7d70]">
+                              <td className="py-2.5 text-garden-ink-soft">
                                 <div>{u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : '—'}</div>
-                                <div className="text-[10px] text-[#8e9c8f]">
+                                <div className="text-[10px] text-garden-ink-faint">
                                   Joined {new Date(u.createdAt).toLocaleDateString()}
                                 </div>
                               </td>
@@ -331,8 +331,8 @@ export const AdminPilotModal: React.FC = () => {
                                     onClick={() => setExpandedUserId(isExpanded ? null : u.id)}
                                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
                                       isExpanded
-                                        ? 'bg-[#3d5a45] text-white border-[#3d5a45]'
-                                        : 'bg-white hover:bg-[#f6f3eb] text-[#3e5241] border-[#ded8cb]'
+                                        ? 'bg-garden-moss text-garden-paper border-garden-moss'
+                                        : 'bg-garden-card hover:bg-[#f6f3eb] text-[#3e5241] border-garden-line'
                                     }`}
                                     title="View Activity Details"
                                   >
@@ -359,28 +359,28 @@ export const AdminPilotModal: React.FC = () => {
 
                             {/* Expandable Per-User Activity Details */}
                             {isExpanded && (
-                              <tr className="bg-[#f7f5ed]/90">
+                              <tr className="bg-[#FDFBF3]/90">
                                 <td colSpan={6} className="p-4 space-y-3">
-                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8e2d4] pb-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-garden-line pb-2">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-xs text-[#233126]">
+                                      <span className="font-semibold text-xs text-garden-ink">
                                         Activity Telemetry: {u.name}
                                       </span>
-                                      <span className="text-[10px] font-mono text-[#788879]">
+                                      <span className="text-[10px] font-mono text-garden-ink-faint">
                                         ID: {u.id}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs">
-                                      <span className="px-2 py-0.5 rounded-full bg-[#e8efe9] text-[#2f5539] font-medium text-[11px]">
+                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
                                         🌱 Total: {u.totalThoughts || 0}
                                       </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-[#edf5ee] text-[#2f5539] font-medium text-[11px]">
+                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
                                         ☀️ Today: {u.thoughtsToday || 0}
                                       </span>
                                       <span className="px-2 py-0.5 rounded-full bg-[#fcedea] text-[#913b2e] font-medium text-[11px]">
                                         🔥 Streak: {u.streak || 0}d
                                       </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-[#edf1f8] text-[#2c4779] font-medium text-[11px]">
+                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
                                         💬 Feedback: {u.feedbackCount || 0}
                                       </span>
                                     </div>
@@ -388,13 +388,13 @@ export const AdminPilotModal: React.FC = () => {
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                                     {/* Daily Log History */}
-                                    <div className="bg-white p-3 rounded-xl border border-[#e4ded0] space-y-2">
-                                      <span className="text-[11px] font-semibold text-[#4e6150] flex items-center gap-1.5">
+                                    <div className="bg-garden-card p-3 rounded-xl border border-garden-line space-y-2">
+                                      <span className="text-[11px] font-semibold text-garden-ink-soft flex items-center gap-1.5">
                                         <Calendar className="w-3.5 h-3.5" />
                                         <span>Daily Activity History</span>
                                       </span>
                                       {!u.activityHistory || u.activityHistory.length === 0 ? (
-                                        <p className="text-[11px] text-[#8e9c8f] italic py-1">
+                                        <p className="text-[11px] text-garden-ink-faint italic py-1">
                                           No daily logs recorded yet.
                                         </p>
                                       ) : (
@@ -402,14 +402,14 @@ export const AdminPilotModal: React.FC = () => {
                                           {u.activityHistory.map((h, idx) => (
                                             <div
                                               key={idx}
-                                              className="flex items-center justify-between text-[11px] py-1 px-2.5 rounded-lg bg-[#faf8f4] border border-[#f0ebe0]"
+                                              className="flex items-center justify-between text-[11px] py-1 px-2.5 rounded-lg bg-[#FDFBF3] border border-garden-line"
                                             >
                                               <span className="font-mono text-[#546656]">{h.date}</span>
                                               <div className="flex items-center gap-3">
                                                 <span className="text-[#36593e] font-medium">
                                                   +{h.thoughts_count} today
                                                 </span>
-                                                <span className="text-[#788879]">
+                                                <span className="text-garden-ink-faint">
                                                   Total: {h.total_thoughts}
                                                 </span>
                                                 <span className="text-amber-700 font-mono text-[10px]">
@@ -423,13 +423,13 @@ export const AdminPilotModal: React.FC = () => {
                                     </div>
 
                                     {/* User's Feedback items */}
-                                    <div className="bg-white p-3 rounded-xl border border-[#e4ded0] space-y-2">
-                                      <span className="text-[11px] font-semibold text-[#4e6150] flex items-center gap-1.5">
+                                    <div className="bg-garden-card p-3 rounded-xl border border-garden-line space-y-2">
+                                      <span className="text-[11px] font-semibold text-garden-ink-soft flex items-center gap-1.5">
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         <span>Feedback Submitted by {u.name}</span>
                                       </span>
                                       {data.feedback.filter((f) => f.userId === u.id).length === 0 ? (
-                                        <p className="text-[11px] text-[#8e9c8f] italic py-1">
+                                        <p className="text-[11px] text-garden-ink-faint italic py-1">
                                           No feedback submitted by this user yet.
                                         </p>
                                       ) : (
@@ -439,10 +439,10 @@ export const AdminPilotModal: React.FC = () => {
                                             .map((f) => (
                                               <div
                                                 key={f.id}
-                                                className="p-2.5 rounded-lg bg-[#faf8f4] border border-[#f0ebe0] space-y-1 text-[11px]"
+                                                className="p-2.5 rounded-lg bg-[#FDFBF3] border border-garden-line space-y-1 text-[11px]"
                                               >
                                                 <div className="flex items-center justify-between text-[10px]">
-                                                  <span className="font-bold text-[#34593e] uppercase">
+                                                  <span className="font-bold text-garden-moss uppercase">
                                                     {f.category} ({'🌿'.repeat(f.rating)})
                                                   </span>
                                                   <span className="text-[#849486]">
@@ -468,30 +468,30 @@ export const AdminPilotModal: React.FC = () => {
               </div>
 
               {/* Feedback Inbox */}
-              <div className="p-5 rounded-2xl bg-white border border-[#e4ded0] shadow-xs space-y-3">
-                <h3 className="font-serif text-base font-semibold text-[#233126] flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#3d5a45]" />
+              <div className="p-5 rounded-2xl bg-garden-card border border-garden-line space-y-3">
+                <h3 className="font-serif text-xl font-semibold text-garden-ink flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-garden-moss" />
                   <span>Pilot Feedback Inbox ({data.feedback.length})</span>
                 </h3>
 
                 {data.feedback.length === 0 ? (
-                  <p className="text-xs text-[#8c9c8e] italic py-3">No feedback received yet.</p>
+                  <p className="text-xs text-garden-ink-faint italic py-3">No feedback received yet.</p>
                 ) : (
                   <div className="space-y-2.5">
                     {data.feedback.map((fb) => (
                       <div
                         key={fb.id}
-                        className="p-3.5 rounded-xl bg-[#faf8f4] border border-[#e4ded0] space-y-1.5"
+                        className="p-3.5 rounded-xl bg-[#FDFBF3] border border-garden-line space-y-1.5"
                       >
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-[#233126]">{fb.userName || 'Anonymous'}</span>
-                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#edf5ee] text-[#34593e] border border-[#d2e4d5]">
+                            <span className="font-semibold text-garden-ink">{fb.userName || 'Anonymous'}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]">
                               {fb.category}
                             </span>
                             <span className="text-xs">{'🌿'.repeat(fb.rating)}</span>
                           </div>
-                          <span className="text-[11px] text-[#788779]">
+                          <span className="text-[11px] text-garden-ink-soft">
                             {new Date(fb.createdAt).toLocaleString()}
                           </span>
                         </div>
@@ -512,8 +512,8 @@ export const AdminPilotModal: React.FC = () => {
 
         {/* Footer with Diagnostic Export Buttons */}
         {isAuthenticated && (
-          <div className="p-4 sm:p-5 border-t border-[#eee9dc] bg-[#f5f2e9]/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
-            <span className="text-xs text-[#6e7d70]">
+          <div className="p-4 sm:p-5 border-t border-garden-line bg-garden-paper-deep/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <span className="text-xs text-garden-ink-soft">
               Signed in as admin &bull; Counts only, no thought text
             </span>
 
@@ -521,16 +521,16 @@ export const AdminPilotModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCopySummary}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-[#faf8f4] border border-[#ded8cb] rounded-xl text-xs font-semibold text-[#233126] shadow-xs transition-transform active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-garden-card hover:bg-[#FDFBF3] border border-garden-line rounded-xl text-xs font-semibold text-garden-ink transition-transform active:scale-95"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#5e6f60]" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-garden-ink-soft" />}
                 <span>{copied ? 'Copied to Clipboard!' : 'Copy Summary'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDownloadJson}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#344e3b] hover:bg-[#2b4131] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-garden-moss hover:bg-garden-moss-dark text-garden-paper rounded-full text-xs font-semibold transition-transform active:scale-95"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export JSON Report</span>
@@ -545,11 +545,11 @@ export const AdminPilotModal: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-[#233126]/70 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-garden-ink/70 backdrop-blur-sm animate-fade-in"
           onClick={() => !isDeletingUser && setUserToDelete(null)}
         >
           <div
-            className="bg-white border border-[#eed0d0] rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4"
+            className="bg-garden-card border border-[#eed0d0] rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
@@ -557,7 +557,7 @@ export const AdminPilotModal: React.FC = () => {
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="font-serif text-lg font-bold text-red-950">
+              <h3 className="font-serif text-2xl font-semibold text-red-950">
                 Delete Pilot User?
               </h3>
               <p className="text-xs text-[#6e5858]">
@@ -574,7 +574,7 @@ export const AdminPilotModal: React.FC = () => {
                 type="button"
                 disabled={isDeletingUser}
                 onClick={() => setUserToDelete(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#546255] hover:bg-[#f3f0e8] transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-garden-ink-soft hover:bg-garden-paper-deep transition-colors"
               >
                 Cancel
               </button>
@@ -582,7 +582,7 @@ export const AdminPilotModal: React.FC = () => {
                 type="button"
                 disabled={isDeletingUser}
                 onClick={handleDeleteUser}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-garden-paper rounded-xl text-xs font-semibold transition-transform active:scale-95"
               >
                 <span>{isDeletingUser ? 'Deleting User...' : 'Confirm Delete'}</span>
               </button>
