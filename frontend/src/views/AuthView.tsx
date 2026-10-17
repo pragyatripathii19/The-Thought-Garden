@@ -3,21 +3,29 @@ import { Sprout, ArrowRight, CloudOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ReasonPicker } from '../components/ReasonPicker';
 import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
+import { ART } from '../lib/art';
 
 const inputClass =
-  'w-full px-4 py-3 rounded-2xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-sm focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all shadow-xs';
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider text-[#526354]';
+  'w-full px-4 py-3 rounded-2xl bg-garden-card border border-garden-line text-garden-ink placeholder-garden-ink-faint text-sm focus:outline-none focus:border-garden-moss focus:ring-2 focus:ring-garden-pill/60 transition-all';
+const labelClass = 'block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft';
 
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen bg-[#faf8f4] flex items-center justify-center px-4 py-10 font-sans text-[#233126]">
-    <div className="bg-[#faf8f4] sm:bg-white sm:border sm:border-[#e3ded2] rounded-3xl w-full max-w-lg sm:p-8 sm:shadow-soft-lg space-y-6">
+  <div className="relative min-h-screen flex items-center justify-center px-4 pt-10 pb-40 font-sans text-garden-ink overflow-hidden">
+    {/* A meadow along the bottom of the page */}
+    <img
+      src={ART.meadow}
+      alt=""
+      aria-hidden="true"
+      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[160%] sm:w-full max-w-none sm:max-w-[1400px] opacity-90 pointer-events-none select-none"
+    />
+    <div className="relative z-10 sm:bg-garden-card/90 sm:border sm:border-garden-line rounded-3xl w-full max-w-lg sm:p-8 sm:shadow-soft-lg space-y-6">
       {children}
     </div>
   </div>
 );
 
 const Emblem: React.FC = () => (
-  <div className="w-12 h-12 rounded-2xl bg-[#edf5ee] border border-[#d2e5d5] text-[#3d5a45] flex items-center justify-center mx-auto shadow-xs">
+  <div className="w-12 h-12 rounded-2xl bg-garden-pill/60 border border-[#CBD5AE] text-garden-moss flex items-center justify-center mx-auto">
     <Sprout className="w-6 h-6" />
   </div>
 );
@@ -29,8 +37,8 @@ export const AuthStatusScreen: React.FC<{ status: 'loading' | 'unreachable'; onR
 }) => (
   <Shell>
     {status === 'loading' ? (
-      <div className="flex flex-col items-center gap-3 py-8 text-sm text-[#6e7d70]" role="status">
-        <SeedToSproutAnimation className="w-8 h-8 text-[#3d5a45]" />
+      <div className="flex flex-col items-center gap-3 py-8 text-sm text-garden-ink-soft" role="status">
+        <SeedToSproutAnimation className="w-8 h-8 text-garden-moss" />
         <span>Opening your garden…</span>
       </div>
     ) : (
@@ -38,15 +46,15 @@ export const AuthStatusScreen: React.FC<{ status: 'loading' | 'unreachable'; onR
         <div className="w-12 h-12 rounded-2xl bg-[#f7efe4] text-[#a46343] flex items-center justify-center mx-auto">
           <CloudOff className="w-6 h-6" />
         </div>
-        <h1 className="font-serif text-2xl font-bold">Can't reach the garden</h1>
-        <p className="text-sm text-[#6e7d70]">
+        <h1 className="font-serif text-[32px] font-semibold">Can't reach the garden</h1>
+        <p className="text-sm text-garden-ink-soft">
           The server isn't responding. It may be waking up, which can take up to a minute. Check your connection and
           try again.
         </p>
         <button
           type="button"
           onClick={onRetry}
-          className="px-5 py-2.5 rounded-2xl bg-[#344e3b] hover:bg-[#283e2e] text-white text-sm font-medium"
+          className="px-5 py-2.5 rounded-full bg-garden-moss hover:bg-garden-moss-dark text-garden-paper text-sm font-medium"
         >
           Try again
         </button>
@@ -100,10 +108,10 @@ export const AuthView: React.FC = () => {
     <Shell>
       <div className="text-center space-y-2">
         <Emblem />
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#233126]">
+        <h1 className="font-serif text-[32px] sm:text-[40px] font-semibold text-garden-ink">
           {isSignup ? 'Welcome to The Thought Garden' : 'Welcome back'}
         </h1>
-        <p className="text-xs sm:text-sm text-[#6e7d70]">
+        <p className="text-xs sm:text-sm text-garden-ink-soft">
           {isSignup
             ? 'Every thought has a home. Create your account to start your garden.'
             : 'Log in to pick up where you left off.'}
@@ -171,16 +179,16 @@ export const AuthView: React.FC = () => {
         )}
 
         {isSignup && (
-          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-[#e6e1d5] text-xs text-[#556557] cursor-pointer">
+          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-garden-card border border-garden-line text-xs text-garden-ink-soft cursor-pointer">
             <input
               id="auth-smart-organizing"
               type="checkbox"
               checked={smartOrganizing}
               onChange={(e) => setSmartOrganizing(e.target.checked)}
-              className="mt-0.5 accent-[#3d5a45]"
+              className="mt-0.5 accent-garden-moss"
             />
             <span>
-              <span className="font-semibold text-[#253e2a]">Use Smart organising.</span> New thoughts and your
+              <span className="font-semibold text-garden-ink">Use Smart organising.</span> New thoughts and your
               collection names are sent through our server to an AI service that sorts them into collections. Untick
               to keep sorting on your device only. You can change this anytime in Data &amp; Settings.
             </span>
@@ -196,11 +204,11 @@ export const AuthView: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 px-5 rounded-2xl bg-[#344e3b] hover:bg-[#283e2e] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
+          className="w-full py-3.5 px-5 rounded-full bg-garden-moss hover:bg-garden-moss-dark disabled:opacity-40 disabled:cursor-not-allowed text-garden-paper font-medium text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
         >
           {isSubmitting ? (
             <>
-              <SeedToSproutAnimation className="w-5 h-5 text-white" />
+              <SeedToSproutAnimation className="w-5 h-5 text-garden-paper" />
               <span>{isSignup ? 'Preparing your garden…' : 'Logging in…'}</span>
             </>
           ) : (
@@ -213,16 +221,16 @@ export const AuthView: React.FC = () => {
       </form>
 
       <div className="space-y-3 text-center">
-        <p className="text-xs text-[#6e7d70]">
+        <p className="text-xs text-garden-ink-soft">
           {isSignup ? 'Already have a garden?' : 'New here?'}{' '}
-          <button type="button" onClick={switchMode} className="font-semibold text-[#344e3b] underline underline-offset-2">
+          <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
             {isSignup ? 'Log in' : 'Create an account'}
           </button>
         </p>
         {!isSignup && (
-          <p className="text-[11px] text-[#8a978b]">Forgot your password? Ask the person who invited you to reset it.</p>
+          <p className="text-[11px] text-garden-ink-faint">Forgot your password? Ask the person who invited you to reset it.</p>
         )}
-        <p className="text-[11px] text-[#8a978b] leading-relaxed">
+        <p className="text-[11px] text-garden-ink-faint leading-relaxed">
           Your thoughts are saved to your account on the Thought Garden server, so they're safe if you clear your
           browser or switch devices. Only you can see them in the app, though whoever runs the server can access the
           database.
