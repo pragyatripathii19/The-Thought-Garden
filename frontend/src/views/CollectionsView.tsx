@@ -18,6 +18,7 @@ import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { AutoBadge } from '../components/OrganizeToast';
 import { CollectionIcon } from '../components/CollectionIcon';
+import { ART } from '../lib/art';
 import { COLLECTION_ICONS, COLLECTION_ICON_KEYS, suggestCollectionIcon } from '../lib/collectionIcons';
 
 interface CollectionsViewProps {
@@ -266,8 +267,15 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
   // SCREEN A: Collections Overview
   return (
     <div className="space-y-6 pb-16">
-      {/* Header matching bottom-left reference */}
-      <div className="flex items-center justify-between pb-1">
+      {/* Header under a mossy branch growing in from the right; its vines fade out before the cards. */}
+      <div className="relative overflow-hidden pt-[30%] sm:pt-[13%]">
+        <img
+          src={ART.branch}
+          alt=""
+          aria-hidden="true"
+          className="absolute -top-2 right-0 w-full sm:w-[78%] -scale-x-100 mask-fade-down saturate-[.85] opacity-95 pointer-events-none select-none"
+        />
+      <div className="relative z-10 flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -290,6 +298,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
         >
           <Search className="w-5 h-5" />
         </button>
+      </div>
       </div>
 
       {/* Optional Search Bar */}
