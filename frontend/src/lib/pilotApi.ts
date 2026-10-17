@@ -17,10 +17,12 @@ export async function submitPilotFeedback(feedback: Omit<PilotFeedback, 'created
 }
 
 /**
- * Loads the admin dashboard. Only accounts listed in the server's ADMIN_EMAILS may open it.
+ * Loads the admin dashboard. Only admins may open it (users.is_admin, or an email in ADMIN_EMAILS).
  */
 export async function fetchAdminOverview(): Promise<AdminOverviewData> {
-  return apiFetch<AdminOverviewData>('/admin/overview');
+  // Days ("today", streaks, the chart) are counted in the admin's own time zone.
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  return apiFetch<AdminOverviewData>(`/admin/overview?tz=${encodeURIComponent(tz)}`);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Thought, PilotUserProfile, PilotFeedback } from '../types';
+import { Thought, AdminOverviewData } from '../types';
 import { describeReason } from './profileReasons';
 import { localDateKey } from './date';
 
@@ -90,48 +90,54 @@ export function computeTodayThoughtsCount(thoughts: Thought[]): number {
   return thoughts.filter((t) => t.createdAt && localDateKey(t.createdAt) === todayStr).length;
 }
 
+const pct = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : '—');
+
 /**
- * Generates formatted diagnostic Markdown summary.
+ * A plain-text (Markdown) summary of the whole pilot, from the admin overview.
+ * Counts only: like the dashboard, it never includes thought text.
  */
-export function generatePilotSummaryReport(
-  profile: PilotUserProfile | null,
-  thoughts: Thought[],
-  feedbacks: PilotFeedback[]
-): string {
-  const todayCount = computeTodayThoughtsCount(thoughts);
-  const streak = computeGardenStreak(thoughts);
-  const dailyMetrics = computeThoughtsPerDay(thoughts, 7);
+export function generateAdminSummaryReport(data: AdminOverviewData, now = new Date()): string {
+  const { summary: s, organizing: o, features: f } = data;
+  const people = data.users.map((u) => {
+    const reasons = u.reasons.map((r) => describeReason(r).label).join(', ') || 'no reasons given';
+    return (
+      `- ${u.name}${u.isAdmin ? ' (admin)' : ''}: ${u.totalThoughts} thoughts (${u.thoughtsThisWeek} this week), ` +
+      `active ${u.daysActive30} of the last 30 days, last seen ${new Date(u.lastActiveAt).toLocaleDateString()}; ${reasons}`
+    );
+  });
+  const feedback = data.feedback.map(
+    (fb, i) =>
+      `### ${i + 1}. [${fb.category.toUpperCase()}] Rating: ${fb.rating}/5 (${fb.userName || 'Anonymous'})\n` +
+      `> ${fb.message}\n` +
+      `*Submitted on ${new Date(fb.createdAt).toLocaleString()}*`
+  );
 
-  const report = [
-    `# The Thought Garden — Pilot Diagnostic Summary`,
-    `Generated at: ${new Date().toLocaleString()}`,
+  return [
+    `# The Thought Garden — Pilot Summary`,
+    `Generated ${now.toLocaleString()} (days counted in ${data.timeZone})`,
     ``,
-    `## User Profile`,
-    `- Name: ${profile?.name || 'Anonymous Gardener'}`,
-    `- Email: ${profile?.email || 'None provided'}`,
-    `- Goals / Intent: ${profile?.reasons?.map((r) => describeReason(r).label).join(', ') || 'Not given'}`,
-    `- Joined: ${profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}`,
+    `## Overview`,
+    `- People: ${s.totalUsers} (${s.admins} admin${s.admins === 1 ? '' : 's'})`,
+    `- Active this week: ${s.activeThisWeek} of ${s.totalUsers}; today: ${s.activeToday}`,
+    `- Thoughts this week: ${s.thoughtsThisWeek}; all time: ${s.totalThoughtsLogged}`,
+    `- Feedback messages: ${s.totalFeedback}`,
     ``,
-    `## Engagement & Usage Metrics`,
-    `- Total Thoughts Planted: ${thoughts.length}`,
-    `- Thoughts Planted Today: ${todayCount}`,
-    `- Active Streak: ${streak} day${streak === 1 ? '' : 's'}`,
+    `## Organising`,
+    `- Automatic actions: ${o.actions}, undone: ${o.undone} (${pct(o.undone, o.actions)})`,
+    `- AI (Smart organising): ${o.llm.actions} actions, ${pct(o.llm.undone, o.llm.actions)} undone`,
+    `- On-device: ${o.onDevice.actions} actions, ${pct(o.onDevice.undone, o.onDevice.actions)} undone`,
+    `- Smart organising on for ${o.smartOrganizingOn} of ${s.totalUsers} people`,
     ``,
-    `## Recent 7-Day Activity`,
-    ...dailyMetrics.map((m) => `- ${m.label} (${m.date}): ${m.count} thought${m.count === 1 ? '' : 's'}`),
+    `## Features used`,
+    `- Collections: ${f.collectionsMade} made by people, ${f.collectionsAuto} created automatically`,
+    `- Accepted connections: ${f.connections}`,
+    `- Saved: ${f.savedThoughts} thoughts, ${f.savedCollections} collections`,
+    `- Stages: ${f.stages.seed} seed, ${f.stages.sprout} sprout, ${f.stages.bloom} bloom, ${f.stages.mature} mature`,
     ``,
-    `## Feedback Submissions (${feedbacks.length})`,
-    feedbacks.length === 0
-      ? `*(No feedback submitted yet)*`
-      : feedbacks
-          .map(
-            (fb, idx) =>
-              `### ${idx + 1}. [${fb.category.toUpperCase()}] Rating: ${fb.rating}/5\n` +
-              `> ${fb.message}\n` +
-              `*Submitted on ${new Date(fb.createdAt).toLocaleString()}*`
-          )
-          .join('\n\n'),
+    `## People`,
+    ...(people.length ? people : ['*(No accounts yet)*']),
+    ``,
+    `## Feedback (${data.feedback.length})`,
+    feedback.length ? feedback.join('\n\n') : '*(No feedback submitted yet)*',
   ].join('\n');
-
-  return report;
 }
