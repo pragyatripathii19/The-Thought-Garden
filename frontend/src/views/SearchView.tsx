@@ -6,6 +6,7 @@ import { formatRelativeTime } from '../lib/time';
 import { GrowthStageBadge } from '../components/GrowthStageBadge';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { Thought, Collection, NavTab } from '../types';
+import { ART } from '../lib/art';
 
 interface SearchViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -26,32 +27,38 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
   const hasResults = results.matchingThoughts.length > 0 || results.matchingCollections.length > 0;
 
   return (
-    <div className="space-y-6 pb-16 max-w-2xl mx-auto">
-      <div className="border-b border-[#eee9dc] pb-4">
-        <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+    <div className="space-y-6 pb-16">
+      <div className="relative pt-2">
+        <img
+          src={ART.river}
+          alt=""
+          aria-hidden="true"
+          className="block sm:absolute sm:right-0 sm:-top-2 w-48 sm:w-60 ml-auto mb-2 sm:mb-0 opacity-90 pointer-events-none select-none"
+        />
+        <h2 className="relative font-serif text-[34px] sm:text-[40px] leading-tight font-semibold text-garden-ink tracking-tight">
           Search the Garden
         </h2>
-        <p className="text-xs text-[#718273] mt-0.5">
+        <p className="relative text-sm text-garden-ink-soft mt-1 sm:max-w-[55%]">
           Find thoughts and collections by keywords, phrases, or themes
         </p>
       </div>
 
       {/* Search Input Bar */}
       <div className="relative">
-        <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#8b998d]" />
+        <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-garden-ink-faint" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by keywords, phrases, or collection titles..."
-          className="w-full pl-12 pr-10 py-3.5 bg-white border border-[#e4ded0] rounded-2xl text-sm text-[#233126] placeholder-[#9ca89d] focus:border-[#7a9d83] focus:outline-none shadow-xs"
+          className="w-full pl-12 pr-10 py-3.5 bg-garden-card border border-garden-line rounded-2xl text-sm text-garden-ink placeholder-garden-ink-faint focus:border-[#BFB38F] focus:outline-none"
           autoFocus
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b998d] hover:text-[#233126] p-1 rounded-lg"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-garden-ink-faint hover:text-garden-ink p-1 rounded-lg"
             aria-label="Clear query"
           >
             <X className="w-4 h-4" />
@@ -66,8 +73,8 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
             {/* Matching Collections Section */}
             {results.matchingCollections.length > 0 && (
               <div className="space-y-3">
-                <span className="text-xs font-semibold text-[#6e7d70] uppercase tracking-wider flex items-center gap-1.5 px-1">
-                  <Library className="w-3.5 h-3.5 text-[#3d5a45]" />
+                <span className="text-xs font-semibold text-garden-ink-soft uppercase tracking-wider flex items-center gap-1.5 px-1">
+                  <Library className="w-3.5 h-3.5 text-garden-moss" />
                   <span>Matching Collections ({results.matchingCollections.length})</span>
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -80,15 +87,15 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
                           setActiveCollectionId(col.id);
                           onNavigateTab?.('collections');
                         }}
-                        className="p-4 bg-white border border-[#e2dcd0] hover:border-[#b8caa0] rounded-2xl shadow-xs cursor-pointer transition-colors"
+                        className="p-4 bg-garden-card border border-garden-line hover:border-[#D6CAA6] rounded-2xl cursor-pointer transition-colors"
                       >
-                        <h4 className="font-serif text-base font-semibold text-[#233126]">
+                        <h4 className="font-serif text-xl font-semibold text-garden-ink">
                           {col.name}
                         </h4>
                         {col.description && (
-                          <p className="text-xs text-[#6e7d70] mt-1 line-clamp-2 leading-relaxed">{col.description}</p>
+                          <p className="text-xs text-garden-ink-soft mt-1 line-clamp-2 leading-relaxed">{col.description}</p>
                         )}
-                        <div className="mt-2 text-xs text-[#869688]">
+                        <div className="mt-2 text-xs text-garden-ink-faint">
                           {count} {count === 1 ? 'thought' : 'thoughts'}
                         </div>
                       </div>
@@ -101,8 +108,8 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
             {/* Matching Thoughts Section */}
             {results.matchingThoughts.length > 0 && (
               <div className="space-y-3">
-                <span className="text-xs font-semibold text-[#6e7d70] uppercase tracking-wider flex items-center gap-1.5 px-1">
-                  <BookOpen className="w-3.5 h-3.5 text-[#3d5a45]" />
+                <span className="text-xs font-semibold text-garden-ink-soft uppercase tracking-wider flex items-center gap-1.5 px-1">
+                  <BookOpen className="w-3.5 h-3.5 text-garden-moss" />
                   <span>Matching Thoughts ({results.matchingThoughts.length})</span>
                 </span>
                 <div className="space-y-3">
@@ -110,14 +117,14 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
                     <div
                       key={thought.id}
                       onClick={() => setSelectedThoughtId(thought.id)}
-                      className="p-4 bg-white border border-[#e2dcd0] hover:border-[#b8caa0] rounded-2xl shadow-xs cursor-pointer transition-colors flex items-start justify-between gap-3 group"
+                      className="p-4 bg-garden-card border border-garden-line hover:border-[#D6CAA6] rounded-2xl cursor-pointer transition-colors flex items-start justify-between gap-3 group"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-[#233126] group-hover:text-[#18231a] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm text-garden-ink group-hover:text-garden-ink leading-relaxed whitespace-pre-wrap">
                           {thought.text}
                         </p>
-                        <div className="flex items-center gap-2 text-[11px] text-[#869688] mt-2">
-                          <Clock className="w-3 h-3 text-[#9ba89d]" />
+                        <div className="flex items-center gap-2 text-[11px] text-garden-ink-faint mt-2">
+                          <Clock className="w-3 h-3 text-garden-ink-faint" />
                           <span>{formatRelativeTime(thought.createdAt)}</span>
                         </div>
                       </div>
@@ -129,32 +136,32 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
             )}
           </div>
         ) : (
-          <div className="text-center py-16 px-4 bg-white border border-dashed border-[#e4ded0] rounded-3xl">
-            <div className="w-12 h-12 rounded-full bg-[#f4f1e8] text-[#8b998d] flex items-center justify-center mx-auto mb-3">
+          <div className="text-center py-16 px-4 bg-garden-card border border-dashed border-garden-line rounded-3xl">
+            <div className="w-12 h-12 rounded-full bg-garden-paper-deep text-garden-ink-faint flex items-center justify-center mx-auto mb-3">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h3 className="font-serif text-lg font-medium text-[#233126] mb-1">
+            <h3 className="font-serif text-2xl font-semibold text-garden-ink mb-1">
               No matching thoughts found for "{query}"
             </h3>
-            <p className="text-xs text-[#718273] max-w-sm mx-auto">
+            <p className="text-xs text-garden-ink-soft max-w-sm mx-auto">
               Try searching for shorter fragments or individual words.
             </p>
           </div>
         )
       ) : (
-        <div className="text-center py-16 px-4 bg-white border border-dashed border-[#e4ded0] rounded-3xl">
-          <div className="w-12 h-12 rounded-full bg-[#f4f1e8] text-[#8b998d] flex items-center justify-center mx-auto mb-3">
+        <div className="text-center py-16 px-4 bg-garden-card border border-dashed border-garden-line rounded-3xl">
+          <div className="w-12 h-12 rounded-full bg-garden-paper-deep text-garden-ink-faint flex items-center justify-center mx-auto mb-3">
             <Search className="w-6 h-6" />
           </div>
-          <h3 className="font-serif text-lg font-medium text-[#233126] mb-1">
+          <h3 className="font-serif text-2xl font-semibold text-garden-ink mb-1">
             Looking for something?
           </h3>
-          <p className="text-xs text-[#718273] max-w-sm mx-auto">
+          <p className="text-xs text-garden-ink-soft max-w-sm mx-auto">
             Type any keyword or phrase you remember jotting down. Search works in real-time across your garden.
           </p>
           {collections.length > 0 && (
             <div className="pt-4 flex flex-wrap items-center justify-center gap-1.5 max-w-md mx-auto">
-              <span className="text-[11px] text-[#869688] w-full text-center mb-1">
+              <span className="text-[11px] text-garden-ink-faint w-full text-center mb-1">
                 Quick search by collection:
               </span>
               {collections.map((c) => (
@@ -162,7 +169,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
                   key={c.id}
                   type="button"
                   onClick={() => setQuery(c.name)}
-                  className="px-2.5 py-1 text-xs rounded-full bg-[#f4f1e8] hover:bg-[#eae5d8] text-[#3d5a45] font-medium border border-[#e2dcd0] transition-colors"
+                  className="px-2.5 py-1 text-xs rounded-full bg-garden-paper-deep hover:bg-garden-line text-garden-moss font-medium border border-garden-line transition-colors"
                 >
                   {c.name}
                 </button>

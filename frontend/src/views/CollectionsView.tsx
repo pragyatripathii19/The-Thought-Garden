@@ -17,7 +17,8 @@ import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { AutoBadge } from '../components/OrganizeToast';
-import { COLLECTION_ICONS, COLLECTION_ICON_KEYS, getCollectionIcon, suggestCollectionIcon } from '../lib/collectionIcons';
+import { CollectionIcon } from '../components/CollectionIcon';
+import { COLLECTION_ICONS, COLLECTION_ICON_KEYS, suggestCollectionIcon } from '../lib/collectionIcons';
 
 interface CollectionsViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -108,59 +109,32 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
     }
   };
 
-  const getCollectionIconStyles = (collection: Collection) => {
-    const Icon = getCollectionIcon(collection.iconType);
-
-    if (collection.colorVariant === 'rose' || collection.id === 'col-writing') {
-      return {
-        iconBg: 'bg-[#fae2e3] text-[#8c3b42]',
-        Icon,
-      };
-    }
-    if (collection.colorVariant === 'purple' || collection.id === 'col-things-to-research') {
-      return {
-        iconBg: 'bg-[#e7e4f6] text-[#4f4886]',
-        Icon,
-      };
-    }
-    if (collection.colorVariant === 'amber' || collection.id === 'col-tasks-to-revisit') {
-      return {
-        iconBg: 'bg-[#fae8d4] text-[#855320]',
-        Icon,
-      };
-    }
-    return {
-      iconBg: 'bg-[#dcebdd] text-[#34593e]',
-      Icon,
-    };
-  };
-
   // SCREEN B: Single Collection Detail View
   if (activeCollection) {
     return (
-      <div className="space-y-6 pb-16 max-w-2xl mx-auto">
+      <div className="space-y-6 pb-16">
         {/* Collection Header */}
-        <div className="flex items-start justify-between border-b border-[#eee9dc] pb-4">
+        <div className="flex items-start justify-between pb-1">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setActiveCollectionId(null)}
-              className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              className="p-1.5 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
               aria-label="Back to all collections"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+              <h2 className="font-serif text-[36px] sm:text-[42px] leading-tight font-semibold text-garden-ink tracking-tight">
                 {activeCollection.name}
                 {activeCollection.origin === 'auto' && <AutoBadge className="ml-2 align-middle" />}
               </h2>
-              <p className="text-xs text-[#718273] mt-0.5">
-                {activeThoughts.length} thoughts
+              <p className="text-sm text-garden-ink-soft mt-1">
+                {activeThoughts.length} {activeThoughts.length === 1 ? 'thought' : 'thoughts'}
                 {activeCollection.description && ` • ${activeCollection.description}`}
               </p>
               {activeCollection.origin === 'auto' && activeCollection.autoReason && (
-                <p className="text-[11px] text-[#36618c] mt-1">
+                <p className="text-[11px] text-garden-moss mt-1">
                   Created automatically: {activeCollection.autoReason}
                 </p>
               )}
@@ -171,14 +145,14 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
             <button
               type="button"
               onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
-              className="p-1.5 text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              className="p-1.5 text-garden-ink-faint hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
               aria-label="Collection options"
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
 
             {isOptionsMenuOpen && (
-              <div className="absolute right-0 top-9 z-20 w-44 bg-white border border-[#e4ded0] rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs">
+              <div className="absolute right-0 top-9 z-20 w-44 bg-garden-card border border-garden-line rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs">
                 <button
                   type="button"
                   onClick={() => {
@@ -197,12 +171,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
         {/* Thoughts inside this collection */}
         {activeThoughts.length === 0 ? (
-          <div className="py-16 text-center bg-white border border-dashed border-[#e4ded0] rounded-3xl p-6">
-            <Sprout className="w-8 h-8 mx-auto text-[#628469] mb-2 opacity-80" />
-            <p className="font-serif text-base font-semibold text-[#253227]">
+          <div className="py-16 text-center bg-garden-card border border-dashed border-garden-line rounded-3xl p-6">
+            <Sprout className="w-8 h-8 mx-auto text-garden-moss mb-2 opacity-80" />
+            <p className="font-serif text-xl font-semibold text-garden-ink">
               No thoughts in this collection yet
             </p>
-            <p className="text-xs text-[#718273] mt-1 max-w-sm mx-auto">
+            <p className="text-xs text-garden-ink-soft mt-1 max-w-sm mx-auto">
               Open any thought on the Home screen and tag it with "{activeCollection.name}".
             </p>
           </div>
@@ -216,17 +190,17 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                 <div
                   key={thought.id}
                   onClick={() => setSelectedThoughtId(thought.id)}
-                  className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl shadow-xs hover:shadow-sm cursor-pointer transition-all flex items-start justify-between gap-3 group"
+                  className="bg-garden-card border border-garden-line hover:border-[#D6CAA6] p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3 group"
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-full ${meta.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
                       <CategoryIcon className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm text-[#233126] group-hover:text-[#18231a] leading-relaxed">
+                      <p className="text-sm text-garden-ink group-hover:text-garden-ink leading-relaxed">
                         {thought.text}
                       </p>
-                      <span className="text-[11px] text-[#869688] mt-1 block">
+                      <span className="text-[11px] text-garden-ink-faint mt-1 block">
                         {formatRelativeTime(thought.createdAt)}
                       </span>
                     </div>
@@ -253,31 +227,31 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
         {/* Delete Collection Modal */}
         {collectionToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in">
-            <div className="w-full max-w-md bg-white border border-[#e4ded0] rounded-3xl p-6 shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in">
+            <div className="w-full max-w-md bg-garden-card border border-garden-line rounded-3xl p-6 shadow-xl space-y-4">
               <div className="flex items-center gap-3 text-rose-600">
                 <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
                   <AlertCircle className="w-5 h-5 text-rose-600" />
                 </div>
-                <h3 className="font-serif text-xl font-semibold text-[#233126]">
+                <h3 className="font-serif text-[26px] font-semibold text-garden-ink">
                   Delete "{collectionToDelete.name}"?
                 </h3>
               </div>
-              <p className="text-xs text-[#6e7d70] leading-relaxed bg-[#faf8f4] p-3 rounded-xl border border-[#ede9df]">
+              <p className="text-xs text-garden-ink-soft leading-relaxed bg-[#FDFBF3] p-3 rounded-xl border border-garden-line">
                 <strong>Your thoughts are safe:</strong> Removing this collection will never delete member thoughts.
               </p>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setCollectionToDelete(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-garden-ink-soft hover:bg-garden-line"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleDeleteCollection}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-garden-paper rounded-xl text-xs font-semibold"
                 >
                   Delete Collection
                 </button>
@@ -291,19 +265,19 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
   // SCREEN A: Collections Overview
   return (
-    <div className="space-y-6 pb-16 max-w-2xl mx-auto">
+    <div className="space-y-6 pb-16">
       {/* Header matching bottom-left reference */}
-      <div className="flex items-center justify-between border-b border-[#eee9dc] pb-4">
+      <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => onNavigateTab?.('garden')}
-            className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors sm:hidden"
+            className="p-1.5 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors sm:hidden"
             aria-label="Back to Home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+          <h2 className="font-serif text-[36px] sm:text-[42px] leading-tight font-semibold text-garden-ink tracking-tight">
             Collections
           </h2>
         </div>
@@ -311,7 +285,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
         <button
           type="button"
           onClick={() => setIsSearchActive(!isSearchActive)}
-          className="p-1.5 text-[#6e7d70] hover:text-[#233126] hover:bg-[#ede8dc] rounded-xl transition-colors"
+          className="p-1.5 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
           aria-label="Search collections"
         >
           <Search className="w-5 h-5" />
@@ -321,13 +295,13 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
       {/* Optional Search Bar */}
       {isSearchActive && (
         <div className="relative animate-fade-in">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b998d]" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-garden-ink-faint" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search collections..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e4ded0] rounded-xl text-xs text-[#233126] focus:border-[#7a9d83] focus:outline-none"
+            className="w-full pl-10 pr-4 py-2.5 bg-garden-card border border-garden-line rounded-xl text-xs text-garden-ink focus:border-[#BFB38F] focus:outline-none"
             autoFocus
           />
         </div>
@@ -337,36 +311,32 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
       <div className="space-y-3">
         {filteredCollections.map((col) => {
           const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
-          const styles = getCollectionIconStyles(col);
-          const Icon = styles.Icon;
 
           return (
             <div
               key={col.id}
               onClick={() => setActiveCollectionId(col.id)}
-              className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all group"
+              className="bg-garden-card border border-garden-line hover:border-[#D6CAA6] p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className={`w-10 h-10 rounded-full ${styles.iconBg} flex items-center justify-center shrink-0`}>
-                  <Icon className="w-5 h-5" />
-                </div>
+                <CollectionIcon collection={col} />
                 <div className="min-w-0">
-                  <h3 className="font-serif text-base font-semibold text-[#233126] leading-tight">
+                  <h3 className="font-serif text-xl font-semibold text-garden-ink leading-tight">
                     {col.name}
                     {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
                   </h3>
-                  <div className="text-[11px] text-[#788779] font-medium mt-0.5">
-                    {count} thoughts
+                  <div className="text-[11px] text-garden-ink-soft font-medium mt-0.5">
+                    {count} {count === 1 ? 'thought' : 'thoughts'}
                   </div>
                   {col.description && (
-                    <p className="text-xs text-[#6e7d70] truncate mt-0.5">
+                    <p className="text-xs text-garden-ink-soft truncate mt-0.5">
                       {col.description}
                     </p>
                   )}
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-[#9cb09f] group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <ChevronRight className="w-5 h-5 text-garden-ink-faint group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
           );
         })}
@@ -374,16 +344,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
         {/* New Collection Action Card */}
         <div
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-[#fcfbf8] border border-dashed border-[#d8d2c4] hover:border-[#7a9d83] p-4 rounded-2xl flex items-center gap-3.5 cursor-pointer transition-colors group mt-2"
+          className="bg-[#FDFBF3] border border-dashed border-garden-line hover:border-[#D6CAA6] p-4 rounded-2xl flex items-center gap-3.5 cursor-pointer transition-colors group mt-2"
         >
-          <div className="w-10 h-10 rounded-full bg-[#ede9dd] group-hover:bg-[#dce9df] text-[#5e6c5f] group-hover:text-[#34593e] flex items-center justify-center shrink-0 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-garden-paper-deep group-hover:bg-garden-pill/60 text-garden-ink-soft group-hover:text-garden-moss flex items-center justify-center shrink-0 transition-colors">
             <Plus className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-serif text-base font-semibold text-[#233126]">
+            <h3 className="font-serif text-xl font-semibold text-garden-ink">
               New Collection
             </h3>
-            <p className="text-xs text-[#788779]">
+            <p className="text-xs text-garden-ink-soft">
               Create a custom collection (optional).
             </p>
           </div>
@@ -392,16 +362,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
       {/* Create Collection Dialog Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md bg-white border border-[#e4ded0] rounded-3xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc]">
-              <h3 className="font-serif text-xl font-bold text-[#233126]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md bg-garden-card border border-garden-line rounded-3xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-garden-line">
+              <h3 className="font-serif text-[26px] font-semibold text-garden-ink">
                 New Collection
               </h3>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-[#7c8779] hover:text-[#233126] rounded-lg"
+                className="p-1 text-garden-ink-faint hover:text-garden-ink rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -409,7 +379,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
             <form onSubmit={handleCreateCollection} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft mb-1.5">
                   Collection Name *
                 </label>
                 <input
@@ -418,13 +388,13 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                   onChange={(e) => setNewColName(e.target.value)}
                   placeholder="e.g. Work Reflections, Book Notes..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2.5 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-none text-[#233126] text-sm"
+                  className="w-full px-4 py-2.5 bg-[#FDFBF3] rounded-xl border border-garden-line focus:border-[#BFB38F] focus:outline-none text-garden-ink text-sm"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft mb-1.5">
                   Description (optional)
                 </label>
                 <textarea
@@ -433,18 +403,18 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                   onChange={(e) => setNewColDesc(e.target.value)}
                   placeholder="Brief note on what belongs here..."
                   disabled={isSaving}
-                  className="w-full px-4 py-2 bg-[#faf8f4] rounded-xl border border-[#e4ded0] focus:border-[#7a9d83] focus:outline-none text-[#233126] text-sm resize-none"
+                  className="w-full px-4 py-2 bg-[#FDFBF3] rounded-xl border border-garden-line focus:border-[#BFB38F] focus:outline-none text-garden-ink text-sm resize-none"
                 />
               </div>
 
               {/* Color Theme Selector */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft mb-1.5">
                   Color Theme
                 </label>
                 <div className="flex items-center gap-2 flex-wrap">
                   {[
-                    { id: 'green', label: 'Sage', bg: 'bg-[#dcebdd] border-[#b8d4bd]' },
+                    { id: 'green', label: 'Sage', bg: 'bg-garden-pill/60 border-[#D6CAA6]' },
                     { id: 'rose', label: 'Rose', bg: 'bg-[#fae2e3] border-[#eec2c5]' },
                     { id: 'purple', label: 'Lavender', bg: 'bg-[#e7e4f6] border-[#cecaec]' },
                     { id: 'amber', label: 'Amber', bg: 'bg-[#fae8d4] border-[#ebd0b4]' },
@@ -454,10 +424,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                       type="button"
                       onClick={() => setSelectedColor(c.id as CollectionColorVariant)}
                       className={`h-8 px-3 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all ${c.bg} ${
-                        selectedColor === c.id ? 'ring-2 ring-[#3d5a45] ring-offset-1 font-semibold' : 'opacity-70 hover:opacity-100'
+                        selectedColor === c.id ? 'ring-2 ring-garden-moss ring-offset-1 font-semibold' : 'opacity-70 hover:opacity-100'
                       }`}
                     >
-                      {selectedColor === c.id && <Check className="w-3 h-3 text-[#233126]" />}
+                      {selectedColor === c.id && <Check className="w-3 h-3 text-garden-ink" />}
                       <span>{c.label}</span>
                     </button>
                   ))}
@@ -467,10 +437,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
               {/* Icon Selector */}
               <div>
                 <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft">
                     Icon: {COLLECTION_ICONS[selectedIcon]?.label ?? 'Leaf'}
                   </span>
-                  <span className="text-[11px] text-[#8a978b]">
+                  <span className="text-[11px] text-garden-ink-faint">
                     {manualIcon ? (
                       <button type="button" onClick={() => setManualIcon(null)} className="underline underline-offset-2">
                         Use suggested
@@ -497,8 +467,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                         onClick={() => setManualIcon(key)}
                         className={`aspect-square rounded-xl border flex items-center justify-center transition-all ${
                           isSelected
-                            ? 'bg-[#3d5a45] text-white border-[#3d5a45] shadow-xs'
-                            : 'bg-white text-[#5d6b5e] border-[#e4ded0] hover:bg-[#faf8f4]'
+                            ? 'bg-garden-moss text-garden-paper border-garden-moss'
+                            : 'bg-garden-card text-garden-ink-soft border-garden-line hover:bg-[#FDFBF3]'
                         }`}
                         title={label}
                         aria-label={label}
@@ -521,14 +491,14 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-garden-ink-soft hover:bg-garden-line"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!newColName.trim() || isSaving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#3d5a45] hover:bg-[#344e3b] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-garden-moss hover:bg-garden-moss disabled:opacity-50 text-garden-paper rounded-full text-xs font-semibold"
                 >
                   <Check className="w-4 h-4" />
                   <span>{isSaving ? 'Creating...' : 'Create Collection'}</span>

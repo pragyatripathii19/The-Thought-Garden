@@ -4,6 +4,7 @@ import { useThoughts } from '../context/StorageContext';
 import { useAuth } from '../context/AuthContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
 import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
+import { LeafLogoIcon } from '../components/BotanicalIllustrations';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -76,33 +77,33 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-16 max-w-2xl mx-auto">
-      <div className="border-b border-[#eee9dc] pb-4">
-        <h2 className="font-serif text-2xl font-bold text-[#233126] tracking-tight">
+    <div className="space-y-6 pb-16">
+      <div className="border-b border-garden-line pb-4">
+        <h2 className="font-serif text-[36px] sm:text-[42px] leading-tight font-semibold text-garden-ink tracking-tight">
           Data & Settings
         </h2>
-        <p className="text-xs text-[#718273] mt-0.5">
+        <p className="text-sm text-garden-ink-soft mt-1">
           Manage your personal garden data and backups
         </p>
       </div>
 
       {/* Storage Architecture Notice */}
-      <div className="bg-[#f2f7f3] border border-[#d6e5d8] rounded-2xl p-5 shadow-xs">
+      <div className="bg-garden-pill/60 border border-[#CBD5AE] rounded-2xl p-5">
         <div className="flex items-start gap-3.5">
-          <div className="w-9 h-9 rounded-xl bg-[#3d5a45] text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-garden-moss text-garden-paper flex items-center justify-center shrink-0">
             <Shield className="w-5 h-5" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="font-serif text-base font-semibold text-[#233126]">
+            <h3 className="font-serif text-xl font-semibold text-garden-ink">
               Saved to your account
             </h3>
-            <p className="text-xs text-[#596d5e] leading-relaxed">
+            <p className="text-xs text-garden-ink-soft leading-relaxed">
               Your thoughts, collections and connections are stored in your account on the Thought Garden server, so
               they're safe if you clear this browser and they appear on any device you log in from. Only you can see
               them in the app; whoever runs the server can access the database. The admin dashboard shows counts
               only, never what you wrote.
             </p>
-            <p className="text-xs text-[#596d5e] leading-relaxed">
+            <p className="text-xs text-garden-ink-soft leading-relaxed">
               Smart organising (on unless you turned it off below) also sends new thoughts to an AI service to sort
               them.
             </p>
@@ -114,27 +115,27 @@ export const SettingsView: React.FC = () => {
       <OrganizingSettingsCard />
 
       {/* Data Backup & Restore */}
-      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-        <h3 className="font-serif text-lg font-semibold text-[#233126]">
+      <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
+        <h3 className="font-serif text-2xl font-semibold text-garden-ink">
           Data Portability
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Export */}
-          <div className="p-4 rounded-xl bg-[#faf8f4] border border-[#e4ded0] flex flex-col justify-between min-h-[140px]">
+          <div className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line flex flex-col justify-between min-h-[140px]">
             <div>
-              <div className="flex items-center gap-2 text-[#233126] font-medium text-xs mb-1">
-                <Download className="w-4 h-4 text-[#3d5a45]" />
+              <div className="flex items-center gap-2 text-garden-ink font-medium text-xs mb-1">
+                <Download className="w-4 h-4 text-garden-moss" />
                 <span>Export Garden</span>
               </div>
-              <p className="text-xs text-[#718273] leading-relaxed mb-3">
+              <p className="text-xs text-garden-ink-soft leading-relaxed mb-3">
                 Download a full JSON backup of thoughts, connections, and collections.
               </p>
             </div>
             <button
               type="button"
               onClick={exportBackup}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#3d5a45] hover:bg-[#344e3b] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-garden-moss hover:bg-garden-moss text-garden-paper rounded-full text-xs font-semibold transition-transform active:scale-95"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export as JSON</span>
@@ -142,13 +143,13 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {/* Import */}
-          <div className="p-4 rounded-xl bg-[#faf8f4] border border-[#e4ded0] flex flex-col justify-between min-h-[140px]">
+          <div className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line flex flex-col justify-between min-h-[140px]">
             <div>
-              <div className="flex items-center gap-2 text-[#233126] font-medium text-xs mb-1">
-                <Upload className="w-4 h-4 text-[#3d5a45]" />
+              <div className="flex items-center gap-2 text-garden-ink font-medium text-xs mb-1">
+                <Upload className="w-4 h-4 text-garden-moss" />
                 <span>Import Backup</span>
               </div>
-              <p className="text-xs text-[#718273] leading-relaxed mb-3">
+              <p className="text-xs text-garden-ink-soft leading-relaxed mb-3">
                 Restore a previously exported Thought Garden backup safely.
               </p>
             </div>
@@ -162,9 +163,9 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenImport}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#233126] rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink rounded-xl text-xs font-semibold transition-transform active:scale-95"
             >
-              <Upload className="w-3.5 h-3.5 text-[#738274]" />
+              <Upload className="w-3.5 h-3.5 text-garden-ink-soft" />
               <span>Choose Backup File</span>
             </button>
           </div>
@@ -172,49 +173,49 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Storage Information */}
-      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs">
-        <h3 className="font-serif text-lg font-semibold text-[#233126] mb-3.5 flex items-center gap-2">
-          <HardDrive className="w-4 h-4 text-[#738274]" />
+      <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6">
+        <h3 className="font-serif text-2xl font-semibold text-garden-ink mb-3.5 flex items-center gap-2">
+          <HardDrive className="w-4 h-4 text-garden-ink-soft" />
           <span>Storage Information</span>
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-          <div className="p-3 rounded-xl bg-[#faf8f4] border border-[#e4ded0]">
-            <div className="text-xl font-serif font-bold text-[#233126]">{thoughts.length}</div>
-            <div className="text-[11px] text-[#718273] mt-0.5">Thoughts</div>
+          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
+            <div className="text-[26px] font-serif font-semibold text-garden-ink">{thoughts.length}</div>
+            <div className="text-[11px] text-garden-ink-soft mt-0.5">Thoughts</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#faf8f4] border border-[#e4ded0]">
-            <div className="text-xl font-serif font-bold text-[#233126]">{collections.length}</div>
-            <div className="text-[11px] text-[#718273] mt-0.5">Collections</div>
+          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
+            <div className="text-[26px] font-serif font-semibold text-garden-ink">{collections.length}</div>
+            <div className="text-[11px] text-garden-ink-soft mt-0.5">Collections</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#faf8f4] border border-[#e4ded0]">
-            <div className="text-xl font-serif font-bold text-[#233126]">{connections.length}</div>
-            <div className="text-[11px] text-[#718273] mt-0.5">Connections</div>
+          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
+            <div className="text-[26px] font-serif font-semibold text-garden-ink">{connections.length}</div>
+            <div className="text-[11px] text-garden-ink-soft mt-0.5">Connections</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#faf8f4] border border-[#e4ded0]">
-            <div className="text-base font-serif font-bold text-[#233126] truncate">Your account</div>
-            <div className="text-[11px] text-[#718273] mt-0.5">Stored in</div>
+          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
+            <div className="text-xl font-serif font-semibold text-garden-ink truncate">Your account</div>
+            <div className="text-[11px] text-garden-ink-soft mt-0.5">Stored in</div>
           </div>
         </div>
       </div>
 
       {/* Pilot Admin & Telemetry Card */}
-      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <h3 className="font-serif text-lg font-semibold text-[#233126] flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-[#edf5ee] text-[#34593e] flex items-center justify-center text-xs">
-                🌱
+            <h3 className="font-serif text-2xl font-semibold text-garden-ink flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-garden-pill/60 text-garden-moss flex items-center justify-center text-xs">
+                <LeafLogoIcon className="w-3.5 h-3.5" />
               </span>
               <span>{isAdmin ? 'Pilot Testing & Admin' : 'Feedback & Profile'}</span>
             </h3>
-            <p className="text-xs text-[#718273] leading-relaxed">
+            <p className="text-xs text-garden-ink-soft leading-relaxed">
               {isAdmin
                 ? 'Track who registered, thoughts planted per day, and feedback submitted by pilot testers.'
                 : 'Tell us what works and what doesn\u2019t, or update how we greet you.'}
             </p>
           </div>
           {isAdmin && (
-            <span className="text-[10px] font-mono text-[#8a998c] bg-[#f5f2e9] px-2 py-1 rounded-md border border-[#e5dfd2]">
+            <span className="text-[10px] font-mono text-garden-ink-faint bg-garden-paper-deep px-2 py-1 rounded-md border border-garden-line">
               Ctrl + Shift + A
             </span>
           )}
@@ -225,7 +226,7 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAdminModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#344e3b] hover:bg-[#2b4131] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-garden-moss hover:bg-garden-moss-dark text-garden-paper rounded-full text-xs font-semibold transition-transform active:scale-95"
             >
               <span>Open Pilot Admin Dashboard</span>
             </button>
@@ -234,15 +235,16 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsFeedbackModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e0ebe2] text-[#34593e] border border-[#d4e4d7] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-garden-pill/60 hover:bg-garden-pill/60 text-garden-moss border border-[#CBD5AE] rounded-xl text-xs font-semibold transition-colors"
           >
-            <span>🌱 Give Feedback</span>
+            <LeafLogoIcon className="w-3.5 h-3.5" />
+            <span>Give Feedback</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsOnboardingOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#4d5d4f] rounded-xl text-xs font-medium transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink-soft rounded-xl text-xs font-medium transition-colors"
           >
             <span>Edit Profile & Intent</span>
           </button>
@@ -250,21 +252,21 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Account */}
-      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#edf5ee] text-[#34593e] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-garden-pill/60 text-garden-moss flex items-center justify-center shrink-0">
             <UserRound className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-serif text-base font-semibold text-[#233126]">Account</h3>
-            <p className="text-xs text-[#718273] truncate">Signed in as {userProfile?.email}</p>
+            <h3 className="font-serif text-xl font-semibold text-garden-ink">Account</h3>
+            <p className="text-xs text-garden-ink-soft truncate">Signed in as {userProfile?.email}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#233126] rounded-xl text-xs font-semibold disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink rounded-xl text-xs font-semibold disabled:opacity-50"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>{isLoggingOut ? 'Logging out\u2026' : 'Log out'}</span>
@@ -272,13 +274,13 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Danger Zone: Account Deletion */}
-      <div className="bg-[#fff8f8] border border-[#f3d6d6] rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+      <div className="bg-[#fff8f8] border border-[#f3d6d6] rounded-2xl p-5 sm:p-6 space-y-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-serif text-base font-semibold text-red-950">
+            <h3 className="font-serif text-xl font-semibold text-red-950">
               Danger Zone: Delete Account
             </h3>
             <p className="text-xs text-[#825454] leading-relaxed">
@@ -292,7 +294,7 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsConfirmDeleteOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-garden-paper rounded-xl text-xs font-semibold transition-transform active:scale-95"
           >
             <span>Delete Account</span>
           </button>
@@ -304,12 +306,12 @@ export const SettingsView: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
           onClick={closeDeleteDialog}
         >
           <form
             onSubmit={runDelete}
-            className="bg-white border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            className="bg-garden-card border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
@@ -317,7 +319,7 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div className="text-center space-y-1.5">
-              <h3 className="font-serif text-lg font-bold text-red-950">
+              <h3 className="font-serif text-2xl font-semibold text-red-950">
                 Are you absolutely sure?
               </h3>
               <p className="text-xs text-[#6e5858] leading-relaxed">
@@ -351,7 +353,7 @@ export const SettingsView: React.FC = () => {
                 autoFocus
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#f1c9c9] text-sm text-[#233126] focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-garden-card border border-[#f1c9c9] text-sm text-garden-ink focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
               />
             </div>
 
@@ -366,14 +368,14 @@ export const SettingsView: React.FC = () => {
                 type="button"
                 disabled={isDeleting}
                 onClick={closeDeleteDialog}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#546255] hover:bg-[#f3f0e8] transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-garden-ink-soft hover:bg-garden-paper-deep transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isDeleting || !deletePassword}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-garden-paper rounded-xl text-xs font-semibold transition-transform active:scale-95"
               >
                 <span>{isDeleting ? 'Deleting everything\u2026' : 'Yes, delete my account'}</span>
               </button>
