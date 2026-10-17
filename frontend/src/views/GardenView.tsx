@@ -65,14 +65,14 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
       Boolean(item.source && item.target)
     );
 
-  // Time-of-day greeting, with a bee by day and the moon in the evening.
+  // Time-of-day greeting: the sun in the morning and afternoon, the moon in the evening.
   const hour = new Date().getHours();
   const getGreeting = () => {
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
-  const isNight = hour >= 18 || hour < 5;
+  const isEvening = hour >= 17;
 
   const handlePlant = async () => {
     const trimmed = input.trim();
@@ -119,14 +119,14 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
         <section className="pt-4 md:pt-8 space-y-1.5">
           <h2 className="font-serif text-[40px] sm:text-[46px] leading-[1.05] font-semibold tracking-tight text-garden-ink">
             {getGreeting()},{' '}
-            {/* The name and the moon/bee wrap together, so the icon never sits alone. */}
+            {/* The name and the sun/moon wrap together, so the icon never sits alone. */}
             <span className="whitespace-nowrap">
               {firstName}
               <img
-                src={isNight ? ART.moon : ART.bee}
+                src={isEvening ? ART.moon : ART.sun}
                 alt=""
                 aria-hidden="true"
-                className={`inline-block select-none ml-3 ${isNight ? 'w-9 sm:w-10 align-[-0.1em]' : 'w-11 sm:w-12 -rotate-12 align-[0.1em]'}`}
+                className={`inline-block select-none ml-3 ${isEvening ? 'w-9 sm:w-10 align-[-0.1em]' : 'w-11 sm:w-12 align-[-0.05em]'}`}
               />
             </span>
           </h2>
