@@ -27,18 +27,12 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
   const hasResults = results.matchingThoughts.length > 0 || results.matchingCollections.length > 0;
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="relative z-10 space-y-6 pb-16">
       <div className="relative pt-2">
-        <img
-          src={ART.river}
-          alt=""
-          aria-hidden="true"
-          className="block sm:absolute sm:right-0 sm:-top-2 w-48 sm:w-60 ml-auto mb-2 sm:mb-0 opacity-90 pointer-events-none select-none"
-        />
         <h2 className="relative font-serif text-[34px] sm:text-[40px] leading-tight font-semibold text-garden-ink tracking-tight">
           Search the Garden
         </h2>
-        <p className="relative text-sm text-garden-ink-soft mt-1 sm:max-w-[55%]">
+        <p className="relative text-sm text-garden-ink-soft mt-1">
           Find thoughts and collections by keywords, phrases, or themes
         </p>
       </div>
@@ -178,6 +172,14 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
           )}
         </div>
       )}
+
+      {/* A cat in the corner, looking up at the search box. Sits behind the results. */}
+      <img
+        src={ART.cat}
+        alt=""
+        aria-hidden="true"
+        className="fixed -z-10 right-2 bottom-[74px] md:right-8 md:bottom-0 w-[4.5rem] md:w-40 pointer-events-none select-none"
+      />
 
       {/* Detail Modal for clicking a search result thought */}
       <ThoughtDetailModal
