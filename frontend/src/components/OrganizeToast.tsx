@@ -69,7 +69,7 @@ export const OrganizeToast: React.FC = () => {
 export const AutoBadge: React.FC<{ title?: string; className?: string }> = ({ title, className = '' }) => (
   <span
     title={title || 'Organised automatically — you can undo or change this anytime'}
-    className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-[#eef4fb] text-[#36618c] border border-[#d4e4f5] ${className}`}
+    className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-garden-pill/70 text-garden-moss border border-[#CBD5AE] ${className}`}
   >
     <Leaf className="w-2.5 h-2.5" />
     Auto

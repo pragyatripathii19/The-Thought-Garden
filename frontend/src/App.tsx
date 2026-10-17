@@ -52,7 +52,7 @@ function AppContent() {
   }, [isAdmin, setIsAdminModalOpen, setIsFeedbackModalOpen]);
 
   return (
-    <div className="min-h-screen bg-[#faf8f4] flex flex-col md:flex-row font-sans text-[#233126]">
+    <div className="min-h-screen flex flex-col md:flex-row font-sans text-garden-ink">
       {/* Desktop Sidebar (>= md) */}
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 

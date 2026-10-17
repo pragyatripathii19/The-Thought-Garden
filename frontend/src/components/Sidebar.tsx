@@ -4,6 +4,7 @@ import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 import { getDailyQuote } from '../lib/quotes';
+import { ART } from '../lib/art';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -24,27 +25,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 shrink-0 min-h-screen bg-[#faf8f3] border-r border-[#ece7dd] p-5 justify-between select-none">
-        {/* Top: Brand & Navigation */}
-        <div className="space-y-7">
-          {/* Brand Header */}
-          <div
+      <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen overflow-y-auto overflow-x-hidden bg-garden-sidebar/80 border-r border-garden-line select-none">
+        <div className="relative z-10 px-5 pt-7 space-y-8">
+          {/* Brand: stacked serif wordmark with a sprig */}
+          <button
+            type="button"
             onClick={() => onTabChange('garden')}
-            className="flex items-center gap-3 cursor-pointer group px-2 pt-1"
+            className="flex items-start gap-1.5 px-2 text-left group"
+            aria-label="The Thought Garden, go to Home"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#e6ede7] flex items-center justify-center text-[#385440] group-hover:scale-105 transition-transform">
-              <LeafLogoIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="font-serif text-lg font-bold tracking-tight text-[#253227] group-hover:text-[#385440] transition-colors leading-tight">
-                The Thought<br />Garden
-              </h1>
-            </div>
-          </div>
+            <span className="font-serif text-[27px] font-semibold leading-[0.95] tracking-tight text-garden-ink group-hover:text-garden-moss transition-colors">
+              The
+              <br />
+              Thought
+              <br />
+              Garden
+            </span>
+            <LeafLogoIcon className="w-6 h-6 mt-6 text-garden-moss -rotate-12" />
+          </button>
 
-          {/* Navigation Items */}
-          <nav className="space-y-1.5" aria-label="Main Navigation">
-            {navItems.map((item) => {
+          {/* Navigation */}
+          <nav className="space-y-1" aria-label="Main Navigation">
+            {[...navItems, { id: 'settings' as NavTab, label: 'Data & Settings', icon: SlidersHorizontal }].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
@@ -52,69 +54,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                   key={item.id}
                   type="button"
                   onClick={() => onTabChange(item.id)}
-                  className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all text-left ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[15px] transition-colors text-left ${
                     isActive
-                      ? 'bg-[#e7eee8] text-[#263b2c] shadow-xs font-semibold'
-                      : 'text-[#5d695e] hover:text-[#253227] hover:bg-[#f1ece1]'
+                      ? 'bg-garden-pill text-garden-ink font-semibold'
+                      : 'text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep/70'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#344f3b]' : 'text-[#7d8b7e]'}`} />
+                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-garden-moss' : 'text-garden-ink-faint'}`} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
+          </nav>
 
-            {/* Settings Item */}
+          {/* Learn & feedback */}
+          <div className="space-y-1 border-t border-garden-line/80 pt-4">
             <button
               type="button"
-              onClick={() => onTabChange('settings')}
-              className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all text-left ${
-                activeTab === 'settings'
-                  ? 'bg-[#e7eee8] text-[#263b2c] shadow-xs font-semibold'
-                  : 'text-[#5d695e] hover:text-[#253227] hover:bg-[#f1ece1]'
-              }`}
+              onClick={() => setIsLearnModalOpen(true)}
+              className="w-full flex items-center gap-3 px-3.5 py-1.5 rounded-xl text-sm text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep/70 transition-colors"
             >
-              <SlidersHorizontal className={`w-4 h-4 ${activeTab === 'settings' ? 'text-[#344f3b]' : 'text-[#7d8b7e]'}`} />
-              <span>Data & Settings</span>
+              <Compass className="w-4 h-4 text-garden-ink-faint" />
+              <span>Learn &amp; Explore</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="w-full flex items-center gap-3 px-3.5 py-1.5 rounded-xl text-sm text-garden-moss font-semibold hover:bg-garden-paper-deep/70 transition-colors"
+            >
+              <LeafLogoIcon className="w-4 h-4" />
+              <span>Share pilot feedback</span>
+            </button>
+          </div>
 
-            {/* Learn & Explore Modal Trigger */}
-            <div className="pt-2 space-y-1.5">
-              <button
-                type="button"
-                onClick={() => setIsLearnModalOpen(true)}
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-medium text-[#657367] hover:text-[#263b2c] hover:bg-[#f1ece1] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Compass className="w-4 h-4 text-[#8a998c]" />
-                  <span>Learn & Explore</span>
-                </div>
-                <span className="text-[#96a497]">&rsaquo;</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsFeedbackModalOpen(true)}
-                className="w-full flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold text-[#34593e] bg-[#edf5ee] hover:bg-[#e1ece2] border border-[#d4e4d7] transition-colors shadow-2xs"
-              >
-                <span>🌱</span>
-                <span>Share Pilot Feedback</span>
-              </button>
-            </div>
-          </nav>
+          {/* Daily quote */}
+          <figure className="px-3.5">
+            <blockquote className="font-serif italic text-[16px] leading-snug text-garden-ink-soft">
+              {getDailyQuote()}
+            </blockquote>
+          </figure>
         </div>
 
-        {/* Bottom Message / Botanical Quote */}
-        <div className="pt-6 border-t border-[#eee9dc]">
-          <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#f4efe5]/60 border border-[#e8e2d4]/70">
-            <div className="w-6 h-6 shrink-0 rounded-full bg-[#e3ece4] flex items-center justify-center text-[#46654f] mt-0.5">
-              <LeafLogoIcon className="w-3.5 h-3.5" />
-            </div>
-            <p className="text-xs text-[#616e63] leading-relaxed">
-              {getDailyQuote()}
-            </p>
-          </div>
+        {/* A tree planted at the bottom edge */}
+        <div className="mt-auto pt-6 px-6 relative z-0 pointer-events-none flex justify-center" aria-hidden="true">
+          <img src={ART.tree} alt="" className="w-44 max-h-[38vh] object-contain object-bottom -mb-1" />
         </div>
       </aside>
 
