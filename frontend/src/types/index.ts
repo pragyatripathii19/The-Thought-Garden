@@ -44,6 +44,8 @@ export interface Collection {
   origin?: CollectionOrigin;
   /** Why the organiser created this collection. */
   autoReason?: string;
+  /** Bookmarked: shown on the Saved tab. */
+  isSaved?: boolean;
 }
 
 /** Locally computed text embedding for a thought. Never exported or sent anywhere. */

@@ -71,6 +71,7 @@ interface StorageContextValue {
   refreshThoughts: () => Promise<void>;
   toggleThoughtCollection: (thoughtId: string, collectionId: string) => Promise<Thought>;
   toggleSaveThought: (id: string) => Promise<Thought>;
+  toggleSaveCollection: (id: string) => Promise<Collection>;
   dismissRediscoveredThought: (id: string) => void;
   // Collection actions
   createCollection: (
@@ -80,7 +81,13 @@ interface StorageContextValue {
   ) => Promise<Collection>;
   updateCollection: (
     id: string,
-    updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+    updates: {
+      name?: string;
+      description?: string;
+      colorVariant?: CollectionColorVariant;
+      iconType?: CollectionIconType;
+      isSaved?: boolean;
+    }
   ) => Promise<Collection>;
   deleteCollection: (id: string) => Promise<void>;
   refreshCollections: () => Promise<void>;
@@ -491,7 +498,13 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const updateCollection = useCallback(
     async (
       id: string,
-      updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+      updates: {
+      name?: string;
+      description?: string;
+      colorVariant?: CollectionColorVariant;
+      iconType?: CollectionIconType;
+      isSaved?: boolean;
+    }
     ): Promise<Collection> => {
       try {
         setError(null);
@@ -506,6 +519,17 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       }
     },
     [collectionRepository]
+  );
+
+  const toggleSaveCollection = useCallback(
+    async (id: string): Promise<Collection> => {
+      const collection = collections.find((c) => c.id === id);
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+      return updateCollection(id, { isSaved: !collection.isSaved });
+    },
+    [collections, updateCollection]
   );
 
   const deleteCollection = useCallback(
@@ -734,6 +758,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         refreshThoughts,
         toggleThoughtCollection,
         toggleSaveThought,
+        toggleSaveCollection,
         dismissRediscoveredThought,
         createCollection,
         updateCollection,

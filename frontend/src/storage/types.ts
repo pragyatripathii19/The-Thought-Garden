@@ -106,6 +106,7 @@ export interface UpdateCollectionDTO {
   description?: string;
   colorVariant?: CollectionColorVariant;
   iconType?: CollectionIconType;
+  isSaved?: boolean;
 }
 
 /**

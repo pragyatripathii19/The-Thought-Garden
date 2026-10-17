@@ -107,6 +107,7 @@ function parseCollection(body) {
     iconType: iconKey(body.iconType),
     origin: oneOf(body.origin, ORIGINS, 'origin'),
     autoReason: text(body.autoReason, 'autoReason', { max: MAX_DESCRIPTION, required: false }),
+    isSaved: Boolean(body.isSaved),
     createdAt: timestamp(body.createdAt, 'createdAt'),
     updatedAt: timestamp(body.updatedAt, 'updatedAt'),
   };
@@ -181,6 +182,7 @@ function collectionFromRow(r) {
     iconType: r.icon_type || undefined,
     origin: r.origin || undefined,
     autoReason: r.auto_reason || undefined,
+    isSaved: r.is_saved || undefined,
   };
 }
 
@@ -254,8 +256,8 @@ function thoughtRecord(t) {
     classified_at: t.classifiedAt,
     created_at: t.createdAt,
     updated_at: t.updatedAt,
-    edit_count: t.editCount,
-    stage_manual: t.stageManual,
+    edit_count: t.editCount || 0,
+    stage_manual: Boolean(t.stageManual),
   };
 }
 
@@ -338,7 +340,8 @@ async function listCollections(db, userId) {
   return rows.map(collectionFromRow);
 }
 
-const COLLECTION_COLUMNS = 'id, name, description, color_variant, icon_type, origin, auto_reason, created_at, updated_at';
+const COLLECTION_COLUMNS =
+  'id, name, description, color_variant, icon_type, origin, auto_reason, created_at, updated_at, is_saved';
 
 function collectionRecord(c) {
   return {
@@ -349,13 +352,14 @@ function collectionRecord(c) {
     icon_type: c.iconType,
     origin: c.origin,
     auto_reason: c.autoReason,
+    is_saved: Boolean(c.isSaved),
     created_at: c.createdAt,
     updated_at: c.updatedAt,
   };
 }
 
 const COLLECTION_RECORD = `x(id text, name text, description text, color_variant text, icon_type text, origin text,
-  auto_reason text, created_at timestamptz, updated_at timestamptz)`;
+  auto_reason text, created_at timestamptz, updated_at timestamptz, is_saved boolean)`;
 
 async function upsertCollection(db, userId, c) {
   const { rows } = await db.query(
@@ -364,6 +368,7 @@ async function upsertCollection(db, userId, c) {
      ON CONFLICT (user_id, id) DO UPDATE SET
        name = EXCLUDED.name, description = EXCLUDED.description, color_variant = EXCLUDED.color_variant,
        icon_type = EXCLUDED.icon_type, origin = EXCLUDED.origin, auto_reason = EXCLUDED.auto_reason,
+       is_saved = EXCLUDED.is_saved,
        updated_at = EXCLUDED.updated_at
      RETURNING *`,
     [userId, JSON.stringify([collectionRecord(c)])]

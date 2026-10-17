@@ -10,6 +10,7 @@ import {
   X,
   Check,
   AlertCircle,
+  Bookmark,
 } from 'lucide-react';
 import { CollectionColorVariant, CollectionIconType, Collection, NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
@@ -33,6 +34,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
     setActiveCollectionId,
     createCollection,
     deleteCollection,
+    toggleSaveCollection,
     updateThought,
     deleteThought,
   } = useThoughts();
@@ -142,7 +144,19 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => toggleSaveCollection(activeCollection.id)}
+              className={`p-1.5 rounded-xl transition-colors hover:bg-garden-line ${
+                activeCollection.isSaved ? 'text-garden-moss' : 'text-garden-ink-faint hover:text-garden-ink'
+              }`}
+              aria-pressed={Boolean(activeCollection.isSaved)}
+              aria-label={activeCollection.isSaved ? 'Remove from Saved' : 'Save collection'}
+              title={activeCollection.isSaved ? 'Saved' : 'Save collection'}
+            >
+              <Bookmark className={`w-5 h-5 ${activeCollection.isSaved ? 'fill-current' : ''}`} />
+            </button>
             <button
               type="button"
               onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
@@ -153,7 +167,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
             </button>
 
             {isOptionsMenuOpen && (
-              <div className="absolute right-0 top-9 z-20 w-44 bg-garden-card border border-garden-line rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs">
+              <div className="absolute right-0 top-10 z-20 w-44 bg-garden-card border border-garden-line rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs">
                 <button
                   type="button"
                   onClick={() => {
@@ -345,7 +359,24 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-garden-ink-faint group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSaveCollection(col.id);
+                  }}
+                  className={`p-1.5 rounded-xl transition-colors hover:bg-garden-paper-deep ${
+                    col.isSaved ? 'text-garden-moss' : 'text-garden-ink-faint hover:text-garden-ink'
+                  }`}
+                  aria-pressed={Boolean(col.isSaved)}
+                  aria-label={col.isSaved ? `Remove ${col.name} from Saved` : `Save ${col.name}`}
+                  title={col.isSaved ? 'Saved' : 'Save collection'}
+                >
+                  <Bookmark className={`w-4 h-4 ${col.isSaved ? 'fill-current' : ''}`} />
+                </button>
+                <ChevronRight className="w-5 h-5 text-garden-ink-faint group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </div>
           );
         })}

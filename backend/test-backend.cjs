@@ -202,6 +202,8 @@ async function run(pool) {
   const withIcon = await alice.put('/api/collections/col-icon', { ...col, id: 'col-icon', iconType: 'travel' });
   assert.equal(withIcon.data.collection.iconType, 'travel', 'any curated icon key is stored');
   expectStatus(await alice.put('/api/collections/col-icon', { ...col, id: 'col-icon', iconType: 'Not An Icon!' }), 400, 'malformed icon keys are refused');
+  const savedCol = await alice.put('/api/collections/col-icon', { ...col, id: 'col-icon', isSaved: true });
+  assert.equal(savedCol.data.collection.isSaved, true, 'collections can be saved');
   await alice.del('/api/collections/col-icon');
   await alice.put('/api/thoughts/t3', thought('t3', 'Compost workshop', { collectionIds: ['col-x'] }));
   await alice.del('/api/collections/col-x');
