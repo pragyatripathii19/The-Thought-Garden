@@ -68,7 +68,7 @@ Everyone signs up with an email and password. Their garden is stored in Postgres
 | Name, email, password, "why I'm here" reasons | Server | Passwords are stored only as scrypt hashes |
 | Feedback | Server | Only what the user submits |
 | Embeddings for automatic organising | This browser (IndexedDB) | A per-device cache; rebuilt as needed and cleared on logout |
-| Smart organising requests | Server → LLM provider | On by default, disclosed with a pre-ticked box at sign-up; can be turned off there or in Settings (saved on the account). Forwarded, not stored or logged |
+| Smart organising requests | Server → LLM provider | On by default for new accounts; explained and switchable in Settings → Organising (saved on the account). Forwarded, not stored or logged |
 
 The admin dashboard (for emails in `ADMIN_EMAILS`) shows counts per user: thoughts, activity per day and feedback. It never shows thought text. Users can delete their account, and everything in it, from **Data & Settings**.
 

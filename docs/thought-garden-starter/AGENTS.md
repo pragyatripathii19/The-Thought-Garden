@@ -15,12 +15,12 @@
 - Suggested collections and connections must be reviewable and reversible. Never silently move, merge, rewrite, or delete thoughts.
 - A thought does not need to become a task. Avoid streaks, productivity guilt, forced goals, or excessive notifications.
 - Do not describe keyword similarity as semantic AI understanding.
-- Automatic organising (added after the MVP) must stay visible and reversible: every automatic change carries an "Auto" marker, an Undo, and an activity-log entry; thoughts the user organised by hand are never changed again. Smart organising (thought text sent to an AI service) is on by default for the pilot. It must stay disclosed at sign-up with a visible way to turn it off, be stored per account, and be refused by the server for accounts that turned it off.
+- Automatic organising (added after the MVP) must stay visible and reversible: every automatic change carries an "Auto" marker, an Undo, and an activity-log entry; thoughts the user organised by hand are never changed again. Smart organising (thought text sent to an AI service) is on by default for the pilot. It must stay explained in Settings with a visible way to turn it off, be stored per account, and be refused by the server for accounts that turned it off.
 - Clearly communicate where data is stored (the user's account on the server) and who can access it. Provide export and import.
 
 ## Pilot exception (current state)
 
-For the v1 pilot with a few invited users, the repository deliberately adds accounts (email and password) and stores each user's garden in PostgreSQL, so data survives cleared browsers and follows the user across devices. It also has feedback, an admin dashboard (counts only, never thought text), and Smart organising (on by default, disclosed at sign-up, falls back to on-device organising whenever the AI is unavailable). Streak numbers are internal telemetry only and must not be shown to users. Keep what is stored, and who can access it, disclosed in the UI (Data & Settings, sign-up screen) and documented in the root `README.md` ("Accounts & Privacy"); do not expand it without updating both.
+For the v1 pilot with a few invited users, the repository deliberately adds accounts (email and password) and stores each user's garden in PostgreSQL, so data survives cleared browsers and follows the user across devices. It also has feedback, an admin dashboard (counts only, never thought text), and Smart organising (on by default, explained and switchable in Settings, falls back to on-device organising whenever the AI is unavailable). Streak numbers are internal telemetry only and must not be shown to users. Keep what is stored, and who can access it, disclosed in the UI (Settings, sign-up screen) and documented in the root `README.md` ("Accounts & Privacy"); do not expand it without updating both.
 
 ## Scope discipline
 
