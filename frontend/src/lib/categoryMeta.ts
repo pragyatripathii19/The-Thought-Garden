@@ -24,7 +24,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
     return {
       label: 'Connection',
       badgeBg: TAG,
-      iconBg: 'bg-[#edf4fb] text-[#36618c]',
+      iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
       Icon: Link2,
     };
   }
@@ -32,7 +32,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
     return {
       label: 'Research',
       badgeBg: TAG,
-      iconBg: 'bg-[#f4f3fa] text-[#554e8c]',
+      iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
       Icon: Search,
     };
   }
@@ -40,7 +40,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
     return {
       label: 'Writing',
       badgeBg: TAG,
-      iconBg: 'bg-[#fdf2f2] text-[#8c3b42]',
+      iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
       Icon: PenTool,
     };
   }
@@ -48,7 +48,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
     return {
       label: 'Tasks',
       badgeBg: TAG,
-      iconBg: 'bg-[#fdf6ee] text-[#855320]',
+      iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
       Icon: CheckSquare,
     };
   }
@@ -56,7 +56,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
     return {
       label: 'Idea',
       badgeBg: TAG,
-      iconBg: 'bg-[#fef9e8] text-[#8a681c]',
+      iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
       Icon: Lightbulb,
     };
   }
@@ -64,7 +64,7 @@ export function getThoughtCategoryMeta(thought: Thought): ThoughtCategoryMeta {
   return {
     label: 'Thought',
     badgeBg: TAG,
-    iconBg: 'bg-[#edf4ee] text-[#34593e]',
+    iconBg: 'bg-garden-paper-deep text-garden-ink-soft',
     Icon: Sprout,
   };
 }
