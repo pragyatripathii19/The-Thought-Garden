@@ -93,7 +93,8 @@ function classifyRoutes({ config }) {
         body: JSON.stringify({
           model: llm.model,
           temperature: 0,
-          max_tokens: 300,
+          max_tokens: llm.maxTokens,
+          ...(llm.reasoningEffort ? { reasoning_effort: llm.reasoningEffort } : {}),
           response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: CLASSIFY_SYSTEM_PROMPT },

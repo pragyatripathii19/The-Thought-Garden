@@ -94,7 +94,8 @@ Configure the server with:
 |---|---|---|
 | `LLM_API_KEY` | *(unset → feature disabled)* | Provider API key, e.g. a free [Groq](https://console.groq.com) key |
 | `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Any OpenAI-compatible endpoint (Groq, OpenRouter, Ollama, …) |
-| `LLM_MODEL` | `llama-3.1-8b-instant` | Model name at that provider |
+| `LLM_MODEL` | `openai/gpt-oss-20b` | Model name at that provider |
+| `LLM_REASONING_EFFORT` | `low` for gpt-oss models, otherwise unset | Sent as `reasoning_effort`; reasoning models otherwise spend their output budget thinking |
 | `CLASSIFY_RATE_LIMIT` | `10` | Requests per user per minute |
 
 The server forwards requests without storing or logging thought text. Check your provider's free-tier limits and data terms before inviting testers.

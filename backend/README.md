@@ -37,7 +37,9 @@ npm run reset-password -- someone@example.com
 | `NODE_ENV` | | Set to `production` when deployed: secure cookies and trusting the hosting proxy for client IPs |
 | `LLM_API_KEY` | *(unset → Smart organising off)* | OpenAI-compatible provider key (e.g. Groq) |
 | `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Provider endpoint |
-| `LLM_MODEL` | `llama-3.1-8b-instant` | Model name |
+| `LLM_MODEL` | `openai/gpt-oss-20b` | Model name |
+| `LLM_REASONING_EFFORT` | `low` for gpt-oss models | Sent as `reasoning_effort` when set |
+| `LLM_MAX_TOKENS` | `600` | Output token limit per request |
 | `CLASSIFY_RATE_LIMIT` | `10` | Smart organising requests per user per minute |
 
 ## Security model

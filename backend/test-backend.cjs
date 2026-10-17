@@ -264,6 +264,8 @@ async function run(pool) {
   const classified = await alice.post('/api/classify', classifyBody);
   expectStatus(classified, 200, 'classify proxies to the provider');
   assert.equal(lastStubRequest.auth, 'Bearer test-key');
+  assert.equal(lastStubRequest.body.model, 'openai/gpt-oss-20b', 'default model');
+  assert.equal(lastStubRequest.body.reasoning_effort, 'low', 'gpt-oss models get low reasoning effort');
   stubMode = 'garbage';
   expectStatus(await alice.post('/api/classify', classifyBody), 502, 'malformed provider output is handled');
   await alice.post('/api/classify', classifyBody);
