@@ -197,7 +197,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                 className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep text-garden-ink border border-garden-line rounded-xl text-xs font-semibold transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" />
-                <span>Account &amp; Data Settings</span>
+                <span>Settings</span>
               </button>
 
               <button

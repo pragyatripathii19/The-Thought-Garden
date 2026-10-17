@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Home, Library, Search, Bookmark, SlidersHorizontal, Compass, X, BookOpen } from 'lucide-react';
+import React from 'react';
+import { Home, Library, Search, Bookmark, BookOpen } from 'lucide-react';
 import { NavTab } from '../types';
-import { useThoughts } from '../context/StorageContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 import { getDailyQuote } from '../lib/quotes';
 import { ART } from '../lib/art';
@@ -11,169 +10,69 @@ interface SidebarProps {
   onTabChange: (tab: NavTab) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
-  const { setIsFeedbackModalOpen } = useThoughts();
-  const [isLearnModalOpen, setIsLearnModalOpen] = useState(false);
+// Settings lives in the avatar menu (top right), so the sidebar stays at five tabs.
+const NAV_ITEMS: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'garden', label: 'Home', icon: Home },
+  { id: 'thoughts', label: 'All Thoughts', icon: BookOpen },
+  { id: 'collections', label: 'Collections', icon: Library },
+  { id: 'search', label: 'Search', icon: Search },
+  { id: 'saved', label: 'Saved', icon: Bookmark },
+];
 
-  const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'garden', label: 'Home', icon: Home },
-    { id: 'thoughts', label: 'All Thoughts', icon: BookOpen },
-    { id: 'collections', label: 'Collections', icon: Library },
-    { id: 'search', label: 'Search', icon: Search },
-    { id: 'saved', label: 'Saved', icon: Bookmark },
-  ];
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => (
+  <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen overflow-y-auto overflow-x-hidden bg-garden-sidebar/80 border-r border-garden-line select-none">
+    <div className="px-5 pt-7 space-y-9">
+      {/* Brand: stacked serif wordmark with a sprig */}
+      <button
+        type="button"
+        onClick={() => onTabChange('garden')}
+        className="flex items-start gap-1.5 px-2 text-left group"
+        aria-label="The Thought Garden, go to Home"
+      >
+        <span className="font-serif text-[27px] font-semibold leading-[0.95] tracking-tight text-garden-ink group-hover:text-garden-moss transition-colors">
+          The
+          <br />
+          Thought
+          <br />
+          Garden
+        </span>
+        <LeafLogoIcon className="w-6 h-6 mt-6 text-garden-moss -rotate-12" />
+      </button>
 
-  return (
-    <>
-      <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen overflow-y-auto overflow-x-hidden bg-garden-sidebar/80 border-r border-garden-line select-none">
-        <div className="relative z-10 px-5 pt-7 space-y-8">
-          {/* Brand: stacked serif wordmark with a sprig */}
-          <button
-            type="button"
-            onClick={() => onTabChange('garden')}
-            className="flex items-start gap-1.5 px-2 text-left group"
-            aria-label="The Thought Garden, go to Home"
-          >
-            <span className="font-serif text-[27px] font-semibold leading-[0.95] tracking-tight text-garden-ink group-hover:text-garden-moss transition-colors">
-              The
-              <br />
-              Thought
-              <br />
-              Garden
-            </span>
-            <LeafLogoIcon className="w-6 h-6 mt-6 text-garden-moss -rotate-12" />
-          </button>
-
-          {/* Navigation */}
-          <nav className="space-y-1" aria-label="Main Navigation">
-            {[...navItems, { id: 'settings' as NavTab, label: 'Data & Settings', icon: SlidersHorizontal }].map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onTabChange(item.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[15px] transition-colors text-left ${
-                    isActive
-                      ? 'bg-garden-pill text-garden-ink font-semibold'
-                      : 'text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep/70'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-garden-moss' : 'text-garden-ink-faint'}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Learn & feedback */}
-          <div className="space-y-1 border-t border-garden-line/80 pt-4">
+      <nav className="space-y-1" aria-label="Main Navigation">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
             <button
+              key={item.id}
               type="button"
-              onClick={() => setIsLearnModalOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-1.5 rounded-xl text-sm text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep/70 transition-colors"
+              onClick={() => onTabChange(item.id)}
+              className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[15px] transition-colors text-left ${
+                isActive
+                  ? 'bg-garden-pill text-garden-ink font-semibold'
+                  : 'text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep/70'
+              }`}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Compass className="w-4 h-4 text-garden-ink-faint" />
-              <span>Learn &amp; Explore</span>
+              <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-garden-moss' : 'text-garden-ink-faint'}`} />
+              <span>{item.label}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setIsFeedbackModalOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-1.5 rounded-xl text-sm text-garden-moss font-semibold hover:bg-garden-paper-deep/70 transition-colors"
-            >
-              <LeafLogoIcon className="w-4 h-4" />
-              <span>Share pilot feedback</span>
-            </button>
-          </div>
+          );
+        })}
+      </nav>
+    </div>
 
-          {/* Daily quote */}
-          <figure className="px-3.5">
-            <blockquote className="font-serif italic text-[16px] leading-snug text-garden-ink-soft">
-              {getDailyQuote()}
-            </blockquote>
-          </figure>
-        </div>
-
-        {/* A tree planted at the bottom edge */}
-        <div className="mt-auto pt-6 px-6 relative z-0 pointer-events-none flex justify-center" aria-hidden="true">
-          <img src={ART.tree} alt="" className="w-44 max-h-[38vh] object-contain object-bottom -mb-1" />
-        </div>
-      </aside>
-
-      {/* Learn & Explore Modal */}
-      {isLearnModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
-          onClick={() => setIsLearnModalOpen(false)}
-        >
-          <div
-            className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-garden-line">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-garden-pill/60 flex items-center justify-center text-garden-moss">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <h3 className="font-serif text-[26px] font-semibold text-garden-ink">
-                  The Thought Garden Philosophy
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsLearnModalOpen(false)}
-                className="p-1 text-garden-ink-faint hover:text-garden-ink rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs sm:text-sm text-[#4d5b4f] leading-relaxed">
-              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
-                <h4 className="font-serif text-xl font-semibold text-garden-ink">1. Capture First. Organize Later.</h4>
-                <p className="text-sm text-garden-ink-soft">
-                  Thoughts don't need categories, titles, or tags right away. Plant them as raw fragments.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
-                <h4 className="font-serif text-xl font-semibold text-garden-ink">2. Natural Growth</h4>
-                <p className="text-sm text-garden-ink-soft">
-                  Watch unfinished thoughts mature from Seeds into Sprouts, Blooms, and Mature reflections.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
-                <h4 className="font-serif text-xl font-semibold text-garden-ink">3. Gentle Rediscovery</h4>
-                <p className="text-sm text-garden-ink-soft">
-                  No streaks, no pressure, and no guilt. The garden gently surfaces older insights when you're ready.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-garden-card border border-garden-line space-y-1">
-                <h4 className="font-serif text-xl font-semibold text-garden-ink">4. Safe in Your Account</h4>
-                <p className="text-sm text-garden-ink-soft">
-                  Your garden is saved to your account, so it's there on any device you log in from. Export a JSON backup anytime under Data & Settings.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsLearnModalOpen(false)}
-                className="px-5 py-2 bg-[#3f5f47] hover:bg-garden-moss text-garden-paper rounded-xl text-xs font-medium"
-              >
-                Return to Garden
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
+    {/* Space, then the quote and the tree at the bottom */}
+    <div className="mt-auto pt-10 space-y-5">
+      <figure className="px-8">
+        <blockquote className="font-serif italic text-[16px] leading-snug text-garden-ink-soft">
+          {getDailyQuote()}
+        </blockquote>
+      </figure>
+      <div className="px-6 pointer-events-none flex justify-center" aria-hidden="true">
+        <img src={ART.tree} alt="" className="w-44 max-h-[34vh] object-contain object-bottom -mb-1" />
+      </div>
+    </div>
+  </aside>
+);
