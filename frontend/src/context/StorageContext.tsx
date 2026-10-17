@@ -31,6 +31,7 @@ import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
 import { submitPilotFeedback } from '../lib/pilotApi';
 import { suggestCollectionIcon } from '../lib/collectionIcons';
+import { evolvedStage } from '../lib/growth';
 import { useOptionalAuth } from './AuthContext';
 
 // How often returning to the tab may reload the garden from the server.
@@ -307,6 +308,36 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       document.removeEventListener('visibilitychange', onFocus);
     };
   }, [refreshOnFocus, refreshThoughts, refreshCollections, refreshConnections]);
+
+  // Grow thoughts automatically as they're tended (seed → sprout → bloom; see lib/growth.ts).
+  // Runs after any change, including the first load, so older thoughts catch up too.
+  const growingRef = useRef(false);
+  const [growthPass, setGrowthPass] = useState(0);
+  useEffect(() => {
+    if (isLoading || growingRef.current) return;
+    const due = thoughts
+      .map((t) => ({ id: t.id, stage: evolvedStage(t, connections) }))
+      .filter((d): d is { id: string; stage: GrowthStage } => d.stage !== null);
+    if (due.length === 0) return;
+
+    growingRef.current = true;
+    (async () => {
+      let grew = false;
+      try {
+        for (const { id, stage } of due) {
+          const updated = await thoughtRepository.update(id, { evolvedStage: stage });
+          setThoughts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+          grew = true;
+        }
+      } catch (err) {
+        // Try again on the next change rather than in a loop.
+        console.warn('Could not update growth stages:', err instanceof Error ? err.message : err);
+      } finally {
+        growingRef.current = false;
+        if (grew) setGrowthPass((n) => n + 1);
+      }
+    })();
+  }, [thoughts, connections, isLoading, thoughtRepository, growthPass]);
 
   // Compute live suggested connection candidate
   const suggestedConnection = useMemo(() => {

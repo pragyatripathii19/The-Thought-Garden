@@ -164,6 +164,12 @@ async function run(pool) {
   assert.deepEqual(put1.data.thought.collectionIds, ['col-writing'], 'unknown collection ids are dropped');
   assert.deepEqual(put1.data.thought.autoCollectionIds, ['col-writing']);
   assert.equal(put1.data.thought.createdAt, t1.createdAt, 'timestamps round-trip exactly');
+  const grown = await alice.put('/api/thoughts/t1', { ...t1, editCount: 3, stageManual: true, stage: 'bloom' });
+  assert.equal(grown.data.thought.editCount, 3, 'edit count is stored');
+  assert.equal(grown.data.thought.stageManual, true, 'a hand-picked stage is remembered');
+  await alice.put('/api/thoughts/t1', t1);
+  assert.equal((await alice.get('/api/thoughts')).data.thoughts.find((t) => t.id === 't1').editCount, undefined, 'edit count resets with the thought');
+  console.log('✓ growth fields round-trip');
 
   expectStatus(await alice.put('/api/thoughts/other', t1), 400, 'URL id must match body id');
   expectStatus(await alice.put('/api/thoughts/t1', { ...t1, text: '   ' }), 400, 'empty thought text is refused');

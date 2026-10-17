@@ -22,6 +22,10 @@ export interface Thought {
   organizeLocked?: boolean;
   classifyState?: ClassifyState;
   classifiedAt?: string;
+  /** How many times the text was edited; feeds automatic growth stages. */
+  editCount?: number;
+  /** The user picked the stage themselves, so it no longer changes automatically. */
+  stageManual?: boolean;
 }
 
 export type CollectionColorVariant = 'green' | 'rose' | 'purple' | 'amber';

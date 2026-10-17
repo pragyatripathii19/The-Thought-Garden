@@ -86,6 +86,8 @@ function parseThought(body) {
     category: oneOf(body.category, CATEGORIES, 'category'),
     isSaved: Boolean(body.isSaved),
     organizeLocked: Boolean(body.organizeLocked),
+    editCount: Number.isInteger(body.editCount) && body.editCount >= 0 ? Math.min(body.editCount, 100000) : 0,
+    stageManual: Boolean(body.stageManual),
     classifyState: oneOf(body.classifyState, CLASSIFY_STATES, 'classifyState'),
     classifiedAt: timestamp(body.classifiedAt, 'classifiedAt', { required: false }),
     createdAt: timestamp(body.createdAt, 'createdAt'),
@@ -158,6 +160,8 @@ function thoughtFromRow(r) {
     collectionIds: r.collection_ids || [],
     stage: r.stage || undefined,
     isSaved: r.is_saved,
+    editCount: r.edit_count || undefined,
+    stageManual: r.stage_manual || undefined,
     category: r.category || undefined,
     autoCollectionIds: r.auto_collection_ids && r.auto_collection_ids.length ? r.auto_collection_ids : undefined,
     organizeLocked: r.organize_locked || undefined,
@@ -235,7 +239,8 @@ async function getThought(db, userId, thoughtId) {
 }
 
 const THOUGHT_RECORD = `x(id text, text text, stage text, category text, is_saved boolean, organize_locked boolean,
-  classify_state text, classified_at timestamptz, created_at timestamptz, updated_at timestamptz)`;
+  classify_state text, classified_at timestamptz, created_at timestamptz, updated_at timestamptz,
+  edit_count integer, stage_manual boolean)`;
 
 function thoughtRecord(t) {
   return {
@@ -249,6 +254,8 @@ function thoughtRecord(t) {
     classified_at: t.classifiedAt,
     created_at: t.createdAt,
     updated_at: t.updatedAt,
+    edit_count: t.editCount,
+    stage_manual: t.stageManual,
   };
 }
 
@@ -280,15 +287,16 @@ async function insertMemberships(db, userId, records) {
 async function upsertThought(db, userId, t) {
   await db.query(
     `INSERT INTO thoughts (user_id, id, text, stage, category, is_saved, organize_locked, classify_state,
-                           classified_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                           classified_at, created_at, updated_at, edit_count, stage_manual)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      ON CONFLICT (user_id, id) DO UPDATE SET
        text = EXCLUDED.text, stage = EXCLUDED.stage, category = EXCLUDED.category,
        is_saved = EXCLUDED.is_saved, organize_locked = EXCLUDED.organize_locked,
        classify_state = EXCLUDED.classify_state, classified_at = EXCLUDED.classified_at,
-       updated_at = EXCLUDED.updated_at`,
+       updated_at = EXCLUDED.updated_at, edit_count = EXCLUDED.edit_count,
+       stage_manual = EXCLUDED.stage_manual`,
     [userId, t.id, t.text, t.stage, t.category, t.isSaved, t.organizeLocked, t.classifyState,
-      t.classifiedAt, t.createdAt, t.updatedAt]
+      t.classifiedAt, t.createdAt, t.updatedAt, t.editCount, t.stageManual]
   );
   await db.query('DELETE FROM thought_collections WHERE user_id = $1 AND thought_id = $2', [userId, t.id]);
   await insertMemberships(db, userId, membershipRecords([t]));
@@ -300,9 +308,9 @@ async function insertThoughts(db, userId, thoughts) {
   if (thoughts.length === 0) return 0;
   const { rows } = await db.query(
     `INSERT INTO thoughts (user_id, id, text, stage, category, is_saved, organize_locked, classify_state,
-                           classified_at, created_at, updated_at)
+                           classified_at, created_at, updated_at, edit_count, stage_manual)
      SELECT $1, x.id, x.text, x.stage, x.category, x.is_saved, x.organize_locked, x.classify_state,
-            x.classified_at, x.created_at, x.updated_at
+            x.classified_at, x.created_at, x.updated_at, x.edit_count, x.stage_manual
        FROM jsonb_to_recordset($2::jsonb) AS ${THOUGHT_RECORD}
      ON CONFLICT DO NOTHING
      RETURNING id`,
