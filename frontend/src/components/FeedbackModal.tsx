@@ -57,7 +57,7 @@ export const FeedbackModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
       onClick={() => setIsFeedbackModalOpen(false)}
     >
       <div

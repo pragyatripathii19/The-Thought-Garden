@@ -245,7 +245,7 @@ export const SettingsView: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
           onClick={closeDeleteDialog}
         >
           <form
