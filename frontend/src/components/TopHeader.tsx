@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, Edit3, KeyRound, Settings, LogOut } from 'lucide-react';
+import { X, Edit3, KeyRound, Settings, LogOut } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { useAuth } from '../context/AuthContext';
@@ -63,15 +63,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
 
           <button
             type="button"
-            onClick={() => onTabChange('search')}
-            className="p-2 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-paper-deep rounded-full transition-colors"
-            aria-label="Search Garden"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-
-          <button
-            type="button"
             onClick={() => setIsProfileOpen(true)}
             className="w-8 h-8 rounded-full bg-garden-moss text-[#F4EEDB] flex items-center justify-center text-xs font-semibold hover:bg-garden-moss-dark transition-colors"
             aria-label="Open Profile"
@@ -82,19 +73,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
       </header>
 
       {/* Desktop Top Header Bar (>= md) */}
-      <header className="hidden md:flex items-center gap-3 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Search: looks like a field, opens the Search page */}
-        <button
-          type="button"
-          onClick={() => onTabChange('search')}
-          className="flex-1 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-garden-card/80 border border-garden-line text-sm text-garden-ink-faint hover:border-[#CFC39F] hover:text-garden-ink-soft transition-colors text-left"
-          title="Search Thoughts"
-          aria-label="Search thoughts or collections"
-        >
-          <Search className="w-4 h-4" />
-          <span>Search thoughts or collections…</span>
-        </button>
-
+      <header className="hidden md:flex items-center justify-end gap-3 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <button
           type="button"
           onClick={() => setIsFeedbackModalOpen(true)}
