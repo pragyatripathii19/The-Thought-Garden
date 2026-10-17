@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The Thought Garden leaf (same drawing as LeafLogoIcon) on a parchment tile -->
+  <rect width="32" height="32" rx="8" fill="#F4EEDB"/>
+  <g transform="translate(4 4)" stroke="#3E5A39" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21V11M12 11C12 7 15 4 19 4C19 8 16 11 12 11Z" stroke-width="2" fill="#DCE3C3"/>
+    <path d="M12 14C9.5 14 7 12 6 9C9 9 11.5 11 12 14Z" stroke-width="1.8" fill="#BFCB9C"/>
+    <path d="M12 18C14 18 16 16.5 17 14.5C15 14.5 13 16 12 18Z" stroke-width="1.6" fill="#A3B57E"/>
+  </g>
+</svg>

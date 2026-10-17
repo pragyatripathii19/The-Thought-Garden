@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { OrganizeEvent } from '../types';
 import { useThoughts } from './StorageContext';
+import { useOptionalAuth } from './AuthContext';
 import { Embedder, canRunLocalEmbedder } from '../lib/organize/embedder';
 import {
   OrganizerActions,
@@ -15,6 +16,8 @@ import { decideLocally } from '../lib/organize/localRule';
 import { validateDecision } from '../lib/organize/validateDecision';
 import { fetchSmartOrganizingAvailable, requestClassification } from '../lib/organize/classifierClient';
 import { SerialQueue } from '../lib/organize/queue';
+import { SmartPause, smartPauseAfter } from '../lib/organize/smartBackoff';
+import { describeReason } from '../lib/profileReasons';
 import { GroupSuggestion, OrganizeDecision } from '../lib/organize/types';
 import {
   OrganizerSettings,
@@ -37,6 +40,8 @@ interface OrganizerContextValue {
   updateSettings: (patch: Partial<OrganizerSettings>) => void;
   /** Whether the server has an LLM configured. */
   smartAvailable: boolean;
+  /** Set while Smart organising is paused after a failure; on-device organising is used meanwhile. */
+  smartPause: SmartPause | null;
   embedderStatus: EmbedderStatus;
   isWorking: boolean;
   events: OrganizeEvent[];
@@ -71,7 +76,15 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
     organizeEventRepository,
   } = useThoughts();
 
-  const [settings, setSettings] = useState<OrganizerSettings>(loadOrganizerSettings);
+  const auth = useOptionalAuth();
+  const [localSettings, setLocalSettings] = useState<OrganizerSettings>(loadOrganizerSettings);
+  // Signed-in users: the account decides Smart organising, so it's the same on every device.
+  const accountSmart = auth?.user?.smartOrganizing;
+  const settings = useMemo<OrganizerSettings>(
+    () => (accountSmart === undefined ? localSettings : { ...localSettings, smartOrganizing: accountSmart }),
+    [localSettings, accountSmart]
+  );
+  const [smartPause, setSmartPause] = useState<SmartPause | null>(null);
   const [smartAvailable, setSmartAvailable] = useState(false);
   const [embedderStatus, setEmbedderStatus] = useState<EmbedderStatus>(() =>
     injectedEmbedder || canRunLocalEmbedder() ? 'idle' : 'unsupported'
@@ -95,10 +108,13 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
   smartAvailableRef.current = smartAvailable;
   const embedderStatusRef = useRef(embedderStatus);
   embedderStatusRef.current = embedderStatus;
-  const userIdRef = useRef(userProfile?.id);
-  userIdRef.current = userProfile?.id;
-  const userSecretRef = useRef(userProfile?.secret);
-  userSecretRef.current = userProfile?.secret;
+  const signedInRef = useRef(Boolean(userProfile));
+  signedInRef.current = Boolean(userProfile);
+  // Why they're here, as readable labels; sent with Smart organising requests to name collections well.
+  const userFocusRef = useRef<string[]>([]);
+  userFocusRef.current = (userProfile?.reasons || []).map((r) => describeReason(r).label);
+  const smartPauseRef = useRef<SmartPause | null>(null);
+  const smartErrorsRef = useRef(0);
   const actionsRef = useRef<OrganizerActions>({ createCollection, updateThought, deleteCollection });
   actionsRef.current = { createCollection, updateThought, deleteCollection };
 
@@ -135,16 +151,49 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
     });
   }, [thoughts, isLoading]);
 
-  const updateSettings = useCallback((patch: Partial<OrganizerSettings>) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      if (patch.smartOrganizing && !prev.smartOrganizing) {
-        next.smartConsentAt = new Date().toISOString();
+  // Resume Smart organising when a pause runs out.
+  useEffect(() => {
+    if (!smartPause) return;
+    const clear = () => {
+      smartPauseRef.current = null;
+      setSmartPause(null);
+    };
+    const ms = smartPause.until - Date.now();
+    if (ms <= 0) {
+      clear();
+      return;
+    }
+    const timer = window.setTimeout(clear, ms);
+    return () => window.clearTimeout(timer);
+  }, [smartPause]);
+
+  const hasAccount = Boolean(auth?.user);
+  const updateProfile = auth?.updateProfile;
+  const updateSettings = useCallback(
+    (patch: Partial<OrganizerSettings>) => {
+      const { smartOrganizing, ...rest } = patch;
+      const smartOnAccount = smartOrganizing !== undefined && hasAccount && updateProfile;
+      if (smartOnAccount) {
+        updateProfile({ smartOrganizing }).catch((err) =>
+          console.warn('Could not save the Smart organising setting:', err instanceof Error ? err.message : err)
+        );
       }
-      saveOrganizerSettings(next);
-      return next;
-    });
-  }, []);
+      if (smartOrganizing) {
+        // Turning it on is a fresh start: try the AI again straight away.
+        smartErrorsRef.current = 0;
+        smartPauseRef.current = null;
+        setSmartPause(null);
+      }
+      setLocalSettings((prev) => {
+        const next = { ...prev, ...rest };
+        if (smartOrganizing !== undefined && !smartOnAccount) next.smartOrganizing = smartOrganizing;
+        if (smartOrganizing && !prev.smartConsentAt) next.smartConsentAt = new Date().toISOString();
+        saveOrganizerSettings(next);
+        return next;
+      });
+    },
+    [hasAccount, updateProfile]
+  );
 
   const getEmbedder = useCallback(async (): Promise<Embedder> => {
     if (!embedderRef.current) {
@@ -221,25 +270,25 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
         };
 
         let decision: OrganizeDecision;
-        const userId = userIdRef.current;
-        const userSecret = userSecretRef.current;
+        const pause = smartPauseRef.current;
         const useSmart =
           settingsRef.current.smartOrganizing &&
           smartAvailableRef.current &&
-          Boolean(userId && userSecret) &&
+          signedInRef.current &&
+          !(pause && Date.now() < pause.until) &&
           (typeof navigator === 'undefined' || navigator.onLine);
 
         if (prepared.candidates.length === 0) {
           // Case D, decided locally: nothing similar exists, so nothing is sent anywhere.
           decision = { action: 'none', reason: 'Nothing similar yet.', source: 'local' };
-        } else if (useSmart && userId && userSecret) {
+        } else if (useSmart) {
           try {
-            const raw = await requestClassification(
-              userId,
-              userSecret,
-              buildClassifyPayload(prepared, thoughtsRef.current, collectionsRef.current)
-            );
-            decision = validateDecision(raw, {
+            const raw = await requestClassification({
+              ...buildClassifyPayload(prepared, thoughtsRef.current, collectionsRef.current),
+              userFocus: userFocusRef.current,
+            });
+            smartErrorsRef.current = 0;
+            const validated = validateDecision(raw, {
               thought: thoughtsRef.current.find((t) => t.id === thoughtId) || prepared.thought,
               candidateThoughtIds: new Set(
                 prepared.candidates.filter((c) => c.kind === 'thought').map((c) => c.id)
@@ -247,8 +296,17 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
               thoughts: thoughtsRef.current,
               collections: collectionsRef.current,
             });
+            // An unusable AI answer falls back to the on-device rule; a deliberate "none" is respected.
+            decision = validated.action === 'none' && validated.rejected ? decideLocally(localInput) : validated;
           } catch (err) {
-            console.warn('Smart organising unavailable, using local rule:', err instanceof Error ? err.message : err);
+            // Rate limits, timeouts, network and server errors: organise on-device and pause the AI for a while.
+            smartErrorsRef.current += 1;
+            const nextPause = smartPauseAfter(err, smartErrorsRef.current);
+            if (nextPause) {
+              smartPauseRef.current = nextPause; // seen by the next queued thought before React re-renders
+              setSmartPause(nextPause);
+            }
+            console.warn('Smart organising unavailable, using on-device rule:', err instanceof Error ? err.message : err);
             decision = decideLocally(localInput);
           }
         } else {
@@ -384,6 +442,7 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
       settings,
       updateSettings,
       smartAvailable,
+      smartPause,
       embedderStatus,
       isWorking,
       events,
@@ -399,6 +458,7 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
       settings,
       updateSettings,
       smartAvailable,
+      smartPause,
       embedderStatus,
       isWorking,
       events,

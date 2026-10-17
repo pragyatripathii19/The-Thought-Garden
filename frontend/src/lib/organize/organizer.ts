@@ -1,4 +1,5 @@
 import { Collection, CollectionColorVariant, CollectionIconType, CollectionOrigin, OrganizeEvent, Thought } from '../../types';
+import { COLLECTION_ICON_KEYS } from '../collectionIcons';
 import { IEmbeddingRepository, UpdateThoughtDTO } from '../../storage/types';
 import { Embedder, hashText } from './embedder';
 import {
@@ -156,6 +157,10 @@ export interface ClassifyPayload {
   thought: { id: string; text: string };
   similarThoughts: { id: string; text: string; collections: string[]; ungrouped: boolean; similarity: number }[];
   collections: { id: string; name: string; description: string; similarity: number | null }[];
+  /** Icon keys Smart organising may choose from when it creates a collection. */
+  iconChoices: string[];
+  /** Why the person uses the garden (readable labels), to help name collections. */
+  userFocus?: string[];
 }
 
 /** Builds the minimal request sent to /api/classify (only when Smart organising is on). */
@@ -196,6 +201,7 @@ export function buildClassifyPayload(
       description: c.description || '',
       similarity: collectionScores.has(c.id) ? Math.round(collectionScores.get(c.id)! * 100) / 100 : null,
     })),
+    iconChoices: COLLECTION_ICON_KEYS,
   };
 }
 
@@ -250,7 +256,7 @@ export async function applyDecision(
     const collection = await actions.createCollection(
       decision.newCollection.name,
       decision.newCollection.description || undefined,
-      { origin: 'auto', autoReason: decision.reason, colorVariant: 'green', iconType: 'leaf' }
+      { origin: 'auto', autoReason: decision.reason, colorVariant: 'green', iconType: decision.newCollection.icon }
     );
     for (const member of [thought, partner]) {
       await actions.updateThought(member.id, {

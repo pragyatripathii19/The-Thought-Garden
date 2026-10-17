@@ -19,6 +19,7 @@ import {
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
+import { describeGrowth } from '../lib/growth';
 import { formatRelativeTime } from '../lib/time';
 import { AutoBadge } from './OrganizeToast';
 
@@ -33,6 +34,7 @@ interface ThoughtDetailModalProps {
       stage?: GrowthStage;
       collectionIds?: string[];
       isSaved?: boolean;
+      stageManual?: boolean;
     }
   ) => Promise<Thought>;
   onDelete: (id: string) => Promise<void>;
@@ -139,6 +141,17 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
     }
   };
 
+  // Hand the stage back to the garden: it grows automatically again from here.
+  const handleAutoGrowth = async () => {
+    try {
+      await onUpdate(thought.id, { stageManual: false });
+    } catch (err) {
+      console.error('Failed to resume automatic growth:', err);
+    }
+  };
+
+  const growth = describeGrowth(thought, connections, collections);
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -153,15 +166,15 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
   const getThoughtIcon = (t: Thought) => {
     if (t.category === 'research' || t.collectionIds.includes('col-things-to-research')) {
-      return { Icon: Search, bg: 'bg-[#e7e4f6] text-[#4f4886]' };
+      return { Icon: Search, bg: 'bg-garden-paper-deep text-garden-ink-soft' };
     }
     if (t.category === 'writing' || t.collectionIds.includes('col-writing')) {
-      return { Icon: PenTool, bg: 'bg-[#fae2e3] text-[#8c3b42]' };
+      return { Icon: PenTool, bg: 'bg-garden-paper-deep text-garden-ink-soft' };
     }
     if (t.category === 'task' || t.collectionIds.includes('col-tasks-to-revisit')) {
-      return { Icon: CheckSquare, bg: 'bg-[#fae8d4] text-[#855320]' };
+      return { Icon: CheckSquare, bg: 'bg-garden-paper-deep text-garden-ink-soft' };
     }
-    return { Icon: Sprout, bg: 'bg-[#dcebdd] text-[#34593e]' };
+    return { Icon: Sprout, bg: 'bg-garden-paper-deep text-garden-ink-soft' };
   };
 
   const getCollectionName = (collectionIds: string[]) => {
@@ -173,19 +186,19 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl bg-[#faf8f4] border border-[#e4ded0] rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-xl bg-[#FDFBF3] border border-garden-line rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar matching reference: <- on left, ... on right */}
-        <div className="px-6 py-4 border-b border-[#eee9dc] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-garden-line flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#5e6c5f] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+            className="p-1.5 text-garden-ink-soft hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
             aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -197,8 +210,8 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               onClick={handleToggleSave}
               className={`p-1.5 rounded-xl transition-colors ${
                 thought.isSaved
-                  ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
-                  : 'text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc]'
+                  ? 'text-garden-moss bg-garden-pill/60 hover:bg-garden-pill'
+                  : 'text-garden-ink-faint hover:text-garden-ink hover:bg-garden-line'
               }`}
               title={thought.isSaved ? 'Saved thought' : 'Save thought'}
               aria-label="Bookmark thought"
@@ -209,21 +222,21 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
             <button
               type="button"
               onClick={() => setShowOptions(!showOptions)}
-              className="p-1.5 text-[#7c8779] hover:text-[#253227] hover:bg-[#ede8dc] rounded-xl transition-colors"
+              className="p-1.5 text-garden-ink-faint hover:text-garden-ink hover:bg-garden-line rounded-xl transition-colors"
               aria-label="Options"
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
 
             {showOptions && (
-              <div className="absolute right-0 top-9 z-20 w-44 bg-white border border-[#e4ded0] rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs space-y-1">
+              <div className="absolute right-0 top-9 z-20 w-44 bg-garden-card border border-garden-line rounded-2xl shadow-lg p-1.5 animate-fade-in text-xs space-y-1">
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditing(true);
                     setShowOptions(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[#253227] hover:bg-[#f2efe6] rounded-xl transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-garden-ink hover:bg-garden-paper-deep rounded-xl transition-colors text-left"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>Edit Words</span>
@@ -249,7 +262,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
           {/* Badge: Connection (only if category is 'connection') or just Stage */}
           <div className="flex items-center gap-2">
             {thought.category === 'connection' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#eef4fb] text-[#36618c] border border-[#d4e4f5]">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]">
                 <Link2 className="w-3.5 h-3.5" />
                 <span>Connection</span>
               </span>
@@ -267,7 +280,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   onChange={(e) => setEditText(e.target.value)}
                   disabled={isSaving}
                   placeholder="Thought cannot be empty..."
-                  className="w-full p-4 bg-white rounded-2xl border border-[#7a9d83] text-[#253227] text-base leading-relaxed resize-none focus:outline-none"
+                  className="w-full p-4 bg-garden-card rounded-2xl border border-[#D6CAA6] text-garden-ink text-base leading-relaxed resize-none focus:outline-none"
                   autoFocus
                 />
                 <div className="flex items-center justify-end gap-2">
@@ -277,7 +290,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                       setIsEditing(false);
                       setEditText(thought.text);
                     }}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-[#6e7d70] hover:bg-[#ede9df]"
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-garden-ink-soft hover:bg-garden-line"
                   >
                     Cancel
                   </button>
@@ -285,7 +298,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                     type="button"
                     onClick={handleSaveText}
                     disabled={!editText.trim() || isSaving}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#3d5a45] hover:bg-[#344e3b] text-white rounded-xl text-xs font-semibold shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-garden-moss hover:bg-garden-moss text-garden-paper rounded-full text-xs font-semibold"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Save changes</span>
@@ -293,22 +306,24 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                 </div>
               </div>
             ) : (
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#233126] leading-relaxed tracking-tight">
+              <h2 className="font-serif text-[26px] sm:text-[32px] font-semibold text-garden-ink leading-snug tracking-tight">
                 {thought.text}
               </h2>
             )}
 
             {/* Timestamp & Pin Tag */}
-            <div className="flex items-center gap-2 text-xs text-[#819283] mt-2">
+            <div className="flex items-center gap-2 text-xs text-garden-ink-faint mt-2">
               <span>{formatRelativeTime(thought.createdAt)}</span>
               <span>•</span>
               <button
                 type="button"
                 onClick={handleToggleSave}
-                className="hover:text-[#253227] inline-flex items-center gap-1"
+                className={`inline-flex items-center gap-1 ${
+                  thought.isSaved ? 'text-garden-moss font-medium' : 'hover:text-garden-ink'
+                }`}
               >
-                <span>📌</span>
-                <span>{thought.isSaved ? 'Saved' : 'Pin thought'}</span>
+                <Bookmark className={`w-3.5 h-3.5 ${thought.isSaved ? 'fill-current' : ''}`} aria-hidden="true" />
+                <span>{thought.isSaved ? 'Saved' : 'Save thought'}</span>
               </button>
             </div>
           </div>
@@ -316,18 +331,18 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
           {/* Related Thoughts Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-base font-semibold text-[#233126]">
+              <h3 className="font-serif text-xl font-semibold text-garden-ink">
                 Related Thoughts
               </h3>
               {connectedThoughts.length > 0 && (
-                <span className="text-xs text-[#718273]">
+                <span className="text-xs text-garden-ink-soft">
                   {connectedThoughts.length} linked
                 </span>
               )}
             </div>
 
             {connectedThoughts.length === 0 ? (
-              <p className="text-xs text-[#7b897c] p-3.5 bg-white rounded-2xl border border-[#e4ded0]">
+              <p className="text-xs text-garden-ink-faint p-3.5 bg-garden-card rounded-2xl border border-garden-line">
                 No accepted connections yet. As more thoughts accumulate, the connection discovery engine will suggest related ideas here.
               </p>
             ) : (
@@ -341,16 +356,16 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                     <div
                       key={related.id}
                       onClick={() => onSelectThought && onSelectThought(related)}
-                      className="p-3.5 bg-white hover:bg-[#fcfbf9] border border-[#e4ded0] hover:border-[#b8caa0] rounded-2xl cursor-pointer transition-all flex items-start gap-3 shadow-xs"
+                      className="p-3.5 bg-garden-card hover:bg-[#FDFBF3] border border-garden-line hover:border-[#D6CAA6] rounded-2xl cursor-pointer transition-all flex items-start gap-3"
                     >
                       <div className={`w-8 h-8 rounded-full ${iconMeta.bg} flex items-center justify-center shrink-0 mt-0.5`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs sm:text-sm text-[#233126] leading-relaxed line-clamp-2">
+                        <p className="text-xs sm:text-sm text-garden-ink leading-relaxed line-clamp-2">
                           {related.text}
                         </p>
-                        <div className="text-[11px] text-[#869688] mt-1 flex items-center gap-1.5">
+                        <div className="text-[11px] text-garden-ink-faint mt-1 flex items-center gap-1.5">
                           <span>{formatRelativeTime(related.createdAt)}</span>
                           <span>•</span>
                           <span>{colName}</span>
@@ -365,29 +380,29 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
           {/* "A possible connection" Section */}
           {primaryConnectionReason && (
-            <div className="p-4 rounded-2xl bg-[#f0f5fc] border border-[#d6e4f5] space-y-1.5">
-              <div className="flex items-center gap-2 text-[#355f8a]">
+            <div className="p-4 rounded-2xl bg-garden-pill/40 border border-[#CBD5AE] space-y-1.5">
+              <div className="flex items-center gap-2 text-garden-moss">
                 <Sparkles className="w-4 h-4" />
-                <h4 className="font-serif text-sm font-semibold">
+                <h4 className="font-serif text-base font-semibold">
                   A possible connection
                 </h4>
               </div>
-              <p className="text-xs sm:text-sm text-[#3e5f82] leading-relaxed">
+              <p className="text-xs sm:text-sm text-garden-ink-soft leading-relaxed">
                 {primaryConnectionReason}
               </p>
             </div>
           )}
 
           {/* Collections Section */}
-          <div className="pt-2 border-t border-[#eee9dc]">
+          <div className="pt-2 border-t border-garden-line">
             <div className="flex items-center justify-between mb-2">
-              <span className="block text-xs font-semibold uppercase tracking-wider text-[#738274]">
+              <span className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft">
                 Collections
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddingCollection(!isAddingCollection)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-[#3d5a45] hover:text-[#283e2e] transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-garden-moss hover:text-garden-moss-dark transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add to collection</span>
@@ -403,7 +418,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   return (
                     <span
                       key={cid}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#f2ede4] text-[#2c3d2e] border border-[#e4ded0]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-garden-paper-deep text-garden-ink border border-garden-line"
                     >
                       <span>{col.name}</span>
                       {thought.autoCollectionIds?.includes(cid) && (
@@ -412,7 +427,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={() => toggleThoughtCollection(thought.id, cid)}
-                        className="p-0.5 hover:bg-[#e4ded0] rounded-full text-[#738274] hover:text-[#233126] transition-colors"
+                        className="p-0.5 hover:bg-garden-line rounded-full text-garden-ink-soft hover:text-garden-ink transition-colors"
                         title={`Remove from ${col.name}`}
                         aria-label={`Remove from ${col.name}`}
                       >
@@ -422,7 +437,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   );
                 })
               ) : (
-                <span className="text-xs text-[#879688] italic">
+                <span className="text-xs text-garden-ink-faint italic">
                   Not assigned to any collections yet
                 </span>
               )}
@@ -430,8 +445,8 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
             {/* Dropdown to add unassigned collections */}
             {isAddingCollection && (
-              <div className="mt-2.5 p-2 bg-white border border-[#e4ded0] rounded-2xl shadow-sm space-y-1 animate-fade-in">
-                <div className="text-[11px] font-semibold text-[#738274] px-2 py-0.5">
+              <div className="mt-2.5 p-2 bg-garden-card border border-garden-line rounded-2xl space-y-1 animate-fade-in">
+                <div className="text-[11px] font-semibold text-garden-ink-soft px-2 py-0.5">
                   Choose a collection:
                 </div>
                 {collections.filter((c) => !thought.collectionIds?.includes(c.id)).length > 0 ? (
@@ -445,14 +460,14 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                           await toggleThoughtCollection(thought.id, col.id);
                           setIsAddingCollection(false);
                         }}
-                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-[#233126] hover:bg-[#f3f0e8] rounded-xl text-left transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-garden-ink hover:bg-garden-paper-deep rounded-xl text-left transition-colors"
                       >
                         <span className="font-medium">{col.name}</span>
-                        <Plus className="w-3.5 h-3.5 text-[#3d5a45]" />
+                        <Plus className="w-3.5 h-3.5 text-garden-moss" />
                       </button>
                     ))
                 ) : (
-                  <p className="text-xs text-[#879688] px-2 py-1">
+                  <p className="text-xs text-garden-ink-faint px-2 py-1">
                     This thought is already in all your collections.
                   </p>
                 )}
@@ -461,8 +476,8 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
           </div>
 
           {/* Growth Stage Selector */}
-          <div className="pt-2 border-t border-[#eee9dc]">
-            <span className="block text-xs font-semibold uppercase tracking-wider text-[#738274] mb-2">
+          <div className="pt-2 border-t border-garden-line">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft mb-2">
               Growth Stage
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -477,8 +492,8 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                     onClick={() => handleStageSelect(stageKey)}
                     className={`flex flex-col items-center p-2.5 rounded-xl border text-xs transition-all ${
                       isSelected
-                        ? 'border-[#3d5a45] bg-[#edf5ee] font-semibold text-[#253d2c]'
-                        : 'border-[#e4ded0] bg-white text-[#5d6b5e] hover:bg-[#f6f4ee]'
+                        ? 'border-garden-moss bg-garden-pill/60 font-semibold text-garden-ink'
+                        : 'border-garden-line bg-garden-card text-garden-ink-soft hover:bg-garden-paper-deep'
                     }`}
                   >
                     <Icon className="w-4 h-4 mb-1" />
@@ -486,6 +501,21 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Why it's at this stage, and what would help it grow */}
+            <div className="mt-3 text-sm leading-relaxed space-y-0.5" aria-live="polite">
+              <p className="text-garden-ink">{growth.why}</p>
+              {growth.next && <p className="text-garden-ink-soft">{growth.next}</p>}
+              {thought.stageManual && (
+                <button
+                  type="button"
+                  onClick={handleAutoGrowth}
+                  className="mt-1 text-sm font-semibold text-garden-moss underline underline-offset-2 hover:text-garden-moss-dark"
+                >
+                  Let it grow automatically
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -501,7 +531,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1.5 text-xs text-[#5e6c5f] hover:bg-rose-100 rounded-lg"
+                className="px-3 py-1.5 text-xs text-garden-ink-soft hover:bg-rose-100 rounded-lg"
               >
                 Cancel
               </button>
@@ -509,7 +539,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg shadow-xs hover:bg-rose-700"
+                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 text-garden-paper rounded-lg hover:bg-rose-700"
               >
                 {isDeleting ? 'Removing...' : 'Confirm Remove'}
               </button>

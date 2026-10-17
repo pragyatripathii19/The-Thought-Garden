@@ -1,6 +1,9 @@
 import { ClassifyPayload } from './organizer';
+import { apiFetch } from '../api';
 
 const API_BASE = '/api';
+// A little longer than the server's own 15s wait for the provider.
+const CLASSIFY_TIMEOUT_MS = 20000;
 
 /**
  * Asks the server whether Smart organising is configured (an LLM key is set).
@@ -22,19 +25,12 @@ export async function fetchSmartOrganizingAvailable(): Promise<boolean> {
  * them to the configured LLM. Only called when the user enabled Smart organising.
  * Returns the raw (untrusted) decision; validate before applying.
  */
-export async function requestClassification(
-  userId: string,
-  secret: string,
-  payload: ClassifyPayload
-): Promise<unknown> {
-  const res = await fetch(`${API_BASE}/classify`, {
+export async function requestClassification(payload: ClassifyPayload): Promise<unknown> {
+  // A slow AI answer shouldn't hold up the queue; the caller falls back to on-device organising.
+  const data = await apiFetch<{ decision: unknown }>('/classify', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-user-secret': secret },
-    body: JSON.stringify({ userId, ...payload }),
+    body: payload,
+    timeoutMs: CLASSIFY_TIMEOUT_MS,
   });
-  if (!res.ok) {
-    throw new Error(`Classification request failed (HTTP ${res.status})`);
-  }
-  const data = await res.json();
   return data.decision;
 }

@@ -25,20 +25,17 @@ import {
   getEmbeddingRepository,
   getOrganizeEventRepository,
 } from '../storage';
-import { ORGANIZER_STORAGE_KEYS } from '../lib/organize/settings';
 import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connections';
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
-import {
-  syncPilotSignup,
-  syncPilotPing,
-  submitPilotFeedback,
-  deletePilotUser,
-  generateUserSecret,
-} from '../lib/pilotApi';
-import { computeTodayThoughtsCount, computeGardenStreak } from '../lib/analytics';
-import { localDateKey } from '../lib/date';
+import { submitPilotFeedback } from '../lib/pilotApi';
+import { suggestCollectionIcon } from '../lib/collectionIcons';
+import { evolvedStage } from '../lib/growth';
+import { useOptionalAuth } from './AuthContext';
+
+// How often returning to the tab may reload the garden from the server.
+const FOCUS_REFRESH_INTERVAL_MS = 15 * 1000;
 
 interface StorageContextValue {
   thoughts: Thought[];
@@ -50,14 +47,12 @@ interface StorageContextValue {
   setActiveCollectionId: (id: string | null) => void;
   isLoading: boolean;
   error: string | null;
-  // Pilot user profile & feedback
+  // Signed-in user's profile & feedback
   userProfile: PilotUserProfile | null;
-  saveUserProfile: (name: string, reasons: string[], email?: string) => Promise<void>;
-  /**
-   * Deletes the pilot profile on the server, then wipes this device. Throws (and
-   * deletes nothing) if the server step fails, unless `localOnly` is set.
-   */
-  deleteAccountAndResetGarden: (options?: { localOnly?: boolean }) => Promise<void>;
+  isAdmin: boolean;
+  saveUserProfile: (name: string, reasons: string[]) => Promise<void>;
+  /** Permanently deletes the account and its whole garden on the server. Needs the password. */
+  deleteAccount: (password: string) => Promise<void>;
   feedbacks: PilotFeedback[];
   submitFeedback: (category: PilotFeedbackCategory, rating: number, message: string, email?: string) => Promise<void>;
   isOnboardingOpen: boolean;
@@ -76,6 +71,7 @@ interface StorageContextValue {
   refreshThoughts: () => Promise<void>;
   toggleThoughtCollection: (thoughtId: string, collectionId: string) => Promise<Thought>;
   toggleSaveThought: (id: string) => Promise<Thought>;
+  toggleSaveCollection: (id: string) => Promise<Collection>;
   dismissRediscoveredThought: (id: string) => void;
   // Collection actions
   createCollection: (
@@ -85,7 +81,13 @@ interface StorageContextValue {
   ) => Promise<Collection>;
   updateCollection: (
     id: string,
-    updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+    updates: {
+      name?: string;
+      description?: string;
+      colorVariant?: CollectionColorVariant;
+      iconType?: CollectionIconType;
+      isSaved?: boolean;
+    }
   ) => Promise<Collection>;
   deleteCollection: (id: string) => Promise<void>;
   refreshCollections: () => Promise<void>;
@@ -120,6 +122,12 @@ export interface StorageProviderProps {
   connectionRepository?: IConnectionRepository;
   embeddingRepository?: IEmbeddingRepository;
   organizeEventRepository?: IOrganizeEventRepository;
+  /** Imports a backup in one step (the server does it in a transaction). Defaults to saving item by item. */
+  importGarden?: (backup: GardenBackupV1, strategy: 'merge' | 'replace') => Promise<ImportStats>;
+  /** Seed the starter collections into an empty store. The server seeds accounts itself. */
+  seedStarterCollections?: boolean;
+  /** Reload the garden when the tab regains focus, to pick up changes from other devices. */
+  refreshOnFocus?: boolean;
 }
 
 export const StorageProvider: React.FC<StorageProviderProps> = ({
@@ -129,7 +137,11 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   connectionRepository = getConnectionRepository(),
   embeddingRepository = getEmbeddingRepository(),
   organizeEventRepository = getOrganizeEventRepository(),
+  importGarden,
+  seedStarterCollections = true,
+  refreshOnFocus = false,
 }) => {
+  const auth = useOptionalAuth();
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -137,26 +149,29 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pilot Profile State
-  const [userProfile, setUserProfile] = useState<PilotUserProfile | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const stored = localStorage.getItem('thought_garden_pilot_profile');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  // The signed-in user's profile, from the account.
+  const authUser = auth?.user ?? null;
+  const userProfile = useMemo<PilotUserProfile | null>(
+    () =>
+      authUser
+        ? {
+            id: authUser.id,
+            name: authUser.name,
+            email: authUser.email,
+            reasons: authUser.reasons,
+            createdAt: authUser.createdAt,
+          }
+        : null,
+    [authUser]
+  );
+  const isAdmin = Boolean(authUser?.isAdmin);
 
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return !localStorage.getItem('thought_garden_pilot_profile');
-  });
-
+  // The profile editor (name & reasons); signup already collects both.
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-  // Feedbacks State
+  // Feedback this browser has sent, shown in the admin summary report.
   const [feedbacks, setFeedbacks] = useState<PilotFeedback[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -168,28 +183,15 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   });
 
   const saveUserProfile = useCallback(
-    async (name: string, reasons: string[], email?: string) => {
-      const id = userProfile?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-      const profile: PilotUserProfile = {
-        id,
-        secret: userProfile?.secret || generateUserSecret(),
+    async (name: string, reasons: string[]) => {
+      if (!auth) throw new Error('Log in to edit your profile.');
+      await auth.updateProfile({
         name: name.trim() || 'Gardener',
-        email: email?.trim() || undefined,
-        reasons: reasons.length > 0 ? reasons : ['General Note Taking'],
-        createdAt: userProfile?.createdAt || new Date().toISOString(),
-        lastActiveAt: new Date().toISOString(),
-      };
-
-      setUserProfile(profile);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('thought_garden_pilot_profile', JSON.stringify(profile));
-      }
+        reasons,
+      });
       setIsOnboardingOpen(false);
-
-      // Background sync to central SQLite backend
-      syncPilotSignup(profile).catch((err) => console.warn('Background signup sync deferred:', err));
     },
-    [userProfile]
+    [auth]
   );
 
   const submitFeedback = useCallback(
@@ -205,124 +207,28 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         createdAt: new Date().toISOString(),
       };
 
+      // Throws if the server rejects it, so the form can say so instead of pretending it was sent.
+      await submitPilotFeedback(newFb);
+
       const updated = [newFb, ...feedbacks];
       setFeedbacks(updated);
-      if (typeof window !== 'undefined') {
+      try {
         localStorage.setItem('thought_garden_pilot_feedback', JSON.stringify(updated));
+      } catch {
+        // Storage unavailable: the local copy is only for the admin report.
       }
-
-      // Background sync to central SQLite backend
-      submitPilotFeedback(newFb, userProfile?.secret).catch((err) =>
-        console.warn('Background feedback sync deferred:', err)
-      );
     },
     [userProfile, feedbacks]
   );
 
-  const deleteAccountAndResetGarden = useCallback(async (options?: { localOnly?: boolean }) => {
-    // 1. Delete the server record first. If that fails, stop before touching
-    //    local data so the user isn't told their account is gone when it isn't.
-    if (userProfile?.id && !options?.localOnly) {
-      const result = await deletePilotUser(userProfile.id, userProfile.secret);
-      if (result === 'unreachable') {
-        throw new Error(
-          "Couldn't reach the pilot server, so your profile there wasn't deleted. Nothing has been deleted yet."
-        );
-      }
-      if (result === 'forbidden') {
-        throw new Error(
-          "The pilot server didn't accept this browser as the owner of your profile, so it wasn't deleted there. Nothing has been deleted yet."
-        );
-      }
-      if (result === 'failed') {
-        throw new Error("The pilot server couldn't delete your profile. Nothing has been deleted yet.");
-      }
-      // 'deleted' or 'not-found' (never synced) — safe to continue.
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // 2. Clear IndexedDB stores
-      await thoughtRepository.clear();
-      await connectionRepository.clear();
-      await collectionRepository.clear();
-      await embeddingRepository.clear();
-      await organizeEventRepository.clear();
-
-      // 3. Re-seed default collections with 0 thoughts
-      for (const col of STARTER_COLLECTIONS) {
-        await collectionRepository.save(col);
-      }
-
-      // 4. Wipe localStorage and session items
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('thought_garden_pilot_profile');
-        localStorage.removeItem('thought_garden_pilot_feedback');
-        localStorage.removeItem('thought_garden_active_collection');
-        sessionStorage.removeItem('thought_garden_admin_pass');
-        ORGANIZER_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-      }
-
-      // 5. Reset in-memory React states
-      setThoughts([]);
-      setConnections([]);
-      setDismissedRediscoveryIds(new Set());
-      const freshCollections = await collectionRepository.getAll();
-      setCollections(freshCollections);
-      setUserProfile(null);
-      setFeedbacks([]);
-      setActiveCollectionId(null);
-
-      // 6. Open Onboarding immediately
-      setIsOnboardingOpen(true);
-    } catch (err) {
-      console.error('Failed to reset garden and delete account:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userProfile, thoughtRepository, connectionRepository, collectionRepository, embeddingRepository, organizeEventRepository]);
-
-  // Background activity ping to central backend (debounced)
-  const lastPingRef = useRef<string>('');
-  useEffect(() => {
-    if (!userProfile) return;
-    const today = localDateKey();
-    const todayCount = computeTodayThoughtsCount(thoughts);
-    const streak = computeGardenStreak(thoughts);
-    const pingKey = `${today}_${todayCount}_${thoughts.length}`;
-
-    if (lastPingRef.current !== pingKey) {
-      lastPingRef.current = pingKey;
-      syncPilotPing(
-        {
-          userId: userProfile.id,
-          date: today,
-          thoughtsCount: todayCount,
-          totalThoughts: thoughts.length,
-          streak,
-        },
-        userProfile.secret
-      ).catch((err) => console.warn('Background activity ping deferred:', err));
-    }
-  }, [thoughts, userProfile]);
-
-  // Profiles created before per-user secrets existed get one now and re-sync,
-  // which lets the server attach it to the existing record.
-  useEffect(() => {
-    if (!userProfile || userProfile.secret) return;
-    const upgraded: PilotUserProfile = { ...userProfile, secret: generateUserSecret() };
-    setUserProfile(upgraded);
-    try {
-      localStorage.setItem('thought_garden_pilot_profile', JSON.stringify(upgraded));
-    } catch {
-      // Storage unavailable: the secret lives for this session only.
-    }
-    syncPilotSignup(upgraded).catch((err) => console.warn('Background signup sync deferred:', err));
-  }, [userProfile]);
+  const deleteAccount = useCallback(
+    async (password: string) => {
+      if (!auth) throw new Error('Log in to delete your account.');
+      // The server removes the account and its whole garden; signing out unmounts this provider.
+      await auth.deleteAccount(password);
+    },
+    [auth]
+  );
 
   // Latest thoughts for callbacks that must not re-create on every change.
   const thoughtsRef = useRef<Thought[]>(thoughts);
@@ -368,7 +274,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
 
       // Idempotent starter seeding: seed the 4 starter collections (with 0 thoughts) if collection store is empty
       const hasSeeded = typeof window !== 'undefined' ? localStorage.getItem('thought_garden_starter_seeded') : null;
-      if (!hasSeeded) {
+      if (seedStarterCollections && !hasSeeded) {
         const colCount = await collectionRepository.count();
         if (colCount === 0) {
           for (const col of STARTER_COLLECTIONS) {
@@ -384,11 +290,61 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [thoughtRepository, collectionRepository, connectionRepository, refreshThoughts, refreshCollections, refreshConnections]);
+  }, [collectionRepository, seedStarterCollections, refreshThoughts, refreshCollections, refreshConnections]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  // Pick up changes made on another device when the user comes back to this tab.
+  const lastFocusRefreshRef = useRef(Date.now());
+  useEffect(() => {
+    if (!refreshOnFocus) return;
+    const onFocus = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - lastFocusRefreshRef.current < FOCUS_REFRESH_INTERVAL_MS) return;
+      lastFocusRefreshRef.current = Date.now();
+      Promise.all([refreshThoughts(), refreshCollections(), refreshConnections()]).catch(() => {
+        // Each refresh reports its own error.
+      });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [refreshOnFocus, refreshThoughts, refreshCollections, refreshConnections]);
+
+  // Grow thoughts automatically as they're tended (seed → sprout → bloom; see lib/growth.ts).
+  // Runs after any change, including the first load, so older thoughts catch up too.
+  const growingRef = useRef(false);
+  const [growthPass, setGrowthPass] = useState(0);
+  useEffect(() => {
+    if (isLoading || growingRef.current) return;
+    const due = thoughts
+      .map((t) => ({ id: t.id, stage: evolvedStage(t, connections) }))
+      .filter((d): d is { id: string; stage: GrowthStage } => d.stage !== null);
+    if (due.length === 0) return;
+
+    growingRef.current = true;
+    (async () => {
+      let grew = false;
+      try {
+        for (const { id, stage } of due) {
+          const updated = await thoughtRepository.update(id, { evolvedStage: stage });
+          setThoughts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+          grew = true;
+        }
+      } catch (err) {
+        // Try again on the next change rather than in a loop.
+        console.warn('Could not update growth stages:', err instanceof Error ? err.message : err);
+      } finally {
+        growingRef.current = false;
+        if (grew) setGrowthPass((n) => n + 1);
+      }
+    })();
+  }, [thoughts, connections, isLoading, thoughtRepository, growthPass]);
 
   // Compute live suggested connection candidate
   const suggestedConnection = useMemo(() => {
@@ -522,7 +478,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
           name,
           description,
           colorVariant: options?.colorVariant,
-          iconType: options?.iconType,
+          // New collections get a fitting icon from their name unless one was chosen.
+          iconType: options?.iconType ?? suggestCollectionIcon(name, description),
           origin: options?.origin ?? 'manual',
           autoReason: options?.autoReason,
         });
@@ -541,7 +498,13 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
   const updateCollection = useCallback(
     async (
       id: string,
-      updates: { name?: string; description?: string; colorVariant?: CollectionColorVariant; iconType?: CollectionIconType }
+      updates: {
+      name?: string;
+      description?: string;
+      colorVariant?: CollectionColorVariant;
+      iconType?: CollectionIconType;
+      isSaved?: boolean;
+    }
     ): Promise<Collection> => {
       try {
         setError(null);
@@ -556,6 +519,17 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       }
     },
     [collectionRepository]
+  );
+
+  const toggleSaveCollection = useCallback(
+    async (id: string): Promise<Collection> => {
+      const collection = collections.find((c) => c.id === id);
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+      return updateCollection(id, { isSaved: !collection.isSaved });
+    },
+    [collections, updateCollection]
   );
 
   const deleteCollection = useCallback(
@@ -662,6 +636,15 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     ): Promise<ImportStats> => {
       try {
         setError(null);
+        if (importGarden) {
+          const stats = await importGarden(backup, strategy);
+          if (strategy === 'replace') {
+            await embeddingRepository.clear();
+          }
+          await loadAll();
+          return stats;
+        }
+
         let thoughtsAdded = 0;
         let collectionsAdded = 0;
         let connectionsAdded = 0;
@@ -734,7 +717,15 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         throw err;
       }
     },
-    [thoughtRepository, collectionRepository, connectionRepository, embeddingRepository, organizeEventRepository, loadAll]
+    [
+      thoughtRepository,
+      collectionRepository,
+      connectionRepository,
+      embeddingRepository,
+      organizeEventRepository,
+      importGarden,
+      loadAll,
+    ]
   );
 
   return (
@@ -750,8 +741,9 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         isLoading,
         error,
         userProfile,
+        isAdmin,
         saveUserProfile,
-        deleteAccountAndResetGarden,
+        deleteAccount,
         feedbacks,
         submitFeedback,
         isOnboardingOpen,
@@ -766,6 +758,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         refreshThoughts,
         toggleThoughtCollection,
         toggleSaveThought,
+        toggleSaveCollection,
         dismissRediscoveredThought,
         createCollection,
         updateCollection,

@@ -16,6 +16,10 @@ import { InMemoryCollectionRepository } from './memory/InMemoryCollectionReposit
 import { IndexedDBCollectionRepository } from './indexeddb/IndexedDBCollectionRepository';
 import { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';
 import { IndexedDBConnectionRepository } from './indexeddb/IndexedDBConnectionRepository';
+// Server-backed (Postgres via the API) for signed-in accounts.
+import { ApiThoughtRepository } from './api/ApiThoughtRepository';
+import { ApiCollectionRepository } from './api/ApiCollectionRepository';
+import { ApiConnectionRepository } from './api/ApiConnectionRepository';
 
 let thoughtRepoInstance: IThoughtRepository | null = null;
 let collectionRepoInstance: ICollectionRepository | null = null;
@@ -38,7 +42,8 @@ export function getThoughtRepository(provider: StorageProviderType = currentProv
         thoughtRepoInstance = new IndexedDBThoughtRepository();
         break;
       case 'postgres':
-        throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
+        thoughtRepoInstance = new ApiThoughtRepository();
+        break;
       default:
         thoughtRepoInstance = new IndexedDBThoughtRepository();
     }
@@ -64,7 +69,8 @@ export function getCollectionRepository(provider: StorageProviderType = currentP
         collectionRepoInstance = new IndexedDBCollectionRepository();
         break;
       case 'postgres':
-        throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
+        collectionRepoInstance = new ApiCollectionRepository();
+        break;
       default:
         collectionRepoInstance = new IndexedDBCollectionRepository();
     }
@@ -90,7 +96,8 @@ export function getConnectionRepository(provider: StorageProviderType = currentP
         connectionRepoInstance = new IndexedDBConnectionRepository();
         break;
       case 'postgres':
-        throw new Error('PostgreSQL adapter not yet implemented. Set provider to "indexeddb" or "memory".');
+        connectionRepoInstance = new ApiConnectionRepository();
+        break;
       default:
         connectionRepoInstance = new IndexedDBConnectionRepository();
     }

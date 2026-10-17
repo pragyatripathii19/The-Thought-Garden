@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Search, X, Edit3, KeyRound, Trash2 } from 'lucide-react';
+import { X, Edit3, KeyRound, Settings, LogOut } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
+import { useAuth } from '../context/AuthContext';
+import { describeReason } from '../lib/profileReasons';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 
 interface TopHeaderProps {
@@ -17,7 +19,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
     setIsFeedbackModalOpen,
     setIsOnboardingOpen,
     setIsAdminModalOpen,
+    isAdmin,
   } = useThoughts();
+  const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Compute initials from user's actual name
@@ -34,15 +38,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
   return (
     <>
       {/* Mobile Top Header (< md) */}
-      <header className="md:hidden sticky top-0 z-30 bg-[#faf8f3]/95 backdrop-blur-md border-b border-[#ece7dd] px-4 py-3 flex items-center justify-between">
+      <header className="md:hidden sticky top-0 z-30 bg-garden-paper/90 backdrop-blur-md border-b border-garden-line px-4 py-3 flex items-center justify-between">
         <div
           onClick={() => onTabChange('garden')}
           className="flex items-center gap-2.5 cursor-pointer"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#e6ede7] flex items-center justify-center text-[#385440]">
-            <LeafLogoIcon className="w-4 h-4" />
-          </div>
-          <span className="font-serif text-lg font-bold text-[#253227] tracking-tight">
+          <LeafLogoIcon className="w-5 h-5 text-garden-moss -rotate-12" />
+          <span className="font-serif text-[21px] font-semibold text-garden-ink tracking-tight leading-none whitespace-nowrap">
             The Thought Garden
           </span>
         </div>
@@ -52,27 +54,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
           <button
             type="button"
             onClick={() => setIsFeedbackModalOpen(true)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#edf5ee] hover:bg-[#e2ede4] text-[#34593e] border border-[#d5e6d8] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-full text-xs font-semibold text-garden-moss hover:bg-garden-paper-deep transition-colors"
             title="Share Feedback"
             aria-label="Share Feedback"
           >
-            <span>🌱</span>
-            <span className="text-[11px]">Feedback</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onTabChange('search')}
-            className="p-2 text-[#5d695e] hover:text-[#253227] hover:bg-[#f1ece1] rounded-xl transition-colors"
-            aria-label="Search Garden"
-          >
-            <Search className="w-5 h-5" />
+            <LeafLogoIcon className="w-3.5 h-3.5" />
+            <span className="hidden min-[400px]:inline">Feedback</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsProfileOpen(true)}
-            className="w-8 h-8 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#344f3b] transition-colors shadow-xs"
+            className="w-8 h-8 rounded-full bg-garden-moss text-[#F4EEDB] flex items-center justify-center text-xs font-semibold hover:bg-garden-moss-dark transition-colors"
             aria-label="Open Profile"
           >
             {initials}
@@ -81,32 +74,21 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
       </header>
 
       {/* Desktop Top Header Bar (>= md) */}
-      <header className="hidden md:flex items-center justify-end px-8 py-5 border-b border-[#eee9dc]/60 gap-3">
-        {/* Feedback Button */}
+      <header className="hidden md:flex items-center justify-end gap-3 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <button
           type="button"
           onClick={() => setIsFeedbackModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#edf5ee] hover:bg-[#e0ebe2] text-[#34593e] border border-[#d4e4d7] rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold text-garden-moss hover:bg-garden-paper-deep transition-colors"
           title="Share Pilot Feedback"
         >
-          <span>🌱</span>
+          <LeafLogoIcon className="w-4 h-4" />
           <span>Feedback</span>
         </button>
 
         <button
           type="button"
-          onClick={() => onTabChange('search')}
-          className="p-2 text-[#5d695e] hover:text-[#253227] hover:bg-[#f1ece1] rounded-xl transition-colors"
-          title="Search Thoughts (Q)"
-          aria-label="Search Thoughts"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-
-        <button
-          type="button"
           onClick={() => setIsProfileOpen(true)}
-          className="w-9 h-9 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#344f3b] transition-transform active:scale-95 shadow-xs"
+          className="w-10 h-10 rounded-full bg-garden-moss text-[#F4EEDB] flex items-center justify-center text-sm font-semibold hover:bg-garden-moss-dark transition-transform active:scale-95"
           title={`${displayName} (Profile)`}
           aria-label="User Profile"
         >
@@ -119,23 +101,23 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/40 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
           onClick={() => setIsProfileOpen(false)}
         >
           <div
-            className="bg-[#fcfbf8] border border-[#e2dcce] rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-4"
+            className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#eee9dc]">
+            <div className="flex items-center justify-between pb-3 border-b border-garden-line">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#3d5a45] text-white flex items-center justify-center text-xs font-semibold">
+                <div className="w-8 h-8 rounded-full bg-garden-moss text-garden-paper flex items-center justify-center text-xs font-semibold">
                   {initials}
                 </div>
                 <div>
-                  <h3 className="font-serif text-lg font-medium text-[#253227] leading-tight">
+                  <h3 className="font-serif text-2xl font-semibold text-garden-ink leading-tight">
                     {displayName}
                   </h3>
-                  <p className="text-[11px] text-[#788779]">
+                  <p className="text-[11px] text-garden-ink-soft">
                     {userProfile?.email || 'Personal Pilot Garden'}
                   </p>
                 </div>
@@ -143,7 +125,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(false)}
-                className="p-1 text-[#7c8779] hover:text-[#2d3a2e] rounded-lg"
+                className="p-1 text-garden-ink-faint hover:text-garden-ink rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -152,30 +134,34 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
             {/* Reasons / Goals */}
             {userProfile?.reasons && userProfile.reasons.length > 0 && (
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#69786a]">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-garden-ink-soft">
                   Garden Intent
                 </span>
                 <div className="flex flex-wrap gap-1">
-                  {userProfile.reasons.map((r, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-[#edf5ee] text-[#34593e] border border-[#d5e7d8]"
-                    >
-                      {r}
-                    </span>
-                  ))}
+                  {userProfile.reasons.map((r, i) => {
+                    const { label, Icon } = describeReason(r);
+                    return (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]"
+                      >
+                        <Icon className="w-3 h-3" />
+                        {label}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 bg-[#f2f7f3] border border-[#dbe7dc] rounded-2xl">
-                <div className="font-serif text-xl font-bold text-[#2d4734]">{thoughts.length}</div>
-                <div className="text-[11px] text-[#556958]">Thoughts Planted</div>
+              <div className="p-3 bg-garden-paper-deep/70 border border-garden-line rounded-2xl">
+                <div className="font-serif text-[26px] font-semibold text-garden-ink">{thoughts.length}</div>
+                <div className="text-[11px] text-garden-ink-soft">Thoughts Planted</div>
               </div>
-              <div className="p-3 bg-[#fbf2f2] border border-[#f4dede] rounded-2xl">
-                <div className="font-serif text-xl font-bold text-[#5c3137]">{collections.length}</div>
-                <div className="text-[11px] text-[#695254]">Collections</div>
+              <div className="p-3 bg-garden-paper-deep/70 border border-garden-line rounded-2xl">
+                <div className="font-serif text-[26px] font-semibold text-garden-ink">{collections.length}</div>
+                <div className="text-[11px] text-garden-ink-soft">Collections</div>
               </div>
             </div>
 
@@ -187,23 +173,25 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                   setIsProfileOpen(false);
                   setIsOnboardingOpen(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#f4f1e8] hover:bg-[#ede8dc] text-[#334636] border border-[#e2dcd0] rounded-xl text-xs font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-paper-deep hover:bg-garden-line text-garden-ink border border-garden-line rounded-xl text-xs font-semibold transition-colors"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Profile & Goals</span>
+                <span>Edit profile</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsProfileOpen(false);
-                  setIsAdminModalOpen(true);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e2eee4] text-[#34593e] border border-[#d2e4d5] rounded-xl text-xs font-semibold transition-colors"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>Open Pilot Admin Panel</span>
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    setIsAdminModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-pill/60 hover:bg-garden-pill/60 text-garden-moss border border-[#CBD5AE] rounded-xl text-xs font-semibold transition-colors"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Admin dashboard</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -211,10 +199,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                   setIsProfileOpen(false);
                   onTabChange('settings');
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-white hover:bg-[#fff5f5] text-red-600 border border-[#f3dada] rounded-xl text-xs font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep text-garden-ink border border-garden-line rounded-xl text-xs font-semibold transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Account & Reset Garden</span>
+                <Settings className="w-3.5 h-3.5" />
+                <span>Settings</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep text-garden-ink border border-garden-line rounded-xl text-xs font-semibold transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log out</span>
               </button>
             </div>
           </div>

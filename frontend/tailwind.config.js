@@ -7,6 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Ghibli-inspired garden palette (v1 redesign): parchment, sage and deep forest green.
+        garden: {
+          paper: '#F4EEDB',
+          'paper-deep': '#ECE5CB',
+          sidebar: '#EAE6CC',
+          card: '#FAF6E9',
+          'card-hover': '#F5EFDB',
+          line: '#E2D7BA',
+          'line-soft': '#EBE3CC',
+          ink: '#2F3B2C',
+          'ink-soft': '#5F6651',
+          'ink-faint': '#8C8D74',
+          moss: '#3E5A39',
+          'moss-dark': '#2F4A2C',
+          pill: '#DCE3C3',
+          tag: '#EAE1C7',
+          'tag-ink': '#6D6A52',
+          gold: '#D9A93A',
+        },
         parchment: {
           DEFAULT: '#FAF7F2',
           light: '#FDFBF7',
@@ -57,7 +76,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          'Inter',
+          '"Nunito Sans"',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
@@ -65,7 +84,7 @@ export default {
           'sans-serif',
         ],
         serif: [
-          'Newsreader',
+          '"Cormorant Garamond"',
           'Georgia',
           'Cambria',
           '"Times New Roman"',

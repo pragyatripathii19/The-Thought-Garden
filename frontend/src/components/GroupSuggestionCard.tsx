@@ -33,21 +33,21 @@ export const GroupSuggestionCard: React.FC<GroupSuggestionCardProps> = ({ sugges
   };
 
   return (
-    <section className="bg-[#f3f7f4] border border-[#d6e5d8] rounded-2xl p-5 shadow-xs space-y-3.5">
+    <section className="bg-garden-card/85 border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-[#3d5a45] text-white flex items-center justify-center">
-            <FolderPlus className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-3">
+          <span className="w-10 h-10 rounded-full bg-garden-pill/70 text-garden-moss flex items-center justify-center shrink-0">
+            <FolderPlus className="w-5 h-5" strokeWidth={1.75} />
           </span>
           <div>
-            <h3 className="font-serif text-base font-semibold text-[#233126]">These thoughts seem related</h3>
-            <p className="text-xs text-[#526e57] font-medium">Group them into a collection?</p>
+            <h3 className="font-serif text-2xl leading-tight font-semibold text-garden-ink">These thoughts seem related</h3>
+            <p className="text-sm text-garden-ink-soft">Group them into a collection?</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => dismissGroupSuggestion(suggestion.id)}
-          className="p-1 text-[#869688] hover:text-[#233126] rounded-lg"
+          className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
           aria-label="Dismiss suggestion"
         >
           <X className="w-4 h-4" />
@@ -60,9 +60,9 @@ export const GroupSuggestionCard: React.FC<GroupSuggestionCardProps> = ({ sugges
             key={t.id}
             type="button"
             onClick={() => onOpenThought(t.id)}
-            className="p-3.5 bg-white rounded-xl border border-[#dbe7dc] text-left shadow-xs hover:border-[#a8cca0] transition-colors"
+            className="p-4 bg-[#FDFBF3] rounded-xl border border-garden-line-soft text-left hover:border-[#D6CAA6] transition-colors"
           >
-            <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed">{t.text}</p>
+            <p className="text-garden-ink text-sm line-clamp-3 leading-relaxed">{t.text}</p>
           </button>
         ))}
       </div>
@@ -77,13 +77,13 @@ export const GroupSuggestionCard: React.FC<GroupSuggestionCardProps> = ({ sugges
           value={name}
           maxLength={60}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 min-w-0 px-3 py-2 bg-white rounded-xl border border-[#dbe7dc] text-xs text-[#233126] focus:border-[#7a9d83]"
+          className="flex-1 min-w-0 px-3.5 py-2 bg-[#FDFBF3] rounded-full border border-garden-line text-sm text-garden-ink focus:outline-none focus:border-[#BFB38F]"
         />
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => dismissGroupSuggestion(suggestion.id)}
-            className="text-xs text-[#6e7d70] hover:text-[#233126]"
+            className="text-sm text-garden-ink-soft hover:text-garden-ink"
           >
             Not now
           </button>
@@ -91,9 +91,9 @@ export const GroupSuggestionCard: React.FC<GroupSuggestionCardProps> = ({ sugges
             type="button"
             onClick={handleAccept}
             disabled={!name.trim() || isSaving}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3d5a45] hover:bg-[#344e3b] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-garden-moss hover:bg-garden-moss-dark disabled:opacity-40 text-[#F4EEDB] text-sm font-semibold transition-colors"
           >
-            <FolderPlus className="w-3.5 h-3.5" />
+            <FolderPlus className="w-4 h-4" />
             <span>{isSaving ? 'Grouping…' : 'Group them'}</span>
           </button>
         </div>

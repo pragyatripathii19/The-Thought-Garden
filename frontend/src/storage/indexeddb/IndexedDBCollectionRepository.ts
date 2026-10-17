@@ -60,6 +60,7 @@ export class IndexedDBCollectionRepository implements ICollectionRepository {
       description: dto.description !== undefined ? dto.description.trim() || undefined : existing.description,
       colorVariant: dto.colorVariant !== undefined ? dto.colorVariant : existing.colorVariant,
       iconType: dto.iconType !== undefined ? dto.iconType : existing.iconType,
+      isSaved: dto.isSaved !== undefined ? dto.isSaved : existing.isSaved,
       updatedAt: new Date().toISOString(),
     };
 

@@ -80,7 +80,7 @@ Voice, transcription, login, cloud sync, collaboration, reminders, external inte
 
 ## 7a. Post-MVP addition: automatic organising
 
-Added during the pilot: on-device embeddings group thoughts into collections, with an optional, opt-in LLM ("Smart organising") routed through the pilot server. It follows the rules above — suggestions are explainable and reversible, no thought content leaves the browser without consent, and manual organisation always wins. See the root `README.md`.
+Added during the pilot: on-device embeddings group thoughts into collections, with an LLM ("Smart organising") routed through the server. It is on by default, explained in Settings and can be turned off per account; when the LLM is unavailable the on-device rule is used. It follows the rules above: suggestions are explainable and reversible, and manual organisation always wins. See the root `README.md`.
 
 ## 8. Prototype validation
 

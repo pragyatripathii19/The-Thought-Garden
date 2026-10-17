@@ -32,6 +32,10 @@ export interface UpdateThoughtDTO {
   organizeLocked?: boolean;
   classifyState?: ClassifyState;
   classifiedAt?: string;
+  /** Turn automatic growth back on (false) or off (true) without changing the stage. */
+  stageManual?: boolean;
+  /** A stage reached automatically. Unlike `stage`, it isn't the user's choice and isn't "tending". */
+  evolvedStage?: GrowthStage;
 }
 
 /**
@@ -52,9 +56,16 @@ export function applyThoughtUpdate(existing: Thought, dto: UpdateThoughtDTO): Th
     dto.category !== undefined;
 
   const updated: Thought = { ...existing };
+  if (dto.text !== undefined && dto.text !== existing.text) updated.editCount = (existing.editCount || 0) + 1;
   if (dto.text !== undefined) updated.text = dto.text;
   if (dto.collectionIds !== undefined) updated.collectionIds = [...dto.collectionIds];
-  if (dto.stage !== undefined) updated.stage = dto.stage;
+  if (dto.stage !== undefined) {
+    // A stage set directly is the user's choice: automatic growth stops for this thought.
+    updated.stage = dto.stage;
+    updated.stageManual = true;
+  }
+  if (dto.stageManual !== undefined) updated.stageManual = dto.stageManual;
+  if (dto.evolvedStage !== undefined) updated.stage = dto.evolvedStage;
   if (dto.isSaved !== undefined) updated.isSaved = dto.isSaved;
   if (dto.category !== undefined) updated.category = dto.category;
   if (dto.autoCollectionIds !== undefined) updated.autoCollectionIds = [...dto.autoCollectionIds];
@@ -95,6 +106,7 @@ export interface UpdateCollectionDTO {
   description?: string;
   colorVariant?: CollectionColorVariant;
   iconType?: CollectionIconType;
+  isSaved?: boolean;
 }
 
 /**

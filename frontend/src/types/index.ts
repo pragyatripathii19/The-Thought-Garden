@@ -22,10 +22,15 @@ export interface Thought {
   organizeLocked?: boolean;
   classifyState?: ClassifyState;
   classifiedAt?: string;
+  /** How many times the text was edited; feeds automatic growth stages. */
+  editCount?: number;
+  /** The user picked the stage themselves, so it no longer changes automatically. */
+  stageManual?: boolean;
 }
 
 export type CollectionColorVariant = 'green' | 'rose' | 'purple' | 'amber';
-export type CollectionIconType = 'sprout' | 'pencil' | 'search' | 'check' | 'leaf' | 'flower';
+/** A key of COLLECTION_ICONS (lib/collectionIcons.ts); unknown keys display as a leaf. */
+export type CollectionIconType = string;
 export type CollectionOrigin = 'manual' | 'auto' | 'starter';
 
 export interface Collection {
@@ -39,6 +44,8 @@ export interface Collection {
   origin?: CollectionOrigin;
   /** Why the organiser created this collection. */
   autoReason?: string;
+  /** Bookmarked: shown on the Saved tab. */
+  isSaved?: boolean;
 }
 
 /** Locally computed text embedding for a thought. Never exported or sent anywhere. */
@@ -81,26 +88,10 @@ export interface Connection {
 
 export interface PilotUserProfile {
   id: string;
-  /**
-   * Random secret generated in this browser. Proves ownership of the profile to
-   * the pilot server (which stores only its hash). Never shown in the UI.
-   */
-  secret?: string;
   name: string;
   email?: string;
   reasons: string[];
   createdAt: string;
-  lastActiveAt?: string;
-  totalThoughts?: number;
-  thoughtsToday?: number;
-  streak?: number;
-  feedbackCount?: number;
-  activityHistory?: Array<{
-    date: string;
-    thoughts_count: number;
-    total_thoughts: number;
-    streak: number;
-  }>;
 }
 
 export type PilotFeedbackCategory = 'suggestion' | 'bug' | 'praise' | 'other';
@@ -116,21 +107,51 @@ export interface PilotFeedback {
   createdAt: string;
 }
 
-export interface PilotDailyActivity {
-  id: string;
-  userId: string;
+export interface AdminActivityDay {
   date: string;
-  thoughtsCount: number;
-  totalThoughts: number;
+  thoughts_count: number;
+  total_thoughts: number;
   streak: number;
-  updatedAt: string;
+}
+
+/** One account on the admin dashboard: counts only, never thought text. */
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  reasons: string[];
+  isAdmin: boolean;
+  smartOrganizing: boolean;
+  createdAt: string;
+  lastActiveAt: string;
+  activeThisWeek: boolean;
+  totalThoughts: number;
+  thoughtsToday: number;
+  thoughtsThisWeek: number;
+  daysActive30: number;
+  streak: number;
+  feedbackCount: number;
+  collections: number;
+  collectionsMade: number;
+  collectionsAuto: number;
+  connections: number;
+  savedThoughts: number;
+  savedCollections: number;
+  autoActions: number;
+  autoUndone: number;
+  activityHistory: AdminActivityDay[];
 }
 
 export interface AdminSummaryKPIs {
   totalUsers: number;
-  totalFeedback: number;
-  totalThoughtsLogged: number;
+  admins: number;
+  activeThisWeek: number;
   activeToday: number;
+  thoughtsThisWeek: number;
+  totalThoughtsLogged: number;
+  totalFeedback: number;
+  /** Share of automatic organising actions that were undone; null before any. */
+  undoRate: number | null;
 }
 
 export interface AdminThoughtsPerDayAgg {
@@ -139,11 +160,31 @@ export interface AdminThoughtsPerDayAgg {
   active_users: number;
 }
 
-export interface AdminOverviewData {
-  summary: AdminSummaryKPIs;
-  users: PilotUserProfile[];
-  feedback: PilotFeedback[];
-  dailyActivities: PilotDailyActivity[];
-  thoughtsPerDayAgg: AdminThoughtsPerDayAgg[];
+export interface AdminOrganizingHealth {
+  actions: number;
+  undone: number;
+  llm: { actions: number; undone: number };
+  onDevice: { actions: number; undone: number };
+  smartOrganizingOn: number;
 }
 
+export interface AdminFeatureUse {
+  collectionsMade: number;
+  collectionsAuto: number;
+  connections: number;
+  savedThoughts: number;
+  savedCollections: number;
+  stages: Record<GrowthStage, number>;
+}
+
+export interface AdminOverviewData {
+  /** IANA time zone the days were counted in. */
+  timeZone: string;
+  summary: AdminSummaryKPIs;
+  organizing: AdminOrganizingHealth;
+  features: AdminFeatureUse;
+  users: AdminUserRow[];
+  feedback: PilotFeedback[];
+  /** The last 30 days, oldest first, empty days included. */
+  thoughtsPerDayAgg: AdminThoughtsPerDayAgg[];
+}

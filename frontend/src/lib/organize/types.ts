@@ -12,7 +12,8 @@ export type OrganizeDecision =
   | { action: 'assign'; collectionIds: string[]; reason: string; source: OrganizeEventSource }
   | {
       action: 'create';
-      newCollection: { name: string; description: string; partnerThoughtId: string };
+      /** `icon`: a COLLECTION_ICONS key chosen by Smart organising; otherwise picked from the name. */
+      newCollection: { name: string; description: string; partnerThoughtId: string; icon?: string };
       reason: string;
       source: OrganizeEventSource;
     }
@@ -25,7 +26,13 @@ export type OrganizeDecision =
       reason: string;
       source: 'local';
     }
-  | { action: 'none'; reason: string; source: OrganizeEventSource };
+  | {
+      action: 'none';
+      reason: string;
+      source: OrganizeEventSource;
+      /** The AI's answer was unusable (bad ids, missing name…); use the on-device rule instead. */
+      rejected?: boolean;
+    };
 
 /** A pending "group these two thoughts?" card produced by the local rule. */
 export interface GroupSuggestion {

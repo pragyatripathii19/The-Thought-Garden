@@ -6,10 +6,13 @@
 # ------------------------------------------------------------------------------
 # 1. System Runtime Requirements
 # ------------------------------------------------------------------------------
-# Node.js: >= 20.0.0 (Tested on v24.18.0)
+# Node.js: >= 22.9.0 (Tested on v24.20.0)
+# PostgreSQL: >= 16 (local development; Neon in production)
 # npm: >= 10.0.0 (Tested on 11.16.0)
 # Python: >= 3.10.0 (Tested on 3.12.10 - reserved for future backend services)
 # Docker: Multi-stage build capable (Node build stage + Python/Nginx runtime stage)
+#
+# Server npm dependencies (root package.json): express@4, pg@8
 
 # ------------------------------------------------------------------------------
 # 2. Python Backend Dependencies (Pip installable for Docker / Local Backend)

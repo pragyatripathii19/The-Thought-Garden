@@ -3,9 +3,9 @@ import {
   computeThoughtsPerDay,
   computeGardenStreak,
   computeTodayThoughtsCount,
-  generatePilotSummaryReport,
+  generateAdminSummaryReport,
 } from './analytics';
-import { Thought } from '../types';
+import { AdminOverviewData, Thought } from '../types';
 import { localDateKey } from './date';
 
 /** ISO timestamp for a local wall-clock time `daysAgo` days back. */
@@ -81,30 +81,42 @@ describe('Local Usage Analytics Engine', () => {
     expect(yesterdayMetric?.count).toBe(1);
   });
 
-  it('generates diagnostic markdown summary with user profile and feedback', () => {
-    const report = generatePilotSummaryReport(
-      {
-        id: 'u1',
-        name: 'Alex Rivera',
-        email: 'alex@example.com',
-        reasons: ['Startup Ideas'],
-        createdAt: '2026-10-01T00:00:00.000Z',
+  it('summarises the whole pilot from the admin overview, never thought text', () => {
+    const data: AdminOverviewData = {
+      timeZone: 'Asia/Kolkata',
+      summary: {
+        totalUsers: 2, admins: 1, activeThisWeek: 2, activeToday: 1, thoughtsThisWeek: 5,
+        totalThoughtsLogged: 12, totalFeedback: 1, undoRate: 0.25,
       },
-      mockThoughts,
-      [
+      organizing: {
+        actions: 8, undone: 2, llm: { actions: 4, undone: 1 }, onDevice: { actions: 4, undone: 1 }, smartOrganizingOn: 1,
+      },
+      features: {
+        collectionsMade: 3, collectionsAuto: 2, connections: 4, savedThoughts: 2, savedCollections: 1,
+        stages: { seed: 6, sprout: 4, bloom: 1, mature: 1 },
+      },
+      users: [
         {
-          id: 'fb1',
-          category: 'suggestion',
-          rating: 5,
-          message: 'Love the zen feel',
-          createdAt: localIso(0, 11),
+          id: 'u1', name: 'Alex Rivera', email: 'alex@example.com', reasons: ['writing', 'learning Spanish'],
+          isAdmin: false, smartOrganizing: true, createdAt: '2026-10-01T00:00:00.000Z',
+          lastActiveAt: '2026-10-17T00:00:00.000Z', activeThisWeek: true, totalThoughts: 9, thoughtsToday: 1,
+          thoughtsThisWeek: 4, daysActive30: 6, streak: 2, feedbackCount: 1, collections: 4, collectionsMade: 2,
+          collectionsAuto: 1, connections: 3, savedThoughts: 2, savedCollections: 1, autoActions: 6, autoUndone: 1,
+          activityHistory: [],
         },
-      ]
-    );
-
-    expect(report).toContain('Alex Rivera');
-    expect(report).toContain('Startup Ideas');
-    expect(report).toContain('Total Thoughts Planted: 4');
+      ],
+      feedback: [
+        { id: 'fb1', userName: 'Alex Rivera', category: 'suggestion', rating: 5, message: 'Love the zen feel', createdAt: localIso(0, 11) },
+      ],
+      thoughtsPerDayAgg: [],
+    };
+    const report = generateAdminSummaryReport(data);
+    expect(report).toContain('Asia/Kolkata');
+    expect(report).toContain('Active this week: 2 of 2');
+    expect(report).toContain('Automatic actions: 8, undone: 2 (25%)');
+    expect(report).toContain('Alex Rivera: 9 thoughts (4 this week), active 6 of the last 30 days');
+    expect(report).toContain('Writing & journaling, learning Spanish');
+    expect(report).toContain('Rating: 5/5 (Alex Rivera)');
     expect(report).toContain('Love the zen feel');
   });
 });
