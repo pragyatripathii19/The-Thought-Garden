@@ -196,3 +196,11 @@
     transform: none !important;
   }
 }
+
+/* Artwork that fades out towards its bottom edge (e.g. hanging vines above content). */
+@layer utilities {
+  .mask-fade-down {
+    -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 35%, transparent 92%);
+  }
+}
