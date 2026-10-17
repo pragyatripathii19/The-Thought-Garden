@@ -5,7 +5,16 @@ const { createApp } = require('./app.cjs');
 
 async function main() {
   const pool = createPool(config.databaseUrl);
-  await migrate(pool);
+  if (config.migrationDatabaseUrl) {
+    const migrationPool = createPool(config.migrationDatabaseUrl);
+    try {
+      await migrate(migrationPool);
+    } finally {
+      await migrationPool.end();
+    }
+  } else {
+    await migrate(pool);
+  }
   if (config.adminEmails.length === 0) {
     console.log('[Thought Garden] No ADMIN_EMAILS set: only accounts with is_admin = true can open the admin dashboard.');
   }
