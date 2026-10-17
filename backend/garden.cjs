@@ -7,7 +7,8 @@ const STAGES = ['seed', 'sprout', 'bloom', 'mature'];
 const CATEGORIES = ['idea', 'research', 'writing', 'task', 'connection', 'thought'];
 const CLASSIFY_STATES = ['pending', 'done', 'skipped', 'failed'];
 const COLOR_VARIANTS = ['green', 'rose', 'purple', 'amber'];
-const ICON_TYPES = ['sprout', 'pencil', 'search', 'check', 'leaf', 'flower'];
+// Icon keys come from the frontend's curated list; unknown keys display as a leaf.
+const ICON_KEY = /^[a-z0-9-]{1,40}$/;
 const ORIGINS = ['manual', 'auto', 'starter'];
 const CONNECTION_STATUSES = ['suggested', 'accepted', 'dismissed'];
 const EVENT_ACTIONS = ['assign', 'create'];
@@ -46,6 +47,12 @@ function text(value, field, { max, required = true, trim = false }) {
 function oneOf(value, allowed, field) {
   if (value === undefined || value === null) return null;
   if (!allowed.includes(value)) throw new ValidationError(`${field} has an unknown value`);
+  return value;
+}
+
+function iconKey(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string' || !ICON_KEY.test(value)) throw new ValidationError('iconType has an unknown value');
   return value;
 }
 
@@ -95,7 +102,7 @@ function parseCollection(body) {
     name: text(body.name, 'name', { max: MAX_NAME, trim: true }),
     description: text(body.description, 'description', { max: MAX_DESCRIPTION, required: false }),
     colorVariant: oneOf(body.colorVariant, COLOR_VARIANTS, 'colorVariant'),
-    iconType: oneOf(body.iconType, ICON_TYPES, 'iconType'),
+    iconType: iconKey(body.iconType),
     origin: oneOf(body.origin, ORIGINS, 'origin'),
     autoReason: text(body.autoReason, 'autoReason', { max: MAX_DESCRIPTION, required: false }),
     createdAt: timestamp(body.createdAt, 'createdAt'),

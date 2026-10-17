@@ -193,6 +193,10 @@ async function run(pool) {
   // ---------- collections ----------
   const col = { id: 'col-x', name: 'Garden projects', createdAt: now(), updatedAt: now(), origin: 'auto', autoReason: 'Shared theme' };
   expectStatus(await alice.put('/api/collections/col-x', col), 200, 'create collection');
+  const withIcon = await alice.put('/api/collections/col-icon', { ...col, id: 'col-icon', iconType: 'travel' });
+  assert.equal(withIcon.data.collection.iconType, 'travel', 'any curated icon key is stored');
+  expectStatus(await alice.put('/api/collections/col-icon', { ...col, id: 'col-icon', iconType: 'Not An Icon!' }), 400, 'malformed icon keys are refused');
+  await alice.del('/api/collections/col-icon');
   await alice.put('/api/thoughts/t3', thought('t3', 'Compost workshop', { collectionIds: ['col-x'] }));
   await alice.del('/api/collections/col-x');
   const t3 = (await alice.get('/api/thoughts')).data.thoughts.find((t) => t.id === 't3');

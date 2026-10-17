@@ -25,7 +25,8 @@ export interface Thought {
 }
 
 export type CollectionColorVariant = 'green' | 'rose' | 'purple' | 'amber';
-export type CollectionIconType = 'sprout' | 'pencil' | 'search' | 'check' | 'leaf' | 'flower';
+/** A key of COLLECTION_ICONS (lib/collectionIcons.ts); unknown keys display as a leaf. */
+export type CollectionIconType = string;
 export type CollectionOrigin = 'manual' | 'auto' | 'starter';
 
 export interface Collection {

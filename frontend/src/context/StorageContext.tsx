@@ -30,6 +30,7 @@ import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portabil
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
 import { submitPilotFeedback } from '../lib/pilotApi';
+import { suggestCollectionIcon } from '../lib/collectionIcons';
 import { useOptionalAuth } from './AuthContext';
 
 // How often returning to the tab may reload the garden from the server.
@@ -439,7 +440,8 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
           name,
           description,
           colorVariant: options?.colorVariant,
-          iconType: options?.iconType,
+          // New collections get a fitting icon from their name unless one was chosen.
+          iconType: options?.iconType ?? suggestCollectionIcon(name, description),
           origin: options?.origin ?? 'manual',
           autoReason: options?.autoReason,
         });

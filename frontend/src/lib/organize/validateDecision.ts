@@ -1,5 +1,6 @@
 import { Collection, Thought } from '../../types';
 import { OrganizeDecision } from './types';
+import { isCollectionIconKey } from '../collectionIcons';
 
 export interface DecisionContext {
   thought: Thought;
@@ -80,7 +81,13 @@ export function validateDecision(raw: unknown, ctx: DecisionContext): OrganizeDe
 
     return {
       action: 'create',
-      newCollection: { name, description, partnerThoughtId: partnerId },
+      newCollection: {
+        name,
+        description,
+        partnerThoughtId: partnerId,
+        // Only icons from our list; otherwise the name decides.
+        ...(isCollectionIconKey(nc.icon) ? { icon: nc.icon } : {}),
+      },
       reason,
       source: 'llm',
     };

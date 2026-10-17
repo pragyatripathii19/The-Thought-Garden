@@ -9,13 +9,14 @@ const CLASSIFY_SYSTEM_PROMPT = [
   'Decide what to do with the NEW thought only. Choose exactly one action:',
   '- "assign": the new thought genuinely fits 1 or 2 EXISTING collections from the list. Use their ids.',
   '- "create": the new thought and exactly ONE similar thought marked "ungrouped": true share a meaningful theme',
-  '  (an idea, project or question — not just a shared word). Give a concise 2-4 word name and a one-line description.',
+  '  (an idea, project or question — not just a shared word). Give a concise 2-4 word name, a one-line description,',
+  '  and the best-fitting "icon" from iconChoices.',
   '- "none": no clear fit. This is the default. When unsure, choose "none".',
   'Rules: never merge, rename or delete collections; never invent ids; prefer an existing collection over creating one;',
   'never create a collection with a name that already exists.',
   'Reply with JSON only, in this shape:',
   '{"action":"assign"|"create"|"none","collectionIds":["..."],',
-  '"newCollection":{"name":"...","description":"...","partnerThoughtId":"..."},"reason":"one short sentence"}',
+  '"newCollection":{"name":"...","description":"...","partnerThoughtId":"...","icon":"..."},"reason":"one short sentence"}',
 ].join('\n');
 
 // When the provider rate-limits us without saying for how long.
@@ -58,7 +59,7 @@ function classifyRoutes({ config }) {
       if (req.user.smart_organizing === false) {
         return res.status(403).json({ error: 'Smart organising is turned off for this account' });
       }
-      const { thought, similarThoughts, collections } = req.body || {};
+      const { thought, similarThoughts, collections, iconChoices } = req.body || {};
       if (!thought || typeof thought.id !== 'string' || typeof thought.text !== 'string') {
         return res.status(400).json({ error: 'thought is required' });
       }
@@ -85,6 +86,7 @@ function classifyRoutes({ config }) {
           description: clip(c && c.description, 200),
           similarity: c && typeof c.similarity === 'number' ? c.similarity : null,
         })),
+        iconChoices: (Array.isArray(iconChoices) ? iconChoices : []).slice(0, 80).map((k) => clip(k, 40)),
       };
 
       const llmRes = await fetch(`${llm.baseUrl}/chat/completions`, {

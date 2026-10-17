@@ -5,15 +5,11 @@ import {
   Plus,
   ChevronRight,
   MoreHorizontal,
-  PenTool,
-  CheckSquare,
   Sprout,
   Trash2,
   X,
   Check,
   AlertCircle,
-  Leaf,
-  Flower2,
 } from 'lucide-react';
 import { CollectionColorVariant, CollectionIconType, Collection, NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
@@ -21,6 +17,7 @@ import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { AutoBadge } from '../components/OrganizeToast';
+import { COLLECTION_ICONS, COLLECTION_ICON_KEYS, getCollectionIcon, suggestCollectionIcon } from '../lib/collectionIcons';
 
 interface CollectionsViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -50,7 +47,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
   const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<CollectionColorVariant>('green');
-  const [selectedIcon, setSelectedIcon] = useState<CollectionIconType>('sprout');
+  // Until the user picks an icon, the one suggested by the name and description is used.
+  const [manualIcon, setManualIcon] = useState<CollectionIconType | null>(null);
+  const suggestedIcon = suggestCollectionIcon(newColName, newColDesc);
+  const selectedIcon = manualIcon ?? suggestedIcon;
 
   const activeCollection = collections.find((c) => c.id === activeCollectionId) || null;
   const activeThoughts = activeCollection
@@ -84,7 +84,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
       setNewColName('');
       setNewColDesc('');
       setSelectedColor('green');
-      setSelectedIcon('sprout');
+      setManualIcon(null);
       setIsCreateModalOpen(false);
       setActiveCollectionId(created.id);
     } catch (err) {
@@ -109,13 +109,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
   };
 
   const getCollectionIconStyles = (collection: Collection) => {
-    let Icon = Sprout;
-    if (collection.iconType === 'pencil' || collection.id === 'col-writing') Icon = PenTool;
-    else if (collection.iconType === 'search' || collection.id === 'col-things-to-research') Icon = Search;
-    else if (collection.iconType === 'check' || collection.id === 'col-tasks-to-revisit') Icon = CheckSquare;
-    else if (collection.iconType === 'leaf') Icon = Leaf;
-    else if (collection.iconType === 'flower') Icon = Flower2;
-    else if (collection.iconType === 'sprout' || collection.id === 'col-startup-ideas') Icon = Sprout;
+    const Icon = getCollectionIcon(collection.iconType);
 
     if (collection.colorVariant === 'rose' || collection.id === 'col-writing') {
       return {
@@ -472,34 +466,44 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
               {/* Icon Selector */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#69786a] mb-1.5">
-                  Icon
-                </label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {[
-                    { id: 'sprout', label: 'Sprout', Icon: Sprout },
-                    { id: 'leaf', label: 'Leaf', Icon: Leaf },
-                    { id: 'flower', label: 'Flower', Icon: Flower2 },
-                    { id: 'pencil', label: 'Writing', Icon: PenTool },
-                    { id: 'search', label: 'Search', Icon: Search },
-                    { id: 'check', label: 'Tasks', Icon: CheckSquare },
-                  ].map((ic) => {
-                    const IconComponent = ic.Icon;
-                    const isSelected = selectedIcon === ic.id;
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]">
+                    Icon: {COLLECTION_ICONS[selectedIcon]?.label ?? 'Leaf'}
+                  </span>
+                  <span className="text-[11px] text-[#8a978b]">
+                    {manualIcon ? (
+                      <button type="button" onClick={() => setManualIcon(null)} className="underline underline-offset-2">
+                        Use suggested
+                      </button>
+                    ) : (
+                      'Suggested from the name'
+                    )}
+                  </span>
+                </div>
+                <div
+                  className="grid grid-cols-8 sm:grid-cols-11 gap-1.5 max-h-36 overflow-y-auto p-1 -m-1"
+                  role="radiogroup"
+                  aria-label="Collection icon"
+                >
+                  {COLLECTION_ICON_KEYS.map((key) => {
+                    const { Icon: IconComponent, label } = COLLECTION_ICONS[key];
+                    const isSelected = selectedIcon === key;
                     return (
                       <button
-                        key={ic.id}
+                        key={key}
                         type="button"
-                        onClick={() => setSelectedIcon(ic.id as CollectionIconType)}
-                        className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all ${
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setManualIcon(key)}
+                        className={`aspect-square rounded-xl border flex items-center justify-center transition-all ${
                           isSelected
                             ? 'bg-[#3d5a45] text-white border-[#3d5a45] shadow-xs'
                             : 'bg-white text-[#5d6b5e] border-[#e4ded0] hover:bg-[#faf8f4]'
                         }`}
-                        title={ic.label}
+                        title={label}
+                        aria-label={label}
                       >
-                        <IconComponent className="w-3.5 h-3.5" />
-                        <span className="text-[11px]">{ic.label}</span>
+                        <IconComponent className="w-4 h-4" strokeWidth={1.75} />
                       </button>
                     );
                   })}
