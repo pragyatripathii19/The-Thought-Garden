@@ -7,7 +7,7 @@ async function main() {
   const pool = createPool(config.databaseUrl);
   await migrate(pool);
   if (config.adminEmails.length === 0) {
-    console.log('[Thought Garden] No ADMIN_EMAILS set: the admin dashboard is unavailable.');
+    console.log('[Thought Garden] No ADMIN_EMAILS set: only accounts with is_admin = true can open the admin dashboard.');
   }
   createApp({ pool, config }).listen(config.port, () => {
     console.log(`[Thought Garden] Server running on http://localhost:${config.port}`);

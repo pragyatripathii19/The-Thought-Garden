@@ -1,5 +1,5 @@
 const express = require('express');
-const { requireUser } = require('../auth.cjs');
+const { requireUser, isAdminUser } = require('../auth.cjs');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const dayKey = (date) => date.toISOString().slice(0, 10); // UTC day
@@ -19,7 +19,7 @@ function streakEndingAt(daySet, today) {
 function adminRoutes({ pool, config }) {
   const router = express.Router();
   router.use(requireUser, (req, res, next) => {
-    if (!config.adminEmails.includes(String(req.user.email).toLowerCase())) {
+    if (!isAdminUser(req.user, config.adminEmails)) {
       return res.status(403).json({ error: 'Only the garden admin can open this.' });
     }
     next();

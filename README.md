@@ -70,7 +70,7 @@ Everyone signs up with an email and password. Their garden is stored in Postgres
 | Embeddings for automatic organising | This browser (IndexedDB) | A per-device cache; rebuilt as needed and cleared on logout |
 | Smart organising requests | Server → LLM provider | On by default for new accounts; explained and switchable in Settings → Organising (saved on the account). Forwarded, not stored or logged |
 
-The admin dashboard (for emails in `ADMIN_EMAILS`) shows counts per user: thoughts, activity per day and feedback. It never shows thought text. Users can delete their account, and everything in it, from **Data & Settings**.
+The admin dashboard opens from the avatar menu for admins: accounts with `is_admin = true` in the `users` table, or emails listed in `ADMIN_EMAILS`. To make someone an admin: `UPDATE users SET is_admin = true WHERE email = 'them@example.com';` It shows counts per user (thoughts, activity per day, feedback) and never thought text. Users can delete their account, and everything in it, from **Settings**.
 
 Gardens saved in a browser before accounts existed show a card offering to add them to the signed-in account. Exported JSON backups import with **Data & Settings → Import Backup**.
 

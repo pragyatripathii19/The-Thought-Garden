@@ -32,7 +32,7 @@ npm run reset-password -- someone@example.com
 |---|---|---|
 | `DATABASE_URL` | *(required)* | Postgres connection string |
 | `TEST_DATABASE_URL` | *(tests only)* | Must name a database containing "test"; its tables are dropped each run |
-| `ADMIN_EMAILS` | *(empty → no admin)* | Comma-separated emails that can open the admin dashboard |
+| `ADMIN_EMAILS` | *(empty)* | Comma-separated emails that can open the admin dashboard. Accounts with `users.is_admin = true` can too |
 | `PORT` | `3001` | HTTP port |
 | `NODE_ENV` | | Set to `production` when deployed: secure cookies and trusting the hosting proxy for client IPs |
 | `LLM_API_KEY` | *(unset → Smart organising off)* | OpenAI-compatible provider key (e.g. Groq) |

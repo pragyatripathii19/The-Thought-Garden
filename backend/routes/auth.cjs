@@ -1,5 +1,5 @@
 const express = require('express');
-const { hashPassword, verifyPassword, dummyHash, requireUser } = require('../auth.cjs');
+const { hashPassword, verifyPassword, dummyHash, requireUser, isAdminUser } = require('../auth.cjs');
 const { createFailureCounter, createSlidingLimiter } = require('../rateLimit.cjs');
 const { withTransaction } = require('../db.cjs');
 const { insertCollections } = require('../garden.cjs');
@@ -27,7 +27,6 @@ function cleanReasons(value) {
 
 function authRoutes({ pool, sessions, config }) {
   const router = express.Router();
-  const isAdmin = (email) => config.adminEmails.includes(String(email).toLowerCase());
   const publicUser = (u) => ({
     id: u.id,
     email: u.email,
@@ -35,7 +34,7 @@ function authRoutes({ pool, sessions, config }) {
     reasons: u.reasons || [],
     smartOrganizing: u.smart_organizing !== false,
     createdAt: new Date(u.created_at).toISOString(),
-    isAdmin: isAdmin(u.email),
+    isAdmin: isAdminUser(u, config.adminEmails),
   });
 
   const emailFailures = createFailureCounter({

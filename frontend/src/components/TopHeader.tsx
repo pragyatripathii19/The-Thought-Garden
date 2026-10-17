@@ -189,7 +189,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                   className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-pill/60 hover:bg-garden-pill/60 text-garden-moss border border-[#CBD5AE] rounded-xl text-xs font-semibold transition-colors"
                 >
                   <KeyRound className="w-3.5 h-3.5" />
-                  <span>Open Pilot Admin Panel</span>
+                  <span>Admin dashboard</span>
                 </button>
               )}
 

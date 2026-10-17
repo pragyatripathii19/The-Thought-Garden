@@ -271,6 +271,12 @@ async function run(pool) {
   // ---------- feedback, admin ----------
   expectStatus(await alice.post('/api/feedback', { category: 'praise', rating: 5, message: 'Lovely' }), 201, 'feedback');
   expectStatus(await alice.get('/api/admin/overview'), 403, 'non-admins cannot open the dashboard');
+  // An admin flagged in the database (not listed in ADMIN_EMAILS).
+  await pool.query("UPDATE users SET is_admin = '1' WHERE email = 'bob@example.com'");
+  assert.equal((await bob.get('/api/auth/me')).data.user.isAdmin, true, 'is_admin in the database makes an admin');
+  expectStatus(await bob.get('/api/admin/overview'), 200, 'a database-flagged admin can open the dashboard');
+  await pool.query("UPDATE users SET is_admin = false WHERE email = 'bob@example.com'");
+  expectStatus(await bob.get('/api/admin/overview'), 403, 'removing the flag removes access');
   const admin = client();
   await signup(admin, ADMIN_EMAIL, 'Admin');
   const overview = await admin.get('/api/admin/overview');
