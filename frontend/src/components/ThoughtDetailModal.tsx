@@ -210,7 +210,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               onClick={handleToggleSave}
               className={`p-1.5 rounded-xl transition-colors ${
                 thought.isSaved
-                  ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  ? 'text-garden-moss bg-garden-pill/60 hover:bg-garden-pill'
                   : 'text-garden-ink-faint hover:text-garden-ink hover:bg-garden-line'
               }`}
               title={thought.isSaved ? 'Saved thought' : 'Save thought'}
@@ -318,10 +318,12 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleToggleSave}
-                className="hover:text-garden-ink inline-flex items-center gap-1"
+                className={`inline-flex items-center gap-1 ${
+                  thought.isSaved ? 'text-garden-moss font-medium' : 'hover:text-garden-ink'
+                }`}
               >
-                <span>📌</span>
-                <span>{thought.isSaved ? 'Saved' : 'Pin thought'}</span>
+                <Bookmark className={`w-3.5 h-3.5 ${thought.isSaved ? 'fill-current' : ''}`} aria-hidden="true" />
+                <span>{thought.isSaved ? 'Saved' : 'Save thought'}</span>
               </button>
             </div>
           </div>

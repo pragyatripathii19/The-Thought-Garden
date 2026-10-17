@@ -8,6 +8,7 @@ import {
   Leaf,
   Flower2,
   Sparkles,
+  Bookmark,
 } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { GrowthStage } from '../types';
@@ -250,7 +251,10 @@ export const AllThoughtsView: React.FC = () => {
                   {thought.isSaved && (
                     <>
                       <span className="text-[#c8d3c9]">•</span>
-                      <span className="text-[11px] text-amber-700">📌</span>
+                      <span className="inline-flex items-center gap-0.5 text-[11px] text-garden-moss" title="Saved">
+                        <Bookmark className="w-3 h-3 fill-current" aria-hidden="true" />
+                        <span className="sr-only">Saved</span>
+                      </span>
                     </>
                   )}
                 </div>

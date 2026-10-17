@@ -16,12 +16,15 @@ import {
   ChevronUp,
   Flame,
   Calendar,
+  Sun,
 } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { AdminOverviewData, PilotUserProfile } from '../types';
 import { fetchAdminOverview, adminDeletePilotUser } from '../lib/pilotApi';
 import { generatePilotSummaryReport } from '../lib/analytics';
 import { localDateKey } from '../lib/date';
+import { describeReason } from '../lib/profileReasons';
+import { LeafRating } from './LeafRating';
 
 export const AdminPilotModal: React.FC = () => {
   const { isAdminModalOpen, setIsAdminModalOpen, thoughts, userProfile, feedbacks: localFeedbacks } = useThoughts();
@@ -301,7 +304,7 @@ export const AdminPilotModal: React.FC = () => {
                                       key={i}
                                       className="text-[10px] px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]"
                                     >
-                                      {r}
+                                      {describeReason(r).label}
                                     </span>
                                   ))}
                                 </div>
@@ -371,17 +374,17 @@ export const AdminPilotModal: React.FC = () => {
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs">
-                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
-                                        🌱 Total: {u.totalThoughts || 0}
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
+                                        <Sprout className="w-3 h-3" /> Total: {u.totalThoughts || 0}
                                       </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
-                                        ☀️ Today: {u.thoughtsToday || 0}
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
+                                        <Sun className="w-3 h-3" /> Today: {u.thoughtsToday || 0}
                                       </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-[#fcedea] text-[#913b2e] font-medium text-[11px]">
-                                        🔥 Streak: {u.streak || 0}d
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F3E6C4] text-[#86641E] font-medium text-[11px]">
+                                        <Flame className="w-3 h-3" /> Streak: {u.streak || 0}d
                                       </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
-                                        💬 Feedback: {u.feedbackCount || 0}
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss font-medium text-[11px]">
+                                        <MessageSquare className="w-3 h-3" /> Feedback: {u.feedbackCount || 0}
                                       </span>
                                     </div>
                                   </div>
@@ -412,8 +415,9 @@ export const AdminPilotModal: React.FC = () => {
                                                 <span className="text-garden-ink-faint">
                                                   Total: {h.total_thoughts}
                                                 </span>
-                                                <span className="text-amber-700 font-mono text-[10px]">
-                                                  🔥{h.streak}d
+                                                <span className="inline-flex items-center gap-0.5 text-[#86641E] font-mono text-[10px]">
+                                                  <Flame className="w-2.5 h-2.5" />
+                                                  {h.streak}d
                                                 </span>
                                               </div>
                                             </div>
@@ -442,8 +446,8 @@ export const AdminPilotModal: React.FC = () => {
                                                 className="p-2.5 rounded-lg bg-[#FDFBF3] border border-garden-line space-y-1 text-[11px]"
                                               >
                                                 <div className="flex items-center justify-between text-[10px]">
-                                                  <span className="font-bold text-garden-moss uppercase">
-                                                    {f.category} ({'🌿'.repeat(f.rating)})
+                                                  <span className="inline-flex items-center gap-1.5 font-bold text-garden-moss uppercase">
+                                                    {f.category} <LeafRating rating={f.rating} className="w-2.5 h-2.5" />
                                                   </span>
                                                   <span className="text-[#849486]">
                                                     {new Date(f.createdAt).toLocaleDateString()}
@@ -489,7 +493,7 @@ export const AdminPilotModal: React.FC = () => {
                             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]">
                               {fb.category}
                             </span>
-                            <span className="text-xs">{'🌿'.repeat(fb.rating)}</span>
+                            <LeafRating rating={fb.rating} />
                           </div>
                           <span className="text-[11px] text-garden-ink-soft">
                             {new Date(fb.createdAt).toLocaleString()}

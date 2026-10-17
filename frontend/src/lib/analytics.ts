@@ -1,4 +1,5 @@
 import { Thought, PilotUserProfile, PilotFeedback } from '../types';
+import { describeReason } from './profileReasons';
 import { localDateKey } from './date';
 
 export interface DailyThoughtMetric {
@@ -108,7 +109,7 @@ export function generatePilotSummaryReport(
     `## User Profile`,
     `- Name: ${profile?.name || 'Anonymous Gardener'}`,
     `- Email: ${profile?.email || 'None provided'}`,
-    `- Goals / Intent: ${profile?.reasons?.join(', ') || 'General Note Taking'}`,
+    `- Goals / Intent: ${profile?.reasons?.map((r) => describeReason(r).label).join(', ') || 'Not given'}`,
     `- Joined: ${profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}`,
     ``,
     `## Engagement & Usage Metrics`,
@@ -125,7 +126,7 @@ export function generatePilotSummaryReport(
       : feedbacks
           .map(
             (fb, idx) =>
-              `### ${idx + 1}. [${fb.category.toUpperCase()}] Rating: ${'🌿'.repeat(fb.rating)}\n` +
+              `### ${idx + 1}. [${fb.category.toUpperCase()}] Rating: ${fb.rating}/5\n` +
               `> ${fb.message}\n` +
               `*Submitted on ${new Date(fb.createdAt).toLocaleString()}*`
           )

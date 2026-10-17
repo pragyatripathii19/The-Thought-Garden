@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { X, MessageSquare, Send } from 'lucide-react';
+import { X, MessageSquare, Send, Lightbulb, Bug, Heart, HelpCircle, Leaf, LucideIcon } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { PilotFeedbackCategory } from '../types';
 import { SeedToSproutAnimation } from './BotanicalIllustrations';
 
-const CATEGORIES: { id: PilotFeedbackCategory; label: string; icon: string }[] = [
-  { id: 'suggestion', label: 'Idea / Suggestion', icon: '💡' },
-  { id: 'bug', label: 'Bug / Issue', icon: '🐛' },
-  { id: 'praise', label: 'Loving It', icon: '❤️' },
-  { id: 'other', label: 'Confused / Question', icon: '❓' },
+const CATEGORIES: { id: PilotFeedbackCategory; label: string; Icon: LucideIcon }[] = [
+  { id: 'suggestion', label: 'Idea / Suggestion', Icon: Lightbulb },
+  { id: 'bug', label: 'Bug / Issue', Icon: Bug },
+  { id: 'praise', label: 'Loving It', Icon: Heart },
+  { id: 'other', label: 'Confused / Question', Icon: HelpCircle },
 ];
 
 const RATING_LEVELS = [
@@ -112,18 +112,19 @@ export const FeedbackModal: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {CATEGORIES.map((cat) => {
                   const isSelected = category === cat.id;
+                  const CategoryIcon = cat.Icon;
                   return (
                     <button
                       key={cat.id}
                       type="button"
                       onClick={() => setCategory(cat.id)}
-                      className={`px-2.5 py-2 rounded-xl text-xs font-medium border text-center transition-all ${
+                      className={`px-2.5 py-2 rounded-xl text-xs font-medium border text-center transition-all inline-flex items-center justify-center gap-1.5 ${
                         isSelected
                           ? 'bg-garden-moss text-garden-paper border-garden-moss'
                           : 'bg-garden-card text-garden-ink-soft border-garden-line hover:border-[#D6CAA6]'
                       }`}
                     >
-                      <span className="mr-1">{cat.icon}</span>
+                      <CategoryIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                       <span>{cat.label}</span>
                     </button>
                   );
@@ -150,7 +151,7 @@ export const FeedbackModal: React.FC = () => {
                           : 'text-garden-ink-faint hover:text-garden-ink-soft'
                       }`}
                     >
-                      <span className="text-lg">🌿</span>
+                      <Leaf className={`w-5 h-5 ${rating >= lvl.val ? 'fill-current' : ''}`} aria-hidden="true" />
                       <span className="text-[10px]">{lvl.label}</span>
                     </button>
                   );
