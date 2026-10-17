@@ -73,7 +73,7 @@ function AppContent() {
           {activeTab === 'thoughts' && <AllThoughtsView />}
           {activeTab === 'collections' && <CollectionsView onNavigateTab={setActiveTab} />}
           {activeTab === 'search' && <SearchView onNavigateTab={setActiveTab} />}
-          {activeTab === 'saved' && <SavedView />}
+          {activeTab === 'saved' && <SavedView onNavigateTab={setActiveTab} />}
           {activeTab === 'settings' && <SettingsView />}
         </main>
       </div>
