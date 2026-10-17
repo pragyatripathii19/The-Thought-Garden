@@ -17,6 +17,7 @@ import { validateDecision } from '../lib/organize/validateDecision';
 import { fetchSmartOrganizingAvailable, requestClassification } from '../lib/organize/classifierClient';
 import { SerialQueue } from '../lib/organize/queue';
 import { SmartPause, smartPauseAfter } from '../lib/organize/smartBackoff';
+import { describeReason } from '../lib/profileReasons';
 import { GroupSuggestion, OrganizeDecision } from '../lib/organize/types';
 import {
   OrganizerSettings,
@@ -109,6 +110,9 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
   embedderStatusRef.current = embedderStatus;
   const signedInRef = useRef(Boolean(userProfile));
   signedInRef.current = Boolean(userProfile);
+  // Why they're here, as readable labels; sent with Smart organising requests to name collections well.
+  const userFocusRef = useRef<string[]>([]);
+  userFocusRef.current = (userProfile?.reasons || []).map((r) => describeReason(r).label);
   const smartPauseRef = useRef<SmartPause | null>(null);
   const smartErrorsRef = useRef(0);
   const actionsRef = useRef<OrganizerActions>({ createCollection, updateThought, deleteCollection });
@@ -279,9 +283,10 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
           decision = { action: 'none', reason: 'Nothing similar yet.', source: 'local' };
         } else if (useSmart) {
           try {
-            const raw = await requestClassification(
-              buildClassifyPayload(prepared, thoughtsRef.current, collectionsRef.current)
-            );
+            const raw = await requestClassification({
+              ...buildClassifyPayload(prepared, thoughtsRef.current, collectionsRef.current),
+              userFocus: userFocusRef.current,
+            });
             smartErrorsRef.current = 0;
             const validated = validateDecision(raw, {
               thought: thoughtsRef.current.find((t) => t.id === thoughtId) || prepared.thought,

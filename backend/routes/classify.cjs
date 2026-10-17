@@ -14,6 +14,8 @@ const CLASSIFY_SYSTEM_PROMPT = [
   '- "none": no clear fit. This is the default. When unsure, choose "none".',
   'Rules: never merge, rename or delete collections; never invent ids; prefer an existing collection over creating one;',
   'never create a collection with a name that already exists.',
+  'userFocus lists why the person uses the app (e.g. "Writing & journaling"). Use it only to choose clearer collection',
+  'names that suit their goals; never let it force a thought into a collection it does not fit.',
   'Reply with JSON only, in this shape:',
   '{"action":"assign"|"create"|"none","collectionIds":["..."],',
   '"newCollection":{"name":"...","description":"...","partnerThoughtId":"...","icon":"..."},"reason":"one short sentence"}',
@@ -59,7 +61,7 @@ function classifyRoutes({ config }) {
       if (req.user.smart_organizing === false) {
         return res.status(403).json({ error: 'Smart organising is turned off for this account' });
       }
-      const { thought, similarThoughts, collections, iconChoices } = req.body || {};
+      const { thought, similarThoughts, collections, iconChoices, userFocus } = req.body || {};
       if (!thought || typeof thought.id !== 'string' || typeof thought.text !== 'string') {
         return res.status(400).json({ error: 'thought is required' });
       }
@@ -87,6 +89,7 @@ function classifyRoutes({ config }) {
           similarity: c && typeof c.similarity === 'number' ? c.similarity : null,
         })),
         iconChoices: (Array.isArray(iconChoices) ? iconChoices : []).slice(0, 80).map((k) => clip(k, 40)),
+        userFocus: (Array.isArray(userFocus) ? userFocus : []).slice(0, 7).map((f) => clip(f, 60)).filter(Boolean),
       };
 
       const llmRes = await fetch(`${llm.baseUrl}/chat/completions`, {

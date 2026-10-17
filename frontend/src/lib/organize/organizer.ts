@@ -159,6 +159,8 @@ export interface ClassifyPayload {
   collections: { id: string; name: string; description: string; similarity: number | null }[];
   /** Icon keys Smart organising may choose from when it creates a collection. */
   iconChoices: string[];
+  /** Why the person uses the garden (readable labels), to help name collections. */
+  userFocus?: string[];
 }
 
 /** Builds the minimal request sent to /api/classify (only when Smart organising is on). */

@@ -3,6 +3,7 @@ import { X, Edit3, KeyRound, Settings, LogOut } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
 import { useAuth } from '../context/AuthContext';
+import { describeReason } from '../lib/profileReasons';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 
 interface TopHeaderProps {
@@ -137,14 +138,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                   Garden Intent
                 </span>
                 <div className="flex flex-wrap gap-1">
-                  {userProfile.reasons.map((r, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]"
-                    >
-                      {r}
-                    </span>
-                  ))}
+                  {userProfile.reasons.map((r, i) => {
+                    const { label, Icon } = describeReason(r);
+                    return (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-garden-pill/60 text-garden-moss border border-[#CBD5AE]"
+                      >
+                        <Icon className="w-3 h-3" />
+                        {label}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}

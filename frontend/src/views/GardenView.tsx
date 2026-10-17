@@ -12,6 +12,7 @@ import { GroupSuggestionCard } from '../components/GroupSuggestionCard';
 import { AutoBadge } from '../components/OrganizeToast';
 import { CollectionIcon } from '../components/CollectionIcon';
 import { ART } from '../lib/art';
+import { pickCapturePrompt } from '../lib/capturePrompts';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -50,6 +51,9 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
   const [input, setInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [justPlanted, setJustPlanted] = useState(false);
+  // The capture prompt follows why they're here, and moves on after each planted thought.
+  const [promptTurn, setPromptTurn] = useState(() => Math.floor(Math.random() * 1000));
+  const capturePrompt = pickCapturePrompt(userProfile?.reasons, promptTurn);
   const [selectedThoughtId, setSelectedThoughtId] = useState<string | null>(null);
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
@@ -83,6 +87,7 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
       await createThought(trimmed);
       setInput('');
       setJustPlanted(true);
+      setPromptTurn((n) => n + 1);
       setTimeout(() => {
         setJustPlanted(false);
       }, 1200);
@@ -155,7 +160,7 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isSaving}
-            placeholder="What's on your mind?"
+            placeholder={capturePrompt}
             className="mt-4 w-full px-4 py-3 rounded-xl bg-[#FDFBF3] border border-garden-line-soft text-garden-ink placeholder-garden-ink-faint text-base sm:text-[17px] leading-relaxed resize-none focus:outline-none focus:border-[#CFC39F]"
           />
 

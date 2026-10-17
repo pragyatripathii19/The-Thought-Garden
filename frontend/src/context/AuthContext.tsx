@@ -24,6 +24,8 @@ interface AuthContextValue {
     password: string;
     name: string;
     reasons: string[];
+    /** Icon key for the collection started from a free-text reason. */
+    customReasonIcon?: string;
     smartOrganizing: boolean;
   }) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;

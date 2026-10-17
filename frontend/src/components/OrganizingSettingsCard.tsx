@@ -126,8 +126,9 @@ export const OrganizingSettingsCard: React.FC = () => {
           <details className="text-xs text-garden-ink-soft">
             <summary className="cursor-pointer font-semibold text-garden-moss w-fit">How this works</summary>
             <p className="mt-1 leading-relaxed">
-              Each new thought, up to 10 similar thoughts and your collection names go through the Thought Garden server
-              to the AI provider. Our server doesn’t keep them; the provider’s terms apply.
+              Each new thought, up to 10 similar thoughts, your collection names and why you’re here (from your
+              profile) go through the Thought Garden server to the AI provider. Our server doesn’t keep them; the
+              provider’s terms apply.
             </p>
           </details>
           {smartDisabledReason && <p className="text-[11px] text-amber-800">{smartDisabledReason}</p>}

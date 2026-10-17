@@ -187,7 +187,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
       if (!auth) throw new Error('Log in to edit your profile.');
       await auth.updateProfile({
         name: name.trim() || 'Gardener',
-        reasons: reasons.length > 0 ? reasons : ['🌱 Daily Brain Dump'],
+        reasons,
       });
       setIsOnboardingOpen(false);
     },

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { pickCapturePrompt } from '../lib/capturePrompts';
 import { ArrowLeft, X, ArrowUpRight } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { SproutLeafClusterArt, SeedToSproutAnimation } from './BotanicalIllustrations';
@@ -14,7 +15,13 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
   onClose,
   defaultCollectionId,
 }) => {
-  const { createThought } = useThoughts();
+  const { createThought, userProfile } = useThoughts();
+  // A prompt that follows why they're here; a new one each time the dialog opens.
+  const capturePrompt = useMemo(
+    () => pickCapturePrompt(userProfile?.reasons, Math.floor(Math.random() * 1000)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isOpen, userProfile?.reasons]
+  );
   const [text, setText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [justPlanted, setJustPlanted] = useState(false);
@@ -132,7 +139,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
                 maxLength={1000}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. an idea, a feeling to express, or perhaps a whim?"
+                placeholder={capturePrompt}
                 className="w-full bg-transparent text-garden-ink placeholder-garden-ink-faint text-base sm:text-lg resize-none focus:outline-none leading-relaxed"
               />
             </div>

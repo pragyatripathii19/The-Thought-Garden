@@ -3,6 +3,7 @@ import { Sprout, X } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { useOrganizer } from '../context/OrganizerContext';
 import { ReasonPicker } from './ReasonPicker';
+import { joinReasons, splitReasons } from '../lib/profileReasons';
 
 /** Edits the signed-in user's name and reasons, and offers Smart organising. */
 export const OnboardingModal: React.FC = () => {
@@ -11,6 +12,7 @@ export const OnboardingModal: React.FC = () => {
   const [smartOptIn, setSmartOptIn] = useState(false);
   const [name, setName] = useState('');
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+  const [customReason, setCustomReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +20,9 @@ export const OnboardingModal: React.FC = () => {
   useEffect(() => {
     if (!isOnboardingOpen) return;
     setName(userProfile?.name || '');
-    setSelectedReasons(userProfile?.reasons || []);
+    const { ids, custom } = splitReasons(userProfile?.reasons);
+    setSelectedReasons(ids);
+    setCustomReason(custom);
     setSmartOptIn(false);
     setError(null);
   }, [isOnboardingOpen, userProfile]);
@@ -36,7 +40,7 @@ export const OnboardingModal: React.FC = () => {
     try {
       setIsSubmitting(true);
       setError(null);
-      await saveUserProfile(name.trim(), selectedReasons);
+      await saveUserProfile(name.trim(), joinReasons(selectedReasons, customReason));
       if (smartOptIn && !settings.smartOrganizing) {
         updateSettings({ smartOrganizing: true });
       }
@@ -101,7 +105,12 @@ export const OnboardingModal: React.FC = () => {
             <span className="block text-xs font-semibold uppercase tracking-wider text-garden-ink-soft">
               Why are you growing a garden?
             </span>
-            <ReasonPicker selected={selectedReasons} onChange={setSelectedReasons} />
+            <ReasonPicker
+              selected={selectedReasons}
+              onChange={setSelectedReasons}
+              custom={customReason}
+              onCustomChange={setCustomReason}
+            />
           </div>
 
           {/* Optional: Smart organising consent (only when the server supports it) */}
@@ -115,8 +124,8 @@ export const OnboardingModal: React.FC = () => {
               />
               <span>
                 <span className="font-semibold text-garden-ink">Turn on Smart organising (optional).</span>{' '}
-                New thoughts and your collection names are sent through our server to an AI service to group them
-                into collections. You can change this anytime in Settings.
+                New thoughts, your collection names and why you’re here are sent through our server to an AI service
+                to group them into collections. You can change this anytime in Settings.
               </span>
             </label>
           )}

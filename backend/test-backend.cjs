@@ -114,7 +114,7 @@ function expectStatus(res, status, label) {
 }
 
 async function signup(c, email, name = 'Tester') {
-  return c.post('/api/auth/signup', { email, password: 'correct horse battery', name, reasons: ['Writing'] });
+  return c.post('/api/auth/signup', { email, password: 'correct horse battery', name, reasons: [] });
 }
 
 async function run(pool) {
@@ -151,8 +151,21 @@ async function run(pool) {
 
   // ---------- starter collections & thoughts ----------
   const starter = await alice.get('/api/collections');
-  assert.equal(starter.data.collections.length, 4, 'new accounts get 4 starter collections');
+  assert.equal(starter.data.collections.length, 4, 'no reasons given: the original 4 starter collections');
   console.log('✓ starter collections seeded');
+
+  // Starter collections follow why someone joined; a free-text reason gets its own collection.
+  const writer = client();
+  await writer.post('/api/auth/signup', {
+    email: 'writer@example.com', password: 'correct horse battery', name: 'Writer',
+    reasons: ['writing', 'mindfulness', 'learning spanish'], customReasonIcon: 'study',
+  });
+  const writerCols = (await writer.get('/api/collections')).data.collections;
+  assert.deepEqual(writerCols.map((c) => c.name).sort(), ['Learning Spanish', 'Reflections', 'Writing']);
+  assert.equal(writerCols.find((c) => c.name === 'Learning Spanish').iconType, 'study', 'the custom collection gets the suggested icon');
+  assert.deepEqual((await writer.get('/api/auth/me')).data.user.reasons, ['writing', 'mindfulness', 'learning spanish']);
+  await writer.del('/api/auth/account', { password: 'correct horse battery' });
+  console.log('✓ starter collections follow sign-up reasons');
 
   const t1 = thought('t1', 'Write about community gardens', {
     collectionIds: ['col-writing', 'col-does-not-exist'],
@@ -271,11 +284,12 @@ async function run(pool) {
   console.log('✓ admin overview has counts, not content');
 
   // ---------- Smart organising ----------
-  const classifyBody = { thought: { id: 't1', text: 'A thought' }, similarThoughts: [], collections: [] };
+  const classifyBody = { thought: { id: 't1', text: 'A thought' }, similarThoughts: [], collections: [], userFocus: ['Writing & journaling'] };
   expectStatus(await client().post('/api/classify', classifyBody), 401, 'classify needs a session');
   const classified = await alice.post('/api/classify', classifyBody);
   expectStatus(classified, 200, 'classify proxies to the provider');
   assert.equal(lastStubRequest.auth, 'Bearer test-key');
+  assert.deepEqual(JSON.parse(lastStubRequest.body.messages[1].content).userFocus, ['Writing & journaling'], 'the person’s focus reaches the AI');
   assert.equal(lastStubRequest.body.model, 'openai/gpt-oss-20b', 'default model');
   assert.equal(lastStubRequest.body.reasoning_effort, 'low', 'gpt-oss models get low reasoning effort');
   stubMode = 'garbage';

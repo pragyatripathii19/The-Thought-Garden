@@ -78,7 +78,8 @@ function authRoutes({ pool, sessions, config }) {
           [email, passwordHash, name, JSON.stringify(reasons), smartOrganizing]
         );
         if (rows.length === 0) return null;
-        await insertCollections(client, rows[0].id, starterCollections());
+        // Starter collections follow why they joined; a free-text reason gets its own collection.
+        await insertCollections(client, rows[0].id, starterCollections(reasons, req.body && req.body.customReasonIcon));
         await sessions.start(res, rows[0].id, client);
         return rows[0];
       });

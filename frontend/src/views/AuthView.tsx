@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { ReasonPicker } from '../components/ReasonPicker';
 import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ART } from '../lib/art';
+import { joinReasons } from '../lib/profileReasons';
+import { suggestCollectionIcon } from '../lib/collectionIcons';
 
 const inputClass =
   'w-full px-4 py-3 rounded-2xl bg-garden-card border border-garden-line text-garden-ink placeholder-garden-ink-faint text-sm focus:outline-none focus:border-garden-moss focus:ring-2 focus:ring-garden-pill/60 transition-all';
@@ -70,6 +72,7 @@ export const AuthView: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [reasons, setReasons] = useState<string[]>([]);
+  const [customReason, setCustomReason] = useState('');
   const [smartOrganizing, setSmartOrganizing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,7 +95,9 @@ export const AuthView: React.FC = () => {
           email: email.trim(),
           password,
           name: name.trim(),
-          reasons: reasons.length > 0 ? reasons : ['🌱 Daily Brain Dump'],
+          // Starter collections follow these; a free-text answer gets its own collection.
+          reasons: joinReasons(reasons, customReason),
+          customReasonIcon: customReason.trim() ? suggestCollectionIcon(customReason) : undefined,
           smartOrganizing,
         });
       } else {
@@ -174,7 +179,13 @@ export const AuthView: React.FC = () => {
         {isSignup && (
           <div className="space-y-2">
             <span className={labelClass}>Why are you growing a garden? (optional)</span>
-            <ReasonPicker selected={reasons} onChange={setReasons} />
+            <ReasonPicker
+              selected={reasons}
+              onChange={setReasons}
+              custom={customReason}
+              onCustomChange={setCustomReason}
+              customHint="We’ll start a collection for it in your garden."
+            />
           </div>
         )}
 
@@ -188,8 +199,9 @@ export const AuthView: React.FC = () => {
               className="mt-0.5 accent-garden-moss"
             />
             <span>
-              <span className="font-semibold text-garden-ink">Use Smart organising.</span> New thoughts and your
-              collection names are sent through our server to an AI service that sorts them into collections. Untick
+              <span className="font-semibold text-garden-ink">Use Smart organising.</span> New thoughts, your
+              collection names and why you’re here are sent through our server to an AI service that sorts them into
+              collections. Untick
               to keep sorting on your device only. You can change this anytime in Settings.
             </span>
           </label>
