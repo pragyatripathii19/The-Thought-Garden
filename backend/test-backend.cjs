@@ -6,6 +6,7 @@ const { config: baseConfig } = require('./config.cjs');
 const { createPool } = require('./db.cjs');
 const { migrate } = require('./migrate.cjs');
 const { createApp } = require('./app.cjs');
+const { validTimeZone, dayIn, addDays, streakEndingAt } = require('./routes/admin.cjs');
 
 const TEST_DB = process.env.TEST_DATABASE_URL || '';
 if (!/test/i.test(new URL(TEST_DB || 'postgres://x/none').pathname)) {
@@ -118,6 +119,15 @@ async function signup(c, email, name = 'Tester') {
 }
 
 async function run(pool) {
+  // ---------- dashboard date helpers ----------
+  assert.equal(validTimeZone('Asia/Kolkata'), 'Asia/Kolkata');
+  assert.equal(validTimeZone('Not/A_Zone'), 'UTC');
+  assert.equal(dayIn(new Date('2026-01-10T20:00:00Z'), 'Asia/Kolkata'), '2026-01-11', '1:30 am in India is the next day');
+  assert.equal(dayIn(new Date('2026-01-10T20:00:00Z'), 'UTC'), '2026-01-10');
+  assert.equal(addDays('2026-03-01', -1), '2026-02-28');
+  assert.equal(streakEndingAt(new Set(['2026-01-09', '2026-01-10']), '2026-01-11'), 2, 'a streak survives until the day ends');
+  console.log('✓ dashboard date helpers');
+
   // ---------- accounts ----------
   const health = await client().get('/api/health');
   expectStatus(health, 200, 'health check reaches the database');
@@ -270,6 +280,13 @@ async function run(pool) {
 
   // ---------- feedback, admin ----------
   expectStatus(await alice.post('/api/feedback', { category: 'praise', rating: 5, message: 'Lovely' }), 201, 'feedback');
+  // Organiser history for the dashboard's undo rate: two automatic actions, one undone.
+  for (const [id, undone, source] of [['ea', true, 'llm'], ['eb', false, 'local']]) {
+    await alice.put(`/api/organize-events/${id}`, {
+      id, thoughtId: 't9', action: 'assign', collectionId: 'col-imp', collectionName: 'Imported',
+      reason: 'Similar', source, createdAt: now(), ...(undone ? { undoneAt: now() } : {}),
+    });
+  }
   expectStatus(await alice.get('/api/admin/overview'), 403, 'non-admins cannot open the dashboard');
   // An admin flagged in the database (not listed in ADMIN_EMAILS).
   await pool.query("UPDATE users SET is_admin = '1' WHERE email = 'bob@example.com'");
@@ -279,8 +296,26 @@ async function run(pool) {
   expectStatus(await bob.get('/api/admin/overview'), 403, 'removing the flag removes access');
   const admin = client();
   await signup(admin, ADMIN_EMAIL, 'Admin');
-  const overview = await admin.get('/api/admin/overview');
+  const overview = await admin.get('/api/admin/overview?tz=Asia/Kolkata');
   expectStatus(overview, 200, 'admin overview');
+  assert.equal(overview.data.timeZone, 'Asia/Kolkata', 'days are counted in the admin’s time zone');
+  assert.equal(overview.data.thoughtsPerDayAgg.length, 30, 'the chart always covers 30 days');
+  assert.equal(overview.data.thoughtsPerDayAgg[29].date, dayIn(new Date(), 'Asia/Kolkata'), 'the chart ends today');
+  assert.deepEqual(
+    { actions: overview.data.organizing.actions, undone: overview.data.organizing.undone, rate: overview.data.summary.undoRate },
+    { actions: 2, undone: 1, rate: 0.5 },
+    'organising health counts automatic actions and undos'
+  );
+  assert.deepEqual(overview.data.organizing.llm, { actions: 1, undone: 1 }, 'AI and on-device actions are split');
+  assert.equal(overview.data.summary.thoughtsThisWeek, 3, 'Alice planted 2 this week, Bob 1');
+  assert.equal(overview.data.summary.activeThisWeek >= 1, true);
+  assert.equal(overview.data.users.find((u) => u.email === ADMIN_EMAIL).isAdmin, true, 'admins are marked');
+  expectStatus(await admin.get('/api/admin/overview?tz=Not/A_Zone'), 200, 'an unknown time zone falls back to UTC');
+  console.log('✓ dashboard: time zone, 30-day chart, organising health');
+  await pool.query("UPDATE users SET is_admin = true WHERE email = 'bob@example.com'");
+  const bobId = (await bob.get('/api/auth/me')).data.user.id;
+  expectStatus(await admin.del(`/api/admin/users/${bobId}`), 403, 'admins cannot delete other admins');
+  await pool.query("UPDATE users SET is_admin = false WHERE email = 'bob@example.com'");
   assert.equal(overview.data.summary.totalUsers, 3);
   const aliceRow = overview.data.users.find((u) => u.email === 'alice@example.com');
   assert.equal(aliceRow.totalThoughts, 2);
