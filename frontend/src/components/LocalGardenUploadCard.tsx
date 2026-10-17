@@ -81,16 +81,16 @@ export const LocalGardenUploadCard: React.FC = () => {
   };
 
   return (
-    <div className="mb-5 bg-[#f2f7f3] border border-[#d6e5d8] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3" role="region" aria-label="Thoughts saved in this browser">
+    <div className="mb-6 bg-garden-card/85 border border-garden-line rounded-2xl p-4 sm:p-5 space-y-3" role="region" aria-label="Thoughts saved in this browser">
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#3d5a45] text-white flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-full bg-garden-moss text-[#F4EEDB] flex items-center justify-center shrink-0">
           <UploadCloud className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0 space-y-1">
-          <h3 className="font-serif text-base font-semibold text-[#233126]">
+          <h3 className="font-serif text-xl font-semibold text-garden-ink">
             {status === 'done' ? 'Your earlier thoughts are in your account' : `${count} thought${count === 1 ? '' : 's'} saved in this browser`}
           </h3>
-          <p className="text-xs text-[#596d5e] leading-relaxed">
+          <p className="text-sm text-garden-ink-soft leading-relaxed">
             {message ||
               'These were saved here before accounts existed. Add them to your account so they are kept safe and show up on your other devices.'}
           </p>
@@ -112,7 +112,7 @@ export const LocalGardenUploadCard: React.FC = () => {
             type="button"
             onClick={upload}
             disabled={status === 'uploading'}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-garden-moss hover:bg-garden-moss-dark disabled:opacity-50 text-[#F4EEDB] text-sm font-semibold"
           >
             <UploadCloud className="w-3.5 h-3.5" />
             <span>{status === 'uploading' ? 'Adding…' : 'Add them to my account'}</span>
@@ -121,7 +121,7 @@ export const LocalGardenUploadCard: React.FC = () => {
             type="button"
             onClick={() => downloadBackupFile(local.thoughts, local.collections, local.connections)}
             disabled={status === 'uploading'}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#233126] rounded-xl text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-transparent hover:bg-garden-paper-deep border border-garden-line text-garden-ink text-sm font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download a copy</span>

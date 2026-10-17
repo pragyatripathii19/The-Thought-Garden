@@ -1,36 +1,33 @@
 import React, { useState } from 'react';
-import {
-  ArrowUpRight,
-  ArrowRight,
-  ChevronRight,
-  Sparkles,
-  X,
-  History,
-  Link2,
-  Search,
-  PenTool,
-  CheckSquare,
-  Sprout,
-} from 'lucide-react';
+import { ChevronRight, X, Link2, Leaf } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
-import { NavTab, Thought, Collection } from '../types';
+import { NavTab, Thought } from '../types';
 import { formatRelativeTime } from '../lib/time';
-import { WateringCanHeroArt, RollingHillsFooterArt, LeafLogoIcon, SeedToSproutAnimation } from '../components/BotanicalIllustrations';
+import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { FallingLeaves } from '../components/FallingLeaves';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { useOrganizer } from '../context/OrganizerContext';
 import { GroupSuggestionCard } from '../components/GroupSuggestionCard';
 import { AutoBadge } from '../components/OrganizeToast';
+import { CollectionIcon } from '../components/CollectionIcon';
+import { ART } from '../lib/art';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
   onOpenNewThought?: () => void;
 }
 
-export const GardenView: React.FC<GardenViewProps> = ({
-  onNavigateTab,
-}) => {
+// Shared surfaces for the v1 garden look.
+const CARD = 'bg-garden-card/85 border border-garden-line rounded-2xl';
+const CARD_HOVER = 'hover:bg-garden-card-hover hover:border-[#D6CAA6] transition-colors';
+const SECTION_TITLE = 'font-serif text-[26px] leading-tight font-semibold text-garden-ink';
+const LINK = 'text-sm font-semibold text-garden-ink-soft hover:text-garden-moss transition-colors';
+const PRIMARY_BUTTON =
+  'inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-garden-moss hover:bg-garden-moss-dark text-[#F4EEDB] text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed';
+const QUIET_BUTTON = 'text-sm text-garden-ink-soft hover:text-garden-ink transition-colors';
+
+export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
   const {
     thoughts,
     collections,
@@ -68,13 +65,14 @@ export const GardenView: React.FC<GardenViewProps> = ({
       Boolean(item.source && item.target)
     );
 
-  // Time-of-day greeting
+  // Time-of-day greeting, with a bee by day and the moon in the evening.
+  const hour = new Date().getHours();
   const getGreeting = () => {
-    const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
+  const isNight = hour >= 18 || hour < 5;
 
   const handlePlant = async () => {
     const trimmed = input.trim();
@@ -109,107 +107,79 @@ export const GardenView: React.FC<GardenViewProps> = ({
     }
   };
 
-  // Collection card styling variants
-  const getCollectionCardStyles = (collection: Collection) => {
-    if (collection.id === 'col-startup-ideas' || collection.colorVariant === 'green') {
-      return {
-        cardBg: 'bg-[#edf4ee] border-[#d6e5d8] hover:border-[#b8d4bd]',
-        iconBg: 'bg-[#dcebdd] text-[#34593e]',
-        arrowColor: 'text-[#34593e]',
-        Icon: Sprout,
-      };
-    }
-    if (collection.id === 'col-writing' || collection.colorVariant === 'rose') {
-      return {
-        cardBg: 'bg-[#fdf2f2] border-[#f5d9db] hover:border-[#eec2c5]',
-        iconBg: 'bg-[#fae2e3] text-[#8c3b42]',
-        arrowColor: 'text-[#8c3b42]',
-        Icon: PenTool,
-      };
-    }
-    if (collection.id === 'col-things-to-research' || collection.colorVariant === 'purple') {
-      return {
-        cardBg: 'bg-[#f4f3fa] border-[#e1def4] hover:border-[#cecaec]',
-        iconBg: 'bg-[#e7e4f6] text-[#4f4886]',
-        arrowColor: 'text-[#4f4886]',
-        Icon: Search,
-      };
-    }
-    return {
-      cardBg: 'bg-[#fdf6ee] border-[#f5e3ce] hover:border-[#ebd0b4]',
-      iconBg: 'bg-[#fae8d4] text-[#855320]',
-      arrowColor: 'text-[#855320]',
-      Icon: CheckSquare,
-    };
-  };
+  const firstName = userProfile?.name ? userProfile.name.split(' ')[0] : 'Gardener';
 
   return (
     <>
-      {/* Delicate falling sage-green leaves ambient background */}
+      {/* Delicate falling leaves */}
       <FallingLeaves />
 
-      <div className="relative z-10 space-y-8 pb-16">
-        {/* Top Greeting Section with Botanical Illustration */}
-        <section className="flex items-center justify-between pt-1">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[#3d5a45]">
-                <LeafLogoIcon className="w-5 h-5" />
-              </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#222c23]">
-                {getGreeting()}, {userProfile?.name ? userProfile.name.split(' ')[0] : 'Gardener'}
-              </h2>
-            </div>
-            <p className="text-xs sm:text-sm text-[#738274]">
-              Your thoughts are growing.
-            </p>
-          </div>
-
-          {/* Botanical Illustration (Desktop & Tablet) */}
-          <div className="hidden sm:block shrink-0 -my-3 -mr-1">
-            <WateringCanHeroArt className="w-32 h-24 lg:w-36 lg:h-28" />
-          </div>
+      <div className="relative z-10 space-y-10 pb-16">
+        {/* Greeting */}
+        <section className="pt-4 md:pt-8 space-y-1.5">
+          <h2 className="font-serif text-[40px] sm:text-[46px] leading-[1.05] font-semibold tracking-tight text-garden-ink">
+            {getGreeting()},{' '}
+            {/* The name and the moon/bee wrap together, so the icon never sits alone. */}
+            <span className="whitespace-nowrap">
+              {firstName}
+              <img
+                src={isNight ? ART.moon : ART.bee}
+                alt=""
+                aria-hidden="true"
+                className={`inline-block select-none ml-3 ${isNight ? 'w-9 sm:w-10 align-[-0.1em]' : 'w-11 sm:w-12 -rotate-12 align-[0.1em]'}`}
+              />
+            </span>
+          </h2>
+          <p className="font-serif italic text-xl text-garden-ink-soft">Your thoughts are growing.</p>
         </section>
 
-        {/* Prominent Quick Capture Card */}
-        <section className="bg-white border border-[#e2dcd0] rounded-2xl p-4 sm:p-5 shadow-xs focus-within:border-[#7a9d83] focus-within:ring-2 focus-within:ring-[#e4ede6] transition-all">
-          <div className="space-y-2">
-            <label
-              htmlFor="home-capture-input"
-              className="block text-xs font-semibold uppercase tracking-wider text-[#69786a]"
-            >
-              What's on your mind?
+        {/* Capture */}
+        <section className={`${CARD} relative p-5 sm:p-6 focus-within:border-[#BFB38F] focus-within:ring-4 focus-within:ring-garden-pill/60 transition-all`}>
+          <img
+            src={ART.butterfly}
+            alt=""
+            aria-hidden="true"
+            className="absolute -top-8 -right-3 sm:-top-10 sm:-right-6 w-16 sm:w-24 rotate-12 pointer-events-none select-none"
+          />
+          <div className="space-y-1">
+            <label htmlFor="home-capture-input" className="block font-serif text-[28px] leading-tight font-semibold text-garden-ink">
+              Capture a thought
             </label>
-            <textarea
-              id="home-capture-input"
-              rows={2}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSaving}
-              placeholder="e.g. an idea, a feeling to express, or perhaps a whim?"
-              className="w-full bg-transparent text-[#233126] placeholder-[#9ca89d] text-base sm:text-lg resize-none focus:outline-none leading-relaxed"
-            />
+            <p className="text-sm text-garden-ink-soft">No need to decide where it belongs. Just write.</p>
           </div>
 
+          <textarea
+            id="home-capture-input"
+            rows={3}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isSaving}
+            placeholder="What's on your mind?"
+            className="mt-4 w-full px-4 py-3 rounded-xl bg-[#FDFBF3] border border-garden-line-soft text-garden-ink placeholder-garden-ink-faint text-base sm:text-[17px] leading-relaxed resize-none focus:outline-none focus:border-[#CFC39F]"
+          />
+
           {error && (
-            <p className="text-xs text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 mt-2">
+            <p className="text-sm text-[#8A3B2E] bg-[#F6E2DC] px-3 py-2 rounded-xl border border-[#E9C6BC] mt-3">
               {error}
             </p>
           )}
 
-          <div className="flex items-center justify-between pt-2 border-t border-[#f4f0e6] mt-2">
-            <span className="text-[11px] text-[#97a599] hidden sm:inline">
-              Press <kbd className="px-1.5 py-0.5 bg-[#f5f2e9] rounded border border-[#e4ded2] font-mono text-[10px] text-[#6b786c]">Ctrl + Enter</kbd> to plant
+          <div className="flex items-center justify-between gap-3 mt-4">
+            <span className="text-xs text-garden-ink-faint hidden sm:inline">
+              <kbd className="px-1.5 py-0.5 bg-garden-paper-deep rounded border border-garden-line font-sans text-[11px] text-garden-ink-soft">
+                Ctrl + Enter
+              </kbd>{' '}
+              to plant
             </span>
 
             <div className="ml-auto flex items-center gap-3">
               {justPlanted && (
                 <div
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[#344e3b] animate-fade-in pointer-events-none select-none"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-garden-moss animate-fade-in pointer-events-none select-none"
                   aria-live="polite"
                 >
-                  <SeedToSproutAnimation className="w-5 h-5 text-[#344e3b]" />
+                  <SeedToSproutAnimation className="w-5 h-5 text-garden-moss" />
                   <span>Planted</span>
                 </div>
               )}
@@ -217,398 +187,279 @@ export const GardenView: React.FC<GardenViewProps> = ({
                 type="button"
                 onClick={handlePlant}
                 disabled={!input.trim() || isSaving || justPlanted}
-                className="w-10 h-10 rounded-full bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-transform active:scale-95 shadow-xs"
-                title="Plant thought"
+                className={PRIMARY_BUTTON}
                 aria-label="Plant thought"
               >
-                <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+                <Leaf className="w-4 h-4" />
+                <span>Plant thought</span>
               </button>
             </div>
           </div>
         </section>
 
-      {/* Suggested Connection Card (Piece 5) */}
-      {suggestedConnection && (
-        <section className="bg-[#f3f7f4] border border-[#d6e5d8] rounded-2xl p-5 shadow-xs animate-fade-in space-y-3.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-[#3d5a45] text-white flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5" />
-              </span>
-              <div>
-                <h3 className="font-serif text-base font-semibold text-[#233126]">
-                  This might connect to…
-                </h3>
-                <p className="text-xs text-[#526e57] font-medium">
-                  {suggestedConnection.reason}
+        {/* A thought for you (rediscovery) */}
+        {rediscoveredThought && (
+          <section className="space-y-3 animate-fade-in">
+            <h3 className={SECTION_TITLE}>A thought for you</h3>
+            <div className={`${CARD} ${CARD_HOVER} animate-rediscovery-accent relative flex items-center gap-4 p-4 sm:p-5 border-l-[3px] border-l-garden-moss/40`}>
+              <button
+                type="button"
+                onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
+                className="flex-1 min-w-0 text-left space-y-1"
+              >
+                <p className="font-serif italic text-lg sm:text-xl leading-snug text-garden-ink line-clamp-3 whitespace-pre-wrap">
+                  “{rediscoveredThought.text}”
                 </p>
+                <p className="text-xs text-garden-ink-faint">Planted {formatRelativeTime(rediscoveredThought.createdAt)}</p>
+              </button>
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
+                  className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
+                  title="Dismiss for now"
+                  aria-label="Dismiss for now"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
+                  className="p-1.5 text-garden-ink-soft hover:text-garden-moss rounded-lg"
+                  aria-label="Open this thought"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
             </div>
+          </section>
+        )}
 
-            <button
-              type="button"
-              onClick={() =>
-                dismissConnection(
-                  suggestedConnection.sourceThought.id,
-                  suggestedConnection.targetThought.id
-                )
-              }
-              className="p-1 text-[#869688] hover:text-[#233126] rounded-lg"
-              title="Dismiss suggestion"
-              aria-label="Dismiss suggestion"
-            >
-              <X className="w-4 h-4" />
+        {/* Suggested connection */}
+        {suggestedConnection && (
+          <section className={`${CARD} p-5 sm:p-6 space-y-4 animate-fade-in`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full bg-garden-pill/70 text-garden-moss flex items-center justify-center shrink-0" aria-hidden="true">
+                  <Link2 className="w-5 h-5" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <h3 className="font-serif text-2xl leading-tight font-semibold text-garden-ink">This might connect to…</h3>
+                  <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-garden-tag text-garden-tag-ink border border-garden-line">
+                    {suggestedConnection.reason}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  dismissConnection(suggestedConnection.sourceThought.id, suggestedConnection.targetThought.id)
+                }
+                className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
+                title="Dismiss suggestion"
+                aria-label="Dismiss suggestion"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[suggestedConnection.sourceThought, suggestedConnection.targetThought].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setSelectedThoughtId(t.id)}
+                  className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line-soft text-left hover:border-[#D6CAA6] transition-colors"
+                >
+                  <p className="text-sm text-garden-ink line-clamp-3 leading-relaxed">{t.text}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  dismissConnection(suggestedConnection.sourceThought.id, suggestedConnection.targetThought.id)
+                }
+                className={QUIET_BUTTON}
+              >
+                Dismiss for now
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  acceptConnection(
+                    suggestedConnection.sourceThought.id,
+                    suggestedConnection.targetThought.id,
+                    suggestedConnection.reason
+                  )
+                }
+                className={PRIMARY_BUTTON}
+              >
+                <Link2 className="w-4 h-4" />
+                <span>Connect them</span>
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* Automatic organising: "group these two thoughts?" (on-device rule) */}
+        {groupSuggestions.slice(0, 1).map((s) => (
+          <GroupSuggestionCard key={s.id} suggestion={s} onOpenThought={setSelectedThoughtId} />
+        ))}
+
+        {/* Collections */}
+        <section className="space-y-3.5">
+          <div className="flex items-baseline justify-between">
+            <h3 className={SECTION_TITLE}>Your collections</h3>
+            <button type="button" onClick={() => onNavigateTab && onNavigateTab('collections')} className={LINK}>
+              View all
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div
-              onClick={() => setSelectedThoughtId(suggestedConnection.sourceThought.id)}
-              className="p-3.5 bg-white rounded-xl border border-[#dbe7dc] cursor-pointer shadow-xs hover:border-[#a8cca0] transition-colors"
-            >
-              <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed">
-                {suggestedConnection.sourceThought.text}
-              </p>
-            </div>
-
-            <div
-              onClick={() => setSelectedThoughtId(suggestedConnection.targetThought.id)}
-              className="p-3.5 bg-white rounded-xl border border-[#dbe7dc] cursor-pointer shadow-xs hover:border-[#a8cca0] transition-colors"
-            >
-              <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed">
-                {suggestedConnection.targetThought.text}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() =>
-                dismissConnection(
-                  suggestedConnection.sourceThought.id,
-                  suggestedConnection.targetThought.id
-                )
-              }
-              className="text-xs text-[#6e7d70] hover:text-[#233126]"
-            >
-              Dismiss for now
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                acceptConnection(
-                  suggestedConnection.sourceThought.id,
-                  suggestedConnection.targetThought.id,
-                  suggestedConnection.reason
-                )
-              }
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3d5a45] hover:bg-[#344e3b] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              <span>Confirm Connection</span>
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Automatic organising: "group these two thoughts?" (on-device rule) */}
-      {groupSuggestions.slice(0, 1).map((s) => (
-        <GroupSuggestionCard key={s.id} suggestion={s} onOpenThought={setSelectedThoughtId} />
-      ))}
-
-      {/* Gentle Rediscovery Card (Piece 6) */}
-      {rediscoveredThought && (
-        <section className="bg-[#fbfaf6] border border-[#e4ded0] rounded-2xl p-5 shadow-xs animate-fade-in animate-rediscovery-accent space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-[#e8e2d4] text-[#556958] flex items-center justify-center">
-                <History className="w-3.5 h-3.5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-serif text-base font-semibold text-[#233126]">
-                    A thought to revisit
-                  </h3>
-                  <span className="inline-flex items-center text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#edf4ee] text-[#34593e] border border-[#d2e2d5]">
-                    Resurfaced
-                  </span>
-                </div>
-                <p className="text-xs text-[#788779]">
-                  Planted {formatRelativeTime(rediscoveredThought.createdAt)}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
-              className="p-1 text-[#869688] hover:text-[#233126] rounded-lg"
-              title="Dismiss for now"
-              aria-label="Dismiss for now"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div
-            onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
-            className="p-3.5 bg-white rounded-xl border border-[#e4ded0] cursor-pointer shadow-xs hover:border-[#b8caa0] transition-colors"
-          >
-            <p className="text-[#233126] text-xs sm:text-sm line-clamp-3 leading-relaxed whitespace-pre-wrap">
-              {rediscoveredThought.text}
-            </p>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => dismissRediscoveredThought(rediscoveredThought.id)}
-              className="text-xs text-[#6e7d70] hover:text-[#233126]"
-            >
-              Dismiss for now
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedThoughtId(rediscoveredThought.id)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3d5a45] hover:bg-[#344f3b] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
-            >
-              <span>Inspect Thought</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Your Collections Section */}
-      <section className="space-y-3.5">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="font-serif text-lg font-semibold text-[#233126]">
-            Your Collections
-          </h3>
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('collections')}
-            className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
-          >
-            View all
-          </button>
-        </div>
-
-        {/* Desktop & Tablet: Up to 6 Pastel Collection Cards Grid */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {collections.slice(0, 6).map((col) => {
-            const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
-            const styles = getCollectionCardStyles(col);
-            const Icon = styles.Icon;
-
-            return (
-              <div
-                key={col.id}
-                onClick={() => handleCollectionClick(col.id)}
-                className={`p-4 rounded-2xl border ${styles.cardBg} shadow-xs hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between min-h-[160px]`}
-              >
-                <div>
-                  <div className={`w-8 h-8 rounded-full ${styles.iconBg} flex items-center justify-center mb-3`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-serif text-base font-semibold text-[#233126] leading-snug">
-                    {col.name}
-                    {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
-                  </h4>
-                  <div className="text-[11px] text-[#718273] font-medium mt-0.5">
-                    {count} {count === 1 ? 'thought' : 'thoughts'}
-                  </div>
-                  {col.description && (
-                    <p className="text-xs text-[#5d6d60] mt-1.5 line-clamp-2 leading-relaxed">
-                      {col.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="pt-2 flex justify-start">
-                  <span className={`${styles.arrowColor}`}>
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {collections.length > 6 && (
-          <div className="hidden sm:flex justify-end">
-            <button
-              type="button"
-              onClick={() => onNavigateTab && onNavigateTab('collections')}
-              className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
-            >
-              + {collections.length - 6} more collections →
-            </button>
-          </div>
-        )}
-
-        {/* Mobile: Compact Rounded List Rows — show 4 */}
-        <div className="sm:hidden space-y-2">
-          {collections.slice(0, 4).map((col) => {
-            const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
-            const styles = getCollectionCardStyles(col);
-            const Icon = styles.Icon;
-
-            return (
-              <div
-                key={col.id}
-                onClick={() => handleCollectionClick(col.id)}
-                className="bg-white border border-[#e4ded0] hover:border-[#b8caa0] p-3 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs active:bg-[#f6f4ed] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${styles.iconBg} flex items-center justify-center shrink-0`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-serif text-sm font-semibold text-[#233126] leading-tight">
+            {collections.map((col, index) => {
+              const count = thoughts.filter((t) => t.collectionIds?.includes(col.id)).length;
+              // 6 on larger screens, 4 on phones; an odd last card spans the row instead of sitting alone.
+              const visibility = index >= 6 ? 'hidden' : index >= 4 ? 'hidden sm:flex' : 'flex';
+              const shownOnWide = Math.min(collections.length, 6);
+              const span = index === shownOnWide - 1 && shownOnWide % 2 === 1 ? 'sm:col-span-2' : '';
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => handleCollectionClick(col.id)}
+                  className={`${CARD} ${CARD_HOVER} ${visibility} ${span} items-center gap-3.5 p-4 text-left`}
+                >
+                  <CollectionIcon collection={col} />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-serif text-xl leading-tight font-semibold text-garden-ink truncate">
                       {col.name}
                       {col.origin === 'auto' && <AutoBadge className="ml-1.5 align-middle" />}
                     </h4>
-                    <span className="text-[11px] text-[#7d8c7f]">
-                      {count} thoughts
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#a3b0a4]" />
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Recent Thoughts Section */}
-      <section className="space-y-3.5">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="font-serif text-lg font-semibold text-[#233126]">
-            Recent Thoughts
-          </h3>
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('thoughts')}
-            className="text-xs font-medium text-[#6e7d70] hover:text-[#233126] transition-colors"
-          >
-            View all
-          </button>
-        </div>
-
-        {isLoading ? (
-          <div className="py-8 text-center text-xs text-[#8f9d90]">
-            Tending the garden...
-          </div>
-        ) : thoughts.length === 0 ? (
-          <div className="py-12 text-center bg-white border border-dashed border-[#e4ded0] rounded-2xl p-6">
-            <Sprout className="w-8 h-8 mx-auto text-[#628469] mb-2 opacity-80" />
-            <p className="font-serif text-base font-semibold text-[#253227]">
-              Your garden starts with one thought
-            </p>
-            <p className="text-xs text-[#718273] mt-1">
-              Capture any fragment above to begin your personal garden.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white border border-[#e2dcd0] rounded-2xl divide-y divide-[#f2ede3] shadow-xs overflow-hidden">
-            {thoughts.slice(0, 10).map((thought) => {
-              const meta = getThoughtCategoryMeta(thought);
-              const CategoryIcon = meta.Icon;
-
-              return (
-                <div
-                  key={thought.id}
-                  onClick={() => setSelectedThoughtId(thought.id)}
-                  className="p-3.5 sm:p-4 hover:bg-[#faf8f4] cursor-pointer transition-colors flex items-center justify-between gap-3 group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-8 h-8 rounded-full ${meta.iconBg} flex items-center justify-center shrink-0`}>
-                      <CategoryIcon className="w-4 h-4" />
-                    </div>
-                    <p className="text-xs sm:text-sm text-[#233126] group-hover:text-[#18231a] truncate font-normal">
-                      {thought.text}
+                    <p className="text-xs text-garden-ink-faint mt-0.5">
+                      {count} {count === 1 ? 'thought' : 'thoughts'}
                     </p>
+                    {col.description && (
+                      <p className="text-xs text-garden-ink-soft mt-1 line-clamp-1 hidden sm:block">{col.description}</p>
+                    )}
                   </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] text-[#869688]">
-                      {formatRelativeTime(thought.createdAt)}
-                    </span>
-                    <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${meta.badgeBg}`}
-                    >
-                      {meta.label}
-                    </span>
-                  </div>
-                </div>
+                  <ChevronRight className="w-4 h-4 text-garden-ink-faint shrink-0" />
+                </button>
               );
             })}
           </div>
-        )}
-      </section>
-
-      {/* Connected Thoughts Section */}
-      {acceptedConnections.length > 0 && (
-        <section className="space-y-3.5">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-[#edf5ee] text-[#34593e] flex items-center justify-center">
-                <Link2 className="w-3.5 h-3.5" />
-              </span>
-              <h3 className="font-serif text-lg font-semibold text-[#233126]">
-                Connected Thoughts
-              </h3>
+          {collections.length > 6 && (
+            <div className="hidden sm:flex justify-end">
+              <button type="button" onClick={() => onNavigateTab && onNavigateTab('collections')} className={LINK}>
+                + {collections.length - 6} more collections →
+              </button>
             </div>
-            <span className="text-xs text-[#718273]">
-              {acceptedConnections.length} connected {acceptedConnections.length === 1 ? 'pair' : 'pairs'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {acceptedConnections.slice(0, 4).map(({ connection: c, source, target }) => (
-              <div
-                key={c.id}
-                className="bg-white border border-[#e2dcd0] hover:border-[#b8caa0] p-4 rounded-2xl shadow-xs transition-all space-y-2.5"
-              >
-                <div className="flex items-center gap-1.5 text-[11px] text-[#3d5a45] font-semibold">
-                  <Link2 className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{c.reason}</span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div
-                    onClick={() => setSelectedThoughtId(source.id)}
-                    className="p-2.5 rounded-xl bg-[#faf8f4] hover:bg-[#f3f0e8] cursor-pointer text-[#233126] line-clamp-2 transition-colors border border-[#ede9df]"
-                  >
-                    "{source.text}"
-                  </div>
-                  <div
-                    onClick={() => setSelectedThoughtId(target.id)}
-                    className="p-2.5 rounded-xl bg-[#faf8f4] hover:bg-[#f3f0e8] cursor-pointer text-[#233126] line-clamp-2 transition-colors border border-[#ede9df]"
-                  >
-                    "{target.text}"
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          )}
+          {collections.length > 4 && (
+            <div className="flex sm:hidden justify-end">
+              <button type="button" onClick={() => onNavigateTab && onNavigateTab('collections')} className={LINK}>
+                + {collections.length - 4} more →
+              </button>
+            </div>
+          )}
         </section>
-      )}
 
-      {/* Decorative Rolling Hills Artwork on Mobile */}
-      <div className="sm:hidden pt-4 -mb-8">
-        <RollingHillsFooterArt className="w-full h-12 opacity-75" />
-      </div>
+        {/* Recent thoughts */}
+        <section className="space-y-3.5">
+          <div className="flex items-baseline justify-between">
+            <h3 className={SECTION_TITLE}>Recent thoughts</h3>
+            <button type="button" onClick={() => onNavigateTab && onNavigateTab('thoughts')} className={LINK}>
+              View all
+            </button>
+          </div>
 
-      {/* Thought Detail Modal */}
-      <ThoughtDetailModal
-        thought={selectedThought}
-        isOpen={Boolean(selectedThought)}
-        onClose={() => setSelectedThoughtId(null)}
-        onUpdate={updateThought}
-        onDelete={deleteThought}
-        onSelectThought={(t) => setSelectedThoughtId(t.id)}
-      />
+          {isLoading ? (
+            <div className="py-10 text-center font-serif italic text-lg text-garden-ink-faint" role="status">
+              Tending the garden…
+            </div>
+          ) : thoughts.length === 0 ? (
+            <div className={`${CARD} flex flex-col items-center text-center px-6 py-10`}>
+              <img src={ART.bee} alt="" aria-hidden="true" className="w-24 -rotate-12 mb-4" />
+              <p className="font-serif text-2xl font-semibold text-garden-ink">Your garden starts with one thought</p>
+              <p className="text-sm text-garden-ink-soft mt-1">Capture any fragment above to begin.</p>
+            </div>
+          ) : (
+            <ul className="space-y-2.5">
+              {thoughts.slice(0, 10).map((thought) => {
+                const meta = getThoughtCategoryMeta(thought);
+                const CategoryIcon = meta.Icon;
+                return (
+                  <li key={thought.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedThoughtId(thought.id)}
+                      className={`${CARD} ${CARD_HOVER} w-full flex items-center gap-3.5 p-3.5 sm:p-4 text-left group`}
+                    >
+                      <span className="w-10 h-10 rounded-full bg-garden-paper-deep text-garden-ink-soft flex items-center justify-center shrink-0" aria-hidden="true">
+                        <CategoryIcon className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                      </span>
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <p className="text-[15px] leading-snug text-garden-ink line-clamp-2">{thought.text}</p>
+                        <div className="flex items-center gap-2.5">
+                          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeBg}`}>
+                            {meta.label}
+                          </span>
+                          <span className="text-xs text-garden-ink-faint">{formatRelativeTime(thought.createdAt)}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-garden-ink-faint group-hover:text-garden-moss shrink-0" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Connected thoughts */}
+        {acceptedConnections.length > 0 && (
+          <section className="space-y-3.5">
+            <div className="flex items-baseline justify-between">
+              <h3 className={SECTION_TITLE}>Connected thoughts</h3>
+              <span className="text-sm text-garden-ink-faint">
+                {acceptedConnections.length} connected {acceptedConnections.length === 1 ? 'pair' : 'pairs'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {acceptedConnections.slice(0, 4).map(({ connection: c, source, target }) => (
+                <div key={c.id} className={`${CARD} p-4 space-y-2.5`}>
+                  <div className="flex items-center gap-1.5 text-xs text-garden-moss font-semibold">
+                    <Link2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{c.reason}</span>
+                  </div>
+                  {[source, target].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setSelectedThoughtId(t.id)}
+                      className="w-full p-3 rounded-xl bg-[#FDFBF3] border border-garden-line-soft hover:border-[#D6CAA6] text-left text-sm text-garden-ink line-clamp-2 transition-colors"
+                    >
+                      {t.text}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Thought Detail Modal */}
+        <ThoughtDetailModal
+          thought={selectedThought}
+          isOpen={Boolean(selectedThought)}
+          onClose={() => setSelectedThoughtId(null)}
+          onUpdate={updateThought}
+          onDelete={deleteThought}
+          onSelectThought={(t) => setSelectedThoughtId(t.id)}
+        />
       </div>
     </>
   );
