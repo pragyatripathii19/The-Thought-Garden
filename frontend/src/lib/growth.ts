@@ -84,10 +84,8 @@ export function describeGrowth(thought: Thought, connections: Connection[], coll
   const s = growthSignals(thought, connections);
 
   if (thought.stageManual) {
-    return {
-      why: 'You chose this stage, so it won’t change on its own.',
-      next: stage === 'mature' ? null : 'Let it grow automatically again to have the garden move it forward as you tend it.',
-    };
+    // The detail view offers a "Let it grow automatically" button for this case.
+    return { why: 'You chose this stage, so it won’t change on its own.', next: null };
   }
 
   if (stage === 'mature') return { why: 'You marked this idea as mature.', next: null };

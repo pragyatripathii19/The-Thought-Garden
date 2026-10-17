@@ -19,6 +19,7 @@ import {
 import { Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
+import { describeGrowth } from '../lib/growth';
 import { formatRelativeTime } from '../lib/time';
 import { AutoBadge } from './OrganizeToast';
 
@@ -33,6 +34,7 @@ interface ThoughtDetailModalProps {
       stage?: GrowthStage;
       collectionIds?: string[];
       isSaved?: boolean;
+      stageManual?: boolean;
     }
   ) => Promise<Thought>;
   onDelete: (id: string) => Promise<void>;
@@ -138,6 +140,17 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
       console.error('Failed to update stage:', err);
     }
   };
+
+  // Hand the stage back to the garden: it grows automatically again from here.
+  const handleAutoGrowth = async () => {
+    try {
+      await onUpdate(thought.id, { stageManual: false });
+    } catch (err) {
+      console.error('Failed to resume automatic growth:', err);
+    }
+  };
+
+  const growth = describeGrowth(thought, connections, collections);
 
   const handleDelete = async () => {
     try {
@@ -486,6 +499,21 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Why it's at this stage, and what would help it grow */}
+            <div className="mt-3 text-sm leading-relaxed space-y-0.5" aria-live="polite">
+              <p className="text-garden-ink">{growth.why}</p>
+              {growth.next && <p className="text-garden-ink-soft">{growth.next}</p>}
+              {thought.stageManual && (
+                <button
+                  type="button"
+                  onClick={handleAutoGrowth}
+                  className="mt-1 text-sm font-semibold text-garden-moss underline underline-offset-2 hover:text-garden-moss-dark"
+                >
+                  Let it grow automatically
+                </button>
+              )}
             </div>
           </div>
         </div>
