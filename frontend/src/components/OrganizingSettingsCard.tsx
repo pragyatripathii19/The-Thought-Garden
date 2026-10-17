@@ -78,8 +78,9 @@ export const OrganizingSettingsCard: React.FC = () => {
             Organise on this device
           </label>
           <p className="text-xs text-[#718273] leading-relaxed">
-            A small model running in your browser (about 25 MB, downloaded once) finds similar thoughts. Nothing is sent
-            anywhere. Clear matches join a collection; close pairs are suggested on Home. Every change can be undone.
+            A small model running in your browser (about 25 MB, downloaded once) finds similar thoughts; the comparison
+            happens on this device. Clear matches join a collection; close pairs are suggested on Home. Every change can
+            be undone.
           </p>
           <p className="text-[11px] text-[#8b998d]">
             {STATUS_COPY[embedderStatus]}

@@ -95,10 +95,8 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
   smartAvailableRef.current = smartAvailable;
   const embedderStatusRef = useRef(embedderStatus);
   embedderStatusRef.current = embedderStatus;
-  const userIdRef = useRef(userProfile?.id);
-  userIdRef.current = userProfile?.id;
-  const userSecretRef = useRef(userProfile?.secret);
-  userSecretRef.current = userProfile?.secret;
+  const signedInRef = useRef(Boolean(userProfile));
+  signedInRef.current = Boolean(userProfile);
   const actionsRef = useRef<OrganizerActions>({ createCollection, updateThought, deleteCollection });
   actionsRef.current = { createCollection, updateThought, deleteCollection };
 
@@ -221,22 +219,18 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
         };
 
         let decision: OrganizeDecision;
-        const userId = userIdRef.current;
-        const userSecret = userSecretRef.current;
         const useSmart =
           settingsRef.current.smartOrganizing &&
           smartAvailableRef.current &&
-          Boolean(userId && userSecret) &&
+          signedInRef.current &&
           (typeof navigator === 'undefined' || navigator.onLine);
 
         if (prepared.candidates.length === 0) {
           // Case D, decided locally: nothing similar exists, so nothing is sent anywhere.
           decision = { action: 'none', reason: 'Nothing similar yet.', source: 'local' };
-        } else if (useSmart && userId && userSecret) {
+        } else if (useSmart) {
           try {
             const raw = await requestClassification(
-              userId,
-              userSecret,
               buildClassifyPayload(prepared, thoughtsRef.current, collectionsRef.current)
             );
             decision = validateDecision(raw, {

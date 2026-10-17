@@ -1,4 +1,5 @@
 import { ClassifyPayload } from './organizer';
+import { apiFetch } from '../api';
 
 const API_BASE = '/api';
 
@@ -22,19 +23,7 @@ export async function fetchSmartOrganizingAvailable(): Promise<boolean> {
  * them to the configured LLM. Only called when the user enabled Smart organising.
  * Returns the raw (untrusted) decision; validate before applying.
  */
-export async function requestClassification(
-  userId: string,
-  secret: string,
-  payload: ClassifyPayload
-): Promise<unknown> {
-  const res = await fetch(`${API_BASE}/classify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-user-secret': secret },
-    body: JSON.stringify({ userId, ...payload }),
-  });
-  if (!res.ok) {
-    throw new Error(`Classification request failed (HTTP ${res.status})`);
-  }
-  const data = await res.json();
+export async function requestClassification(payload: ClassifyPayload): Promise<unknown> {
+  const data = await apiFetch<{ decision: unknown }>('/classify', { method: 'POST', body: payload });
   return data.decision;
 }

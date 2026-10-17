@@ -27,6 +27,7 @@ export const FeedbackModal: React.FC = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!isFeedbackModalOpen) return null;
 
@@ -36,6 +37,7 @@ export const FeedbackModal: React.FC = () => {
 
     try {
       setIsSubmitting(true);
+      setSubmitError(null);
       await submitFeedback(category, rating, message.trim(), email.trim() || undefined);
       setSubmitted(true);
       setTimeout(() => {
@@ -43,6 +45,8 @@ export const FeedbackModal: React.FC = () => {
         setMessage('');
         setIsFeedbackModalOpen(false);
       }, 1400);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Your feedback couldn't be sent. Try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -187,6 +191,12 @@ export const FeedbackModal: React.FC = () => {
                 className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#ded8cb] text-[#233126] placeholder-[#9ca89d] text-xs focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4] transition-all"
               />
             </div>
+
+            {submitError && (
+              <p role="alert" className="text-xs text-[#7a2e2e] bg-[#fff1f1] border border-[#f1c9c9] rounded-2xl p-3">
+                {submitError}
+              </p>
+            )}
 
             {/* Submit Button */}
             <div className="pt-2">

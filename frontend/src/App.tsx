@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -18,11 +18,15 @@ import { AdminPilotModal } from './components/AdminPilotModal';
 import { useThoughts } from './context/StorageContext';
 import { OrganizerProvider } from './context/OrganizerContext';
 import { OrganizeToast } from './components/OrganizeToast';
+import { LocalGardenUploadCard } from './components/LocalGardenUploadCard';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthView, AuthStatusScreen } from './views/AuthView';
+import { createApiRepositories, importGardenOnServer } from './storage/api';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<NavTab>('garden');
   const [isNewThoughtModalOpen, setIsNewThoughtModalOpen] = useState(false);
-  const { setIsAdminModalOpen, setIsFeedbackModalOpen } = useThoughts();
+  const { setIsAdminModalOpen, setIsFeedbackModalOpen, isAdmin } = useThoughts();
 
   // Global keyboard shortcuts:
   // - Ctrl + N: New Thought
@@ -34,7 +38,7 @@ function AppContent() {
         e.preventDefault();
         setIsNewThoughtModalOpen(true);
       }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      if (isAdmin && (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
         setIsAdminModalOpen(true);
       }
@@ -45,7 +49,7 @@ function AppContent() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setIsAdminModalOpen, setIsFeedbackModalOpen]);
+  }, [isAdmin, setIsAdminModalOpen, setIsFeedbackModalOpen]);
 
   return (
     <div className="min-h-screen bg-[#faf8f4] flex flex-col md:flex-row font-sans text-[#233126]">
@@ -59,6 +63,7 @@ function AppContent() {
 
         {/* Main Content Area */}
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8 pb-24 md:pb-12">
+          <LocalGardenUploadCard />
           {activeTab === 'garden' && (
             <GardenView
               onNavigateTab={setActiveTab}
@@ -97,13 +102,37 @@ function AppContent() {
   );
 }
 
-export function App() {
+/** The signed-in app. Remounted per account so nothing carries over between users. */
+function SignedInApp() {
+  const repositories = useMemo(() => createApiRepositories(), []);
   return (
-    <StorageProvider>
+    <StorageProvider
+      {...repositories}
+      importGarden={importGardenOnServer}
+      seedStarterCollections={false}
+      refreshOnFocus
+    >
       <OrganizerProvider>
         <AppContent />
       </OrganizerProvider>
     </StorageProvider>
+  );
+}
+
+function AuthGate() {
+  const { status, user, retry } = useAuth();
+  if (status === 'loading' || status === 'unreachable') {
+    return <AuthStatusScreen status={status} onRetry={retry} />;
+  }
+  if (status === 'signed-out' || !user) return <AuthView />;
+  return <SignedInApp key={user.id} />;
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }
 

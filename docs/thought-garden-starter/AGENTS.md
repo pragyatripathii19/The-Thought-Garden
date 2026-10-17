@@ -20,7 +20,7 @@
 
 ## Pilot exception (current state)
 
-For the pilot, the repository deliberately adds a small optional server layer: a pilot profile (name, optional email, reasons), daily activity counts, feedback, an admin dashboard, and opt-in Smart organising. Thought content still never leaves the browser unless the user turns on Smart organising. Streak numbers are internal telemetry only and must not be shown to users. Keep this layer disclosed in the UI (Data & Settings) and documented in the root `README.md` ("Pilot Layer & Privacy"); do not expand it without updating both.
+For the v1 pilot with a few invited users, the repository deliberately adds accounts (email and password) and stores each user's garden in PostgreSQL, so data survives cleared browsers and follows the user across devices. It also has feedback, an admin dashboard (counts only, never thought text), and opt-in Smart organising. Streak numbers are internal telemetry only and must not be shown to users. Keep what is stored, and who can access it, disclosed in the UI (Data & Settings, sign-up screen) and documented in the root `README.md` ("Accounts & Privacy"); do not expand it without updating both.
 
 ## Scope discipline
 

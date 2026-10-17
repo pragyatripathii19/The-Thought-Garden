@@ -81,11 +81,6 @@ export interface Connection {
 
 export interface PilotUserProfile {
   id: string;
-  /**
-   * Random secret generated in this browser. Proves ownership of the profile to
-   * the pilot server (which stores only its hash). Never shown in the UI.
-   */
-  secret?: string;
   name: string;
   email?: string;
   reasons: string[];

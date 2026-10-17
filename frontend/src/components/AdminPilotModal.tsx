@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Shield,
-  Lock,
   Users,
   Sprout,
   MessageSquare,
@@ -26,8 +25,6 @@ import { localDateKey } from '../lib/date';
 
 export const AdminPilotModal: React.FC = () => {
   const { isAdminModalOpen, setIsAdminModalOpen, thoughts, userProfile, feedbacks: localFeedbacks } = useThoughts();
-  const [passcode, setPasscode] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [data, setData] = useState<AdminOverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,50 +33,39 @@ export const AdminPilotModal: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<PilotUserProfile | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
-  // Auto-login if previously saved in session
-  useEffect(() => {
-    if (isAdminModalOpen) {
-      const savedPass = sessionStorage.getItem('thought_garden_admin_pass');
-      if (savedPass) {
-        setPasscode(savedPass);
-        handleLoadOverview(savedPass);
-      }
-    }
-  }, [isAdminModalOpen]);
-
-  if (!isAdminModalOpen) return null;
-
-  const handleLoadOverview = async (codeToUse?: string) => {
-    const code = codeToUse || passcode;
-    if (!code) return;
-
+  const handleLoadOverview = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetchAdminOverview(code);
-      setData(res);
-      setIsAuthenticated(true);
-      sessionStorage.setItem('thought_garden_admin_pass', code);
+      setData(await fetchAdminOverview());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
-      setIsAuthenticated(false);
+      setError(err instanceof Error ? err.message : "Couldn't load the dashboard");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // The signed-in account must be an admin (server-side ADMIN_EMAILS); no passcode.
+  useEffect(() => {
+    if (isAdminModalOpen) handleLoadOverview();
+  }, [isAdminModalOpen]);
+
+  if (!isAdminModalOpen) return null;
+
+  const isAuthenticated = data !== null;
+
   const handleDeleteUser = async () => {
-    if (!userToDelete || !passcode) return;
+    if (!userToDelete) return;
     try {
       setIsDeletingUser(true);
       setError(null);
-      await adminDeletePilotUser(userToDelete.id, passcode);
+      await adminDeletePilotUser(userToDelete.id);
       const deletedId = userToDelete.id;
       setUserToDelete(null);
       if (expandedUserId === deletedId) {
         setExpandedUserId(null);
       }
-      await handleLoadOverview(passcode);
+      await handleLoadOverview();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete user');
     } finally {
@@ -161,53 +147,28 @@ export const AdminPilotModal: React.FC = () => {
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          {!isAuthenticated ? (
-            /* Passcode Gate */
+          {!data ? (
             <div className="max-w-sm mx-auto my-8 p-6 bg-white border border-[#e2dcd0] rounded-3xl shadow-sm text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#edf5ee] text-[#3d5a45] flex items-center justify-center mx-auto">
-                <Lock className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-serif text-lg font-medium text-[#233126]">
-                  Enter Admin Passcode
-                </h3>
-                <p className="text-xs text-[#718273] mt-1">
-                  Use the passcode set in the server's <code className="px-1.5 py-0.5 bg-[#f3f0e8] rounded font-mono text-[11px]">ADMIN_PASSCODE</code> environment variable.
-                </p>
-              </div>
-
-              {error && (
-                <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs text-left">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
+              {error ? (
+                <>
+                  <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs text-left">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleLoadOverview()}
+                    disabled={isLoading}
+                    className="w-full py-2.5 rounded-xl bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors"
+                  >
+                    Try again
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-[#718273]" role="status">Loading the dashboard…</p>
               )}
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLoadOverview();
-                }}
-                className="space-y-3"
-              >
-                <input
-                  type="password"
-                  placeholder="Admin passcode"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#ded8cb] text-[#233126] text-sm focus:outline-none focus:border-[#4a6b53] focus:ring-2 focus:ring-[#e2ede4]"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  disabled={!passcode || isLoading}
-                  className="w-full py-2.5 rounded-xl bg-[#344e3b] hover:bg-[#2b4131] disabled:opacity-40 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors"
-                >
-                  {isLoading ? 'Authenticating…' : 'Unlock Admin Dashboard'}
-                </button>
-              </form>
             </div>
-          ) : data ? (
+          ) : (
             /* Authenticated Overview Dashboard */
             <>
               {/* Top KPI Cards */}
@@ -546,14 +507,14 @@ export const AdminPilotModal: React.FC = () => {
                 )}
               </div>
             </>
-          ) : null}
+          )}
         </div>
 
         {/* Footer with Diagnostic Export Buttons */}
         {isAuthenticated && (
           <div className="p-4 sm:p-5 border-t border-[#eee9dc] bg-[#f5f2e9]/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <span className="text-xs text-[#6e7d70]">
-              Passcode authenticated &bull; Real-time SQLite sync
+              Signed in as admin &bull; Counts only, no thought text
             </span>
 
             <div className="flex items-center gap-2.5">

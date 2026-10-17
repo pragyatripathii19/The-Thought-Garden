@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Download, Upload, Shield, HardDrive, AlertTriangle } from 'lucide-react';
+import { Download, Upload, Shield, HardDrive, AlertTriangle, LogOut, UserRound } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
+import { useAuth } from '../context/AuthContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
 import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
 
@@ -13,22 +14,28 @@ export const SettingsView: React.FC = () => {
     setIsAdminModalOpen,
     setIsFeedbackModalOpen,
     setIsOnboardingOpen,
-    deleteAccountAndResetGarden,
+    deleteAccount,
+    userProfile,
+    isAdmin,
   } = useThoughts();
+  const { logout } = useAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const runDelete = async (localOnly: boolean) => {
+  const runDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deletePassword || isDeleting) return;
     try {
       setIsDeleting(true);
       setDeleteError(null);
-      await deleteAccountAndResetGarden({ localOnly });
-      setIsConfirmDeleteOpen(false);
+      // On success the account is gone and the app returns to the sign-up screen.
+      await deleteAccount(deletePassword);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Something went wrong. Nothing was deleted.');
-    } finally {
       setIsDeleting(false);
     }
   };
@@ -37,6 +44,16 @@ export const SettingsView: React.FC = () => {
     if (isDeleting) return;
     setIsConfirmDeleteOpen(false);
     setDeleteError(null);
+    setDeletePassword('');
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      setIsLoggingOut(false);
+    }
   };
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -77,15 +94,17 @@ export const SettingsView: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <h3 className="font-serif text-base font-semibold text-[#233126]">
-              Local-First &amp; Private
+              Saved to your account
             </h3>
             <p className="text-xs text-[#596d5e] leading-relaxed">
-              Your thoughts are stored only on this device using IndexedDB. Thought content is never uploaded unless you turn on Smart organising below. As part of the Thought Garden pilot, we collect a small amount of usage data (your name, activity patterns, and any feedback you choose to submit) to help us improve the product.
+              Your thoughts, collections and connections are stored in your account on the Thought Garden server, so
+              they're safe if you clear this browser and they appear on any device you log in from. Only you can see
+              them in the app; whoever runs the server can access the database. The admin dashboard shows counts
+              only, never what you wrote.
             </p>
-            <div className="flex items-center gap-1.5 pt-1 text-[11px] text-amber-800 font-medium">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>Clearing browser cookies or cache may erase local data. Export regular backups below.</span>
-            </div>
+            <p className="text-xs text-[#596d5e] leading-relaxed">
+              Smart organising, if you turn it on below, also sends new thoughts to an AI service to sort them.
+            </p>
           </div>
         </div>
       </div>
@@ -171,8 +190,8 @@ export const SettingsView: React.FC = () => {
             <div className="text-[11px] text-[#718273] mt-0.5">Connections</div>
           </div>
           <div className="p-3 rounded-xl bg-[#faf8f4] border border-[#e4ded0]">
-            <div className="text-base font-serif font-bold text-[#233126] truncate">IndexedDB</div>
-            <div className="text-[11px] text-[#718273] mt-0.5">Storage Engine</div>
+            <div className="text-base font-serif font-bold text-[#233126] truncate">Your account</div>
+            <div className="text-[11px] text-[#718273] mt-0.5">Stored in</div>
           </div>
         </div>
       </div>
@@ -185,25 +204,31 @@ export const SettingsView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-[#edf5ee] text-[#34593e] flex items-center justify-center text-xs">
                 🌱
               </span>
-              <span>Pilot Testing & Admin</span>
+              <span>{isAdmin ? 'Pilot Testing & Admin' : 'Feedback & Profile'}</span>
             </h3>
             <p className="text-xs text-[#718273] leading-relaxed">
-              Track who registered, thoughts planted per day, and feedback submitted by pilot testers.
+              {isAdmin
+                ? 'Track who registered, thoughts planted per day, and feedback submitted by pilot testers.'
+                : 'Tell us what works and what doesn\u2019t, or update how we greet you.'}
             </p>
           </div>
-          <span className="text-[10px] font-mono text-[#8a998c] bg-[#f5f2e9] px-2 py-1 rounded-md border border-[#e5dfd2]">
-            Ctrl + Shift + A
-          </span>
+          {isAdmin && (
+            <span className="text-[10px] font-mono text-[#8a998c] bg-[#f5f2e9] px-2 py-1 rounded-md border border-[#e5dfd2]">
+              Ctrl + Shift + A
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2.5 pt-1">
-          <button
-            type="button"
-            onClick={() => setIsAdminModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#344e3b] hover:bg-[#2b4131] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
-          >
-            <span>Open Pilot Admin Dashboard</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setIsAdminModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#344e3b] hover:bg-[#2b4131] text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
+            >
+              <span>Open Pilot Admin Dashboard</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -223,7 +248,29 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Danger Zone: Account Deletion & Reset */}
+      {/* Account */}
+      <div className="bg-white border border-[#e2dcd0] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#edf5ee] text-[#34593e] flex items-center justify-center shrink-0">
+            <UserRound className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-serif text-base font-semibold text-[#233126]">Account</h3>
+            <p className="text-xs text-[#718273] truncate">Signed in as {userProfile?.email}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] border border-[#e4ded0] text-[#233126] rounded-xl text-xs font-semibold disabled:opacity-50"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>{isLoggingOut ? 'Logging out\u2026' : 'Log out'}</span>
+        </button>
+      </div>
+
+      {/* Danger Zone: Account Deletion */}
       <div className="bg-[#fff8f8] border border-[#f3d6d6] rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
@@ -231,10 +278,11 @@ export const SettingsView: React.FC = () => {
           </div>
           <div className="space-y-1">
             <h3 className="font-serif text-base font-semibold text-red-950">
-              Danger Zone: Delete Account & Reset Garden
+              Danger Zone: Delete Account
             </h3>
             <p className="text-xs text-[#825454] leading-relaxed">
-              Permanently wipe all thoughts, collections, and connections from this device's IndexedDB, and remove your user profile and feedback from the pilot server.
+              Permanently delete your account and everything in it from the server: all thoughts, collections,
+              connections and feedback. Export a backup first if you might want them later.
             </p>
           </div>
         </div>
@@ -245,7 +293,7 @@ export const SettingsView: React.FC = () => {
             onClick={() => setIsConfirmDeleteOpen(true)}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
           >
-            <span>Delete Account & Reset Garden</span>
+            <span>Delete Account</span>
           </button>
         </div>
       </div>
@@ -258,7 +306,8 @@ export const SettingsView: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#233126]/60 backdrop-blur-sm animate-fade-in"
           onClick={closeDeleteDialog}
         >
-          <div
+          <form
+            onSubmit={runDelete}
             className="bg-white border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
@@ -278,7 +327,7 @@ export const SettingsView: React.FC = () => {
             <ul className="text-xs text-[#715454] space-y-2 bg-[#fdf2f2] p-3.5 rounded-2xl border border-[#f5dada]">
               <li className="flex items-start gap-2">
                 <span className="text-red-500 font-bold">&bull;</span>
-                <span>All <strong>{thoughts.length} thoughts</strong> and notes will be deleted from your local device.</span>
+                <span>All <strong>{thoughts.length} thoughts</strong> will be deleted from your account.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-red-500 font-bold">&bull;</span>
@@ -286,26 +335,29 @@ export const SettingsView: React.FC = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-red-500 font-bold">&bull;</span>
-                <span>Your pilot tester profile will be deleted from the server.</span>
+                <span>Your account and feedback will be deleted, and you'll be logged out everywhere.</span>
               </li>
             </ul>
 
+            <div className="space-y-1.5">
+              <label htmlFor="delete-password" className="block text-xs font-semibold text-[#715454]">
+                Enter your password to confirm
+              </label>
+              <input
+                id="delete-password"
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#f1c9c9] text-sm text-[#233126] focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              />
+            </div>
+
             {deleteError && (
-              <div role="alert" className="text-xs text-[#7a2e2e] bg-[#fff1f1] border border-[#f1c9c9] rounded-2xl p-3.5 space-y-2">
-                <p>{deleteError}</p>
-                <p className="text-[#8a5a5a]">
-                  You can try again later, or erase this device only. Your profile and feedback would then stay on the
-                  pilot server until it can be removed.
-                </p>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={() => runDelete(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#fff5f5] border border-[#f1c9c9] text-red-700 rounded-xl text-xs font-semibold disabled:opacity-50"
-                >
-                  Erase this device only
-                </button>
-              </div>
+              <p role="alert" className="text-xs text-[#7a2e2e] bg-[#fff1f1] border border-[#f1c9c9] rounded-2xl p-3.5">
+                {deleteError}
+              </p>
             )}
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
@@ -318,15 +370,14 @@ export const SettingsView: React.FC = () => {
                 Cancel
               </button>
               <button
-                type="button"
-                disabled={isDeleting}
-                onClick={() => runDelete(false)}
+                type="submit"
+                disabled={isDeleting || !deletePassword}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-transform active:scale-95"
               >
-                <span>{isDeleting ? 'Deleting Everything...' : 'Yes, Delete & Reset Everything'}</span>
+                <span>{isDeleting ? 'Deleting everything\u2026' : 'Yes, delete my account'}</span>
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 

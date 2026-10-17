@@ -1,6 +1,6 @@
 # The Thought Garden
 
-A calm, local-first personal space for capturing unfinished thoughts and discovering useful relationships between them over time.
+A calm personal space for capturing unfinished thoughts and discovering useful relationships between them over time.
 
 > *Every thought has a home, even when you don't know what that home is yet.*
 
@@ -14,59 +14,72 @@ A calm, local-first personal space for capturing unfinished thoughts and discove
 │   ├── thought-garden-starter/# Core product brief, MVP spec, technical & build plans
 │   └── Visual_Feel_References/# Visual style guides, card references, flow diagrams
 ├── frontend/                 # React 18 + Vite + TypeScript + Tailwind CSS application
-│   ├── src/                  # Components, views, design system, and domain types
-│   ├── package.json          # Frontend dependencies & scripts
-│   └── ...
-└── backend/                  # Pilot server: Express + SQLite (profiles, activity, feedback, Smart organising)
-    ├── server.cjs
-    └── test-backend.cjs
+└── backend/                  # Express + PostgreSQL: accounts, gardens, feedback, Smart organising
 ```
 
 ---
 
 ## Getting Started
 
-### Running the Frontend
+You need Node.js 22.9 or newer and PostgreSQL (16 or newer).
+
+### 1. Create the databases (once)
+
+In `psql` as the `postgres` user:
+
+```sql
+CREATE ROLE thought_garden LOGIN PASSWORD 'choose-a-password';
+CREATE DATABASE thought_garden_dev OWNER thought_garden;
+CREATE DATABASE thought_garden_test OWNER thought_garden;
+```
+
+### 2. Configure
+
+Copy `.env.example` to `.env` and fill in `DATABASE_URL`, `TEST_DATABASE_URL` and `ADMIN_EMAILS` (your email, to get the admin dashboard). `.env` is git-ignored.
+
+### 3. Run
+
 ```bash
-cd frontend
-npm install
-npm run dev
+npm install                      # root: server dependencies
+npm run dev:backend              # http://localhost:3001, applies migrations on start
+npm run dev:frontend             # http://localhost:5173 (proxies /api to the server)
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Running the Pilot Backend
+Open http://localhost:5173 and create an account.
+
+### Tests
+
 ```bash
-npm install          # root: express + cors
-npm run dev:backend  # http://localhost:3001 (Vite proxies /api to it)
+npm test                         # frontend unit tests
+npm run test:backend             # API tests against TEST_DATABASE_URL (wiped each run)
 ```
 
-The app works without the backend; pilot sync, feedback and Smart organising simply stay offline.
+### Forgotten passwords
 
-To use the admin dashboard, set a passcode first (there is no default; without it the admin API is disabled):
-```powershell
-$env:ADMIN_PASSCODE = "choose-a-long-passcode"; npm run dev:backend
-```
+There are no reset emails yet. Run `npm run reset-password -- someone@example.com`, which prints a temporary password to send them privately.
 
-Run the backend tests with `node backend/test-backend.cjs` (uses a temporary database).
+## Accounts & Privacy
 
-## Pilot Layer & Privacy
-
-The original MVP had no accounts or analytics. For the pilot, a small optional layer was added — this is a deliberate, disclosed exception to the rules in `docs/thought-garden-starter/AGENTS.md`:
+Everyone signs up with an email and password. Their garden is stored in Postgres under their account, so nothing is lost when a browser is cleared, and the same garden appears on every device they log in from.
 
 | Data | Where it goes | Notes |
 |---|---|---|
-| Thoughts, collections, connections | This browser only (IndexedDB) | Never sent to the server, except the opt-in Smart organising request below |
-| Name, optional email, "why I'm here" reasons | Pilot server (SQLite) | Collected at onboarding |
-| Daily counts (thoughts today, total, consecutive active days) | Pilot server | Numbers only, no text. Streaks are internal telemetry and are never shown to users |
-| Feedback messages | Pilot server | Only what the user submits |
-| Smart organising requests | Pilot server → LLM provider | Opt-in; forwarded, not stored or logged |
+| Thoughts, collections, connections, organiser history | Server (Postgres), per account | Only the owner sees them in the app. Whoever runs the server can access the database, so tell testers this |
+| Name, email, password, "why I'm here" reasons | Server | Passwords are stored only as scrypt hashes |
+| Feedback | Server | Only what the user submits |
+| Embeddings for automatic organising | This browser (IndexedDB) | A per-device cache; rebuilt as needed and cleared on logout |
+| Smart organising requests | Server → LLM provider | Opt-in; forwarded, not stored or logged |
 
-**Access control.** Each browser generates a random secret when the profile is created; the server stores only its SHA-256 hash and requires it (`x-user-secret` header) for profile updates, activity pings, attributed feedback, Smart organising and self-service deletion. Admin endpoints require `ADMIN_PASSCODE` and lock out an IP after 10 wrong attempts for 15 minutes. Users can delete their profile and all server-side records from **Data & Settings**.
+The admin dashboard (for emails in `ADMIN_EMAILS`) shows counts per user: thoughts, activity per day and feedback. It never shows thought text. Users can delete their account, and everything in it, from **Data & Settings**.
+
+Gardens saved in a browser before accounts existed show a card offering to add them to the signed-in account. Exported JSON backups import with **Data & Settings → Import Backup**.
+
+See `backend/README.md` for the security model and API.
 
 ### Automatic Organising
 New thoughts are grouped into collections automatically, with an "Auto" badge and Undo on every change.
 
-- **On this device (default):** a small embedding model (`Xenova/all-MiniLM-L6-v2` via Transformers.js, ~25 MB, downloaded once and cached) runs in a Web Worker to find similar thoughts. Clear matches join a collection; close pairs are offered as a "group these?" card. No thought text leaves the browser.
+- **On this device (default):** a small embedding model (`Xenova/all-MiniLM-L6-v2` via Transformers.js, ~25 MB, downloaded once and cached) runs in a Web Worker to find similar thoughts. Clear matches join a collection; close pairs are offered as a "group these?" card.
 - **Smart organising (opt-in):** when the user turns it on, the new thought, up to 10 similar thoughts and collection names are sent via `POST /api/classify` to an OpenAI-compatible LLM, which can also create and name new collections. Configure the server with:
 
 | Variable | Default | Purpose |
@@ -78,8 +91,17 @@ New thoughts are grouped into collections automatically, with an "Auto" badge an
 
 The server forwards requests without storing or logging thought text. Check your provider's free-tier limits and data terms before inviting testers.
 
-### Building for Production
-```bash
-cd frontend
-npm run build
-```
+## Deploying (Render + Neon, free tiers)
+
+1. **Database:** create a project at [neon.tech](https://neon.tech) and copy its connection string (it ends in `?sslmode=require`).
+2. **App:** on [render.com](https://render.com), create a **Web Service** from this GitHub repo:
+   - Build command: `npm install && npm run build`
+   - Start command: `npm start`
+   - Environment variables:
+     - `DATABASE_URL`: the Neon string
+     - `NODE_ENV`: `production`
+     - `ADMIN_EMAILS`: your email
+     - optionally `LLM_API_KEY`
+3. Open the Render URL and sign up. Migrations run automatically on every start.
+
+Render's free tier goes to sleep after a period without visits, so the first visit afterwards can take up to a minute. The app shows a "Can't reach the garden" screen with **Try again** while it wakes. Check both providers' current free-tier terms before relying on them.

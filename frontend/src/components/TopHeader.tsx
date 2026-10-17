@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, X, Edit3, KeyRound, Trash2 } from 'lucide-react';
+import { Search, X, Edit3, KeyRound, Settings, LogOut } from 'lucide-react';
 import { NavTab } from '../types';
 import { useThoughts } from '../context/StorageContext';
+import { useAuth } from '../context/AuthContext';
 import { LeafLogoIcon } from './BotanicalIllustrations';
 
 interface TopHeaderProps {
@@ -17,7 +18,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
     setIsFeedbackModalOpen,
     setIsOnboardingOpen,
     setIsAdminModalOpen,
+    isAdmin,
   } = useThoughts();
+  const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Compute initials from user's actual name
@@ -193,17 +196,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                 <span>Edit Profile & Goals</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsProfileOpen(false);
-                  setIsAdminModalOpen(true);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e2eee4] text-[#34593e] border border-[#d2e4d5] rounded-xl text-xs font-semibold transition-colors"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>Open Pilot Admin Panel</span>
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    setIsAdminModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-[#edf5ee] hover:bg-[#e2eee4] text-[#34593e] border border-[#d2e4d5] rounded-xl text-xs font-semibold transition-colors"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Open Pilot Admin Panel</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -211,10 +216,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                   setIsProfileOpen(false);
                   onTabChange('settings');
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-white hover:bg-[#fff5f5] text-red-600 border border-[#f3dada] rounded-xl text-xs font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] text-[#334636] border border-[#e2dcd0] rounded-xl text-xs font-semibold transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Account & Reset Garden</span>
+                <Settings className="w-3.5 h-3.5" />
+                <span>Account &amp; Data Settings</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-white hover:bg-[#f6f4ee] text-[#334636] border border-[#e2dcd0] rounded-xl text-xs font-semibold transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log out</span>
               </button>
             </div>
           </div>

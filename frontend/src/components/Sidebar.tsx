@@ -171,9 +171,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
               </div>
 
               <div className="p-3.5 rounded-2xl bg-[#fdf6ee] border border-[#fae8d4] space-y-1">
-                <h4 className="font-semibold text-[#543b23]">4. 100% Local & Private</h4>
+                <h4 className="font-semibold text-[#543b23]">4. Safe in Your Account</h4>
                 <p className="text-xs text-[#665646]">
-                  Everything is saved in your browser's IndexedDB. Export your JSON backups anytime under Data & Settings.
+                  Your garden is saved to your account, so it's there on any device you log in from. Export a JSON backup anytime under Data & Settings.
                 </p>
               </div>
             </div>

@@ -1,29 +1,34 @@
+// End-to-end API tests against a real Postgres test database.
+// Run with: npm run test:backend   (needs TEST_DATABASE_URL in .env)
 const http = require('http');
-const os = require('os');
-const path = require('path');
+const assert = require('assert/strict');
+const { config: baseConfig } = require('./config.cjs');
+const { createPool } = require('./db.cjs');
+const { migrate } = require('./migrate.cjs');
+const { createApp } = require('./app.cjs');
 
-// Isolated test database, a known admin passcode, and a local stub standing in for the LLM provider.
-const ADMIN = 'test-admin-passcode';
-process.env.PILOT_DB_PATH = path.join(os.tmpdir(), `tg-test-${Date.now()}.sqlite`);
-process.env.ADMIN_PASSCODE = ADMIN;
-process.env.LLM_BASE_URL = 'http://localhost:4006/v1';
-process.env.LLM_API_KEY = 'test-key';
-process.env.CLASSIFY_RATE_LIMIT = '3';
+const TEST_DB = process.env.TEST_DATABASE_URL || '';
+if (!/test/i.test(new URL(TEST_DB || 'postgres://x/none').pathname)) {
+  console.error('Set TEST_DATABASE_URL to a database whose name contains "test". Its tables are wiped on every run.');
+  process.exit(1);
+}
 
-// Per-user secrets (the browser generates these; 32+ characters).
-const SECRET_1 = 'a'.repeat(64);
-const SECRET_CLASSIFY = 'c'.repeat(64);
-const SECRET_ADMIN_DEL = 'd'.repeat(64);
-const WRONG_SECRET = 'x'.repeat(64);
-const asUser = (secret) => ({ 'x-user-secret': secret });
+const ADMIN_EMAIL = 'admin@example.com';
+const config = {
+  ...baseConfig,
+  isProduction: false,
+  adminEmails: [ADMIN_EMAIL],
+  llm: { ...baseConfig.llm, baseUrl: 'http://localhost:4016/v1', apiKey: 'test-key', rateLimit: 3 },
+};
 
+// Stand-in for the LLM provider.
 let stubMode = 'assign';
 let lastStubRequest = null;
 const stub = http.createServer((req, res) => {
   let raw = '';
   req.on('data', (c) => (raw += c));
   req.on('end', () => {
-    lastStubRequest = { url: req.url, auth: req.headers.authorization, body: JSON.parse(raw) };
+    lastStubRequest = { auth: req.headers.authorization, body: JSON.parse(raw) };
     const content =
       stubMode === 'garbage'
         ? 'not json at all'
@@ -32,189 +37,287 @@ const stub = http.createServer((req, res) => {
     res.end(JSON.stringify({ choices: [{ message: { content } }] }));
   });
 });
-stub.listen(4006);
 
-const { app } = require('./server.cjs');
+let base = '';
 
-const server = app.listen(4005, async () => {
-  try {
-    console.log('Testing Pilot Backend API on port 4005...');
-
-    // 1. Health check
-    const health = await get('/api/health');
-    console.log('✓ /api/health:', health.status);
-
-    // 2. Signup requires a secret
-    await expectStatus(() => post('/api/pilot/signup', { id: 'usr_test_1', name: 'No Secret' }), 400);
-    const signup = await post('/api/pilot/signup', {
-      id: 'usr_test_1',
-      name: 'Pilot Tester',
-      email: 'pilot@example.com',
-      reasons: ['Daily Brain Dump', 'Startup Ideas'],
-      secret: SECRET_1,
+/** A tiny cookie-keeping client, one per simulated browser. */
+function client() {
+  let cookie = '';
+  async function request(method, path, body, { json = true } = {}) {
+    const headers = {};
+    if (cookie) headers.Cookie = cookie;
+    if (json) headers['Content-Type'] = 'application/json';
+    const res = await fetch(base + path, {
+      method,
+      headers,
+      body: body === undefined ? (json && method !== 'GET' ? '{}' : undefined) : JSON.stringify(body),
     });
-    console.log('✓ /api/pilot/signup:', signup.ok, signup.name);
-
-    // 3. Someone else can't take over the profile with a different secret
-    await expectStatus(
-      () => post('/api/pilot/signup', { id: 'usr_test_1', name: 'Hijacker', secret: WRONG_SECRET }),
-      403
-    );
-    console.log('✓ /api/pilot/signup rejects profile takeover');
-
-    // 4. Activity ping requires the user's secret
-    await expectStatus(
-      () => post('/api/pilot/ping', { userId: 'usr_test_1', date: '2026-10-10', thoughtsCount: 1 }),
-      403
-    );
-    const ping = await post(
-      '/api/pilot/ping',
-      { userId: 'usr_test_1', date: '2026-10-10', thoughtsCount: 7, totalThoughts: 7, streak: 1 },
-      asUser(SECRET_1)
-    );
-    console.log('✓ /api/pilot/ping:', ping.ok);
-
-    // 5. Feedback: attributed feedback needs the secret; anonymous feedback is allowed
-    const feedbackBody = {
-      userId: 'usr_test_1',
-      userName: 'Pilot Tester',
-      category: 'suggestion',
-      rating: 5,
-      message: 'The falling leaves animation is wonderful!',
-      email: 'pilot@example.com',
-    };
-    await expectStatus(() => post('/api/pilot/feedback', feedbackBody, asUser(WRONG_SECRET)), 403);
-    const fb = await post('/api/pilot/feedback', feedbackBody, asUser(SECRET_1));
-    const anonFb = await post('/api/pilot/feedback', { category: 'other', rating: 4, message: 'Anonymous note' });
-    console.log('✓ /api/pilot/feedback:', fb.ok, anonFb.ok);
-
-    // 6. Admin overview: wrong passcode rejected
-    await expectStatus(() => get('/api/pilot/admin/overview', { 'x-admin-passcode': 'wrong-passcode' }), 401);
-    console.log('✓ Rejected unauthorized admin request');
-
-    // 7. Admin overview with the configured passcode; secret hashes are never exposed
-    const adminData = await get('/api/pilot/admin/overview', { 'x-admin-passcode': ADMIN });
-    assert(adminData.users.length === 1, 'expected one user');
-    assert(!('secret_hash' in adminData.users[0]), 'secret hashes must not be returned');
-    console.log('✓ /api/pilot/admin/overview:', {
-      usersCount: adminData.users.length,
-      feedbackCount: adminData.feedback.length,
-      summary: adminData.summary,
-    });
-
-    // 8. Self-delete requires the user's secret
-    await expectStatus(() => del('/api/pilot/users/usr_test_1'), 403);
-    await expectStatus(() => del('/api/pilot/users/usr_test_1', asUser(WRONG_SECRET)), 403);
-    await expectStatus(() => del('/api/pilot/users/usr_unknown', asUser(SECRET_1)), 404);
-    const selfDel = await del('/api/pilot/users/usr_test_1', asUser(SECRET_1));
-    console.log('✓ DELETE /api/pilot/users/usr_test_1 (with secret):', selfDel.ok);
-
-    // 9. Admin delete
-    await post('/api/pilot/signup', {
-      id: 'usr_test_admin_del',
-      name: 'To Be Admin Deleted',
-      reasons: ['Testing Admin Delete'],
-      secret: SECRET_ADMIN_DEL,
-    });
-    await expectStatus(() => del('/api/pilot/admin/users/usr_test_admin_del', { 'x-admin-passcode': 'wrong' }), 401);
-    const adminDel = await del('/api/pilot/admin/users/usr_test_admin_del', { 'x-admin-passcode': ADMIN });
-    console.log('✓ DELETE /api/pilot/admin/users/usr_test_admin_del:', adminDel.ok);
-
-    // 10. Smart organising: health advertises availability
-    const health2 = await get('/api/health');
-    assert(health2.smartOrganizing === true, 'health should report smartOrganizing');
-    console.log('✓ /api/health reports smartOrganizing');
-
-    const classifyBody = {
-      userId: 'usr_classify',
-      thought: { id: 't-new', text: 'Draft an essay about slow mornings' },
-      similarThoughts: [{ id: 't-1', text: 'Blog idea on routines', collections: ['Writing'], ungrouped: false, similarity: 0.7 }],
-      collections: [{ id: 'col-writing', name: 'Writing', description: 'Blog ideas', similarity: 0.6 }],
-    };
-
-    // 11. Unknown user, or a known user without their secret, is rejected
-    await expectStatus(() => post('/api/classify', classifyBody, asUser(SECRET_CLASSIFY)), 403);
-    await post('/api/pilot/signup', { id: 'usr_classify', name: 'Classifier', reasons: [], secret: SECRET_CLASSIFY });
-    await expectStatus(() => post('/api/classify', classifyBody), 403);
-    console.log('✓ /api/classify rejects unknown or unauthenticated users');
-
-    // 12. Authenticated user gets a decision; key and model are forwarded
-    const classified = await post('/api/classify', classifyBody, asUser(SECRET_CLASSIFY));
-    assert(classified.decision.action === 'assign', 'expected assign decision');
-    assert(lastStubRequest.auth === 'Bearer test-key', 'API key should be forwarded');
-    assert(lastStubRequest.url === '/v1/chat/completions', 'should call chat completions');
-    console.log('✓ /api/classify returns the provider decision');
-
-    // 13. Malformed provider output is reported as 502, not passed through
-    stubMode = 'garbage';
-    await expectStatus(() => post('/api/classify', classifyBody, asUser(SECRET_CLASSIFY)), 502);
-    stubMode = 'assign';
-    console.log('✓ /api/classify handles malformed provider output');
-
-    // 14. Rate limit (3 per minute in this test; 2 used above, rejected requests are not counted)
-    await post('/api/classify', classifyBody, asUser(SECRET_CLASSIFY));
-    await expectStatus(() => post('/api/classify', classifyBody, asUser(SECRET_CLASSIFY)), 429);
-    console.log('✓ /api/classify rate-limits per user');
-
-    // 15. Admin lockout after 10 consecutive wrong passcodes (successful logins above reset the count)
-    for (let i = 0; i < 10; i++) {
-      await expectStatus(() => get('/api/pilot/admin/overview', { 'x-admin-passcode': 'guess' }), 401);
+    const setCookie = res.headers.get('set-cookie');
+    if (setCookie) {
+      const pair = setCookie.split(';')[0];
+      cookie = pair.endsWith('=') ? '' : pair;
     }
-    await expectStatus(() => get('/api/pilot/admin/overview', { 'x-admin-passcode': ADMIN }), 429);
-    console.log('✓ Admin passcode guessing is locked out');
-
-    console.log('ALL BACKEND TESTS PASSED!');
-    stub.close();
-    server.close(() => process.exit(0));
-  } catch (err) {
-    console.error('Backend test failed:', err);
-    stub.close();
-    server.close(() => process.exit(1));
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+    return { status: res.status, data };
   }
+  return {
+    get: (p) => request('GET', p),
+    put: (p, b) => request('PUT', p, b),
+    post: (p, b, o) => request('POST', p, b, o),
+    patch: (p, b) => request('PATCH', p, b),
+    del: (p, b) => request('DELETE', p, b),
+    hasCookie: () => Boolean(cookie),
+  };
+}
+
+const now = () => new Date().toISOString();
+const thought = (id, text, extra = {}) => ({
+  id,
+  text,
+  createdAt: now(),
+  updatedAt: now(),
+  collectionIds: [],
+  stage: 'seed',
+  isSaved: false,
+  ...extra,
+});
+const connection = (id, source, target, extra = {}) => ({
+  id,
+  sourceThoughtId: source,
+  targetThoughtId: target,
+  status: 'accepted',
+  reason: 'Both mention gardens.',
+  createdAt: now(),
+  updatedAt: now(),
+  ...extra,
 });
 
-function assert(condition, message) {
-  if (!condition) throw new Error(`Assertion failed: ${message}`);
+function expectStatus(res, status, label) {
+  assert.equal(res.status, status, `${label}: expected HTTP ${status}, got ${res.status} ${JSON.stringify(res.data)}`);
+  console.log(`✓ ${label}`);
 }
 
-async function expectStatus(fn, status) {
-  try {
-    await fn();
-  } catch (err) {
-    if (String(err.message).startsWith(`HTTP ${status}`)) return;
-    throw err;
-  }
-  throw new Error(`Expected HTTP ${status}`);
+async function signup(c, email, name = 'Tester') {
+  return c.post('/api/auth/signup', { email, password: 'correct horse battery', name, reasons: ['Writing'] });
 }
 
-function request(method, path, body, headers = {}) {
-  return new Promise((resolve, reject) => {
-    const data = body === undefined ? null : JSON.stringify(body);
-    const req = http.request(
-      {
-        hostname: 'localhost',
-        port: 4005,
-        path,
-        method,
-        headers: data
-          ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), ...headers }
-          : headers,
-      },
-      (res) => {
-        let raw = '';
-        res.on('data', (c) => (raw += c));
-        res.on('end', () => {
-          if (res.statusCode >= 400) return reject(new Error(`HTTP ${res.statusCode}: ${raw}`));
-          resolve(JSON.parse(raw));
-        });
-      }
-    );
-    req.on('error', reject);
-    if (data) req.write(data);
-    req.end();
+async function run(pool) {
+  // ---------- accounts ----------
+  const health = await client().get('/api/health');
+  expectStatus(health, 200, 'health check reaches the database');
+
+  const alice = client();
+  expectStatus(await signup(alice, 'Alice@Example.com', 'Alice'), 201, 'signup creates an account');
+  assert.ok(alice.hasCookie(), 'signup sets a session cookie');
+  const me = await alice.get('/api/auth/me');
+  expectStatus(me, 200, 'me returns the signed-in user');
+  assert.equal(me.data.user.email, 'alice@example.com', 'emails are stored lowercased');
+  assert.equal(me.data.user.isAdmin, false);
+
+  expectStatus(await signup(client(), 'alice@example.com'), 409, 'duplicate email is refused');
+  expectStatus(
+    await client().post('/api/auth/signup', { email: 'nope', password: 'longenough', name: 'X' }),
+    400,
+    'invalid email is refused'
+  );
+  expectStatus(
+    await client().post('/api/auth/signup', { email: 'short@example.com', password: 'short', name: 'X' }),
+    400,
+    'short password is refused'
+  );
+  expectStatus(await client().get('/api/auth/me'), 401, 'me without a session is 401');
+  expectStatus(await client().get('/api/thoughts'), 401, 'garden routes need a session');
+
+  const patched = await alice.patch('/api/auth/me', { name: 'Alice G', reasons: ['Research'] });
+  expectStatus(patched, 200, 'profile update');
+  assert.equal(patched.data.user.name, 'Alice G');
+
+  // ---------- starter collections & thoughts ----------
+  const starter = await alice.get('/api/collections');
+  assert.equal(starter.data.collections.length, 4, 'new accounts get 4 starter collections');
+  console.log('✓ starter collections seeded');
+
+  const t1 = thought('t1', 'Write about community gardens', {
+    collectionIds: ['col-writing', 'col-does-not-exist'],
+    autoCollectionIds: ['col-writing'],
+    classifyState: 'done',
   });
+  const put1 = await alice.put('/api/thoughts/t1', t1);
+  expectStatus(put1, 200, 'create thought');
+  assert.deepEqual(put1.data.thought.collectionIds, ['col-writing'], 'unknown collection ids are dropped');
+  assert.deepEqual(put1.data.thought.autoCollectionIds, ['col-writing']);
+  assert.equal(put1.data.thought.createdAt, t1.createdAt, 'timestamps round-trip exactly');
+
+  expectStatus(await alice.put('/api/thoughts/other', t1), 400, 'URL id must match body id');
+  expectStatus(await alice.put('/api/thoughts/t1', { ...t1, text: '   ' }), 400, 'empty thought text is refused');
+  expectStatus(await alice.post('/api/feedback', undefined, { json: false }), 415, 'non-JSON writes are refused');
+
+  const edited = await alice.put('/api/thoughts/t1', { ...t1, text: 'Edited', collectionIds: [], autoCollectionIds: [] });
+  assert.equal(edited.data.thought.text, 'Edited');
+  assert.deepEqual(edited.data.thought.collectionIds, [], 'memberships are replaced on update');
+  console.log('✓ update thought');
+
+  await alice.put('/api/thoughts/t2', thought('t2', 'Seed library idea', { collectionIds: ['col-startup-ideas'] }));
+  await alice.put('/api/thoughts/t3', thought('t3', 'Compost workshop'));
+
+  // ---------- isolation between users ----------
+  const bob = client();
+  expectStatus(await signup(bob, 'bob@example.com', 'Bob'), 201, 'second account');
+  assert.equal((await bob.get('/api/thoughts')).data.thoughts.length, 0, "Bob can't see Alice's thoughts");
+  await bob.put('/api/thoughts/t1', thought('t1', "Bob's own t1"));
+  await bob.del('/api/thoughts/t2');
+  await bob.del('/api/collections/col-writing');
+  const aliceThoughts = (await alice.get('/api/thoughts')).data.thoughts;
+  assert.equal(aliceThoughts.length, 3, "Bob's deletes don't touch Alice's thoughts");
+  assert.equal(aliceThoughts.find((t) => t.id === 't1').text, 'Edited', "Bob's write with the same id stays in his garden");
+  assert.equal((await alice.get('/api/collections')).data.collections.length, 4, "Bob can't delete Alice's collections");
+  console.log('✓ users are isolated from each other');
+
+  // ---------- collections ----------
+  const col = { id: 'col-x', name: 'Garden projects', createdAt: now(), updatedAt: now(), origin: 'auto', autoReason: 'Shared theme' };
+  expectStatus(await alice.put('/api/collections/col-x', col), 200, 'create collection');
+  await alice.put('/api/thoughts/t3', thought('t3', 'Compost workshop', { collectionIds: ['col-x'] }));
+  await alice.del('/api/collections/col-x');
+  const t3 = (await alice.get('/api/thoughts')).data.thoughts.find((t) => t.id === 't3');
+  assert.deepEqual(t3.collectionIds, [], 'deleting a collection removes its memberships');
+  console.log('✓ collection delete cascades to memberships');
+
+  // ---------- connections ----------
+  expectStatus(await alice.put('/api/connections/c1', connection('c1', 't1', 't2')), 200, 'create connection');
+  expectStatus(await alice.put('/api/connections/c2', connection('c2', 't2', 't1')), 409, 'duplicate pair (reversed) is refused');
+  expectStatus(await alice.put('/api/connections/c3', connection('c3', 't1', 't1')), 400, 'self-connection is refused');
+  const c1 = await alice.put('/api/connections/c1', connection('c1', 't1', 't2', { status: 'dismissed' }));
+  assert.equal(c1.data.connection.status, 'dismissed', 'connection update');
+  await alice.del('/api/thoughts/t2');
+  assert.equal((await alice.get('/api/connections')).data.connections.length, 0, 'deleting a thought removes its connections');
+  console.log('✓ thought delete removes its connections');
+
+  // ---------- organiser log ----------
+  const event = {
+    id: 'e1', thoughtId: 't1', action: 'assign', collectionId: 'col-writing', collectionName: 'Writing',
+    reason: 'Similar thoughts', source: 'local', createdAt: now(),
+  };
+  expectStatus(await alice.put('/api/organize-events/e1', event), 200, 'record organise event');
+  const undone = await alice.put('/api/organize-events/e1', { ...event, undoneAt: now() });
+  assert.ok(undone.data.event.undoneAt, 'undo is recorded');
+
+  // ---------- import ----------
+  const backup = {
+    thoughts: [thought('t1', 'Duplicate id, should be skipped'), thought('t9', 'Imported', { collectionIds: ['col-imp'] })],
+    collections: [{ id: 'col-imp', name: 'Imported', createdAt: now(), updatedAt: now() }],
+    connections: [connection('c9', 't1', 't9')],
+  };
+  const merged = await alice.post('/api/garden/import', { garden: backup, strategy: 'merge' });
+  expectStatus(merged, 200, 'merge import');
+  assert.deepEqual(merged.data, { thoughtsAdded: 1, collectionsAdded: 1, connectionsAdded: 1 });
+  const afterMerge = (await alice.get('/api/thoughts')).data.thoughts;
+  assert.equal(afterMerge.find((t) => t.id === 't1').text, 'Edited', 'merge keeps existing thoughts');
+  assert.deepEqual(afterMerge.find((t) => t.id === 't9').collectionIds, ['col-imp'], 'imported memberships survive');
+
+  const replaced = await alice.post('/api/garden/import', { garden: backup, strategy: 'replace' });
+  assert.deepEqual(replaced.data, { thoughtsAdded: 2, collectionsAdded: 1, connectionsAdded: 1 });
+  assert.equal((await alice.get('/api/thoughts')).data.thoughts.length, 2, 'replace import wipes the old garden first');
+  assert.equal((await alice.get('/api/organize-events')).data.events.length, 0, 'replace clears the organiser log');
+  console.log('✓ replace import');
+  expectStatus(
+    await alice.post('/api/garden/import', { garden: { thoughts: [{ id: 'bad' }] }, strategy: 'merge' }),
+    400,
+    'malformed import is refused'
+  );
+  assert.equal((await alice.get('/api/thoughts')).data.thoughts.length, 2, 'a refused import changes nothing');
+
+  // ---------- feedback, admin ----------
+  expectStatus(await alice.post('/api/feedback', { category: 'praise', rating: 5, message: 'Lovely' }), 201, 'feedback');
+  expectStatus(await alice.get('/api/admin/overview'), 403, 'non-admins cannot open the dashboard');
+  const admin = client();
+  await signup(admin, ADMIN_EMAIL, 'Admin');
+  const overview = await admin.get('/api/admin/overview');
+  expectStatus(overview, 200, 'admin overview');
+  assert.equal(overview.data.summary.totalUsers, 3);
+  const aliceRow = overview.data.users.find((u) => u.email === 'alice@example.com');
+  assert.equal(aliceRow.totalThoughts, 2);
+  assert.equal(aliceRow.thoughtsToday, 2);
+  assert.equal(aliceRow.feedbackCount, 1);
+  assert.ok(!JSON.stringify(overview.data).includes('Imported'), 'the dashboard never includes thought text');
+  console.log('✓ admin overview has counts, not content');
+
+  // ---------- Smart organising ----------
+  const classifyBody = { thought: { id: 't1', text: 'A thought' }, similarThoughts: [], collections: [] };
+  expectStatus(await client().post('/api/classify', classifyBody), 401, 'classify needs a session');
+  const classified = await alice.post('/api/classify', classifyBody);
+  expectStatus(classified, 200, 'classify proxies to the provider');
+  assert.equal(lastStubRequest.auth, 'Bearer test-key');
+  stubMode = 'garbage';
+  expectStatus(await alice.post('/api/classify', classifyBody), 502, 'malformed provider output is handled');
+  await alice.post('/api/classify', classifyBody);
+  expectStatus(await alice.post('/api/classify', classifyBody), 429, 'classify is rate-limited per user');
+
+  // ---------- logout, login, lockout ----------
+  expectStatus(await alice.post('/api/auth/logout'), 200, 'logout');
+  expectStatus(await alice.get('/api/auth/me'), 401, 'session ends on logout');
+  expectStatus(
+    await alice.post('/api/auth/login', { email: 'alice@example.com', password: 'wrong password' }),
+    401,
+    'wrong password is refused'
+  );
+  expectStatus(
+    await alice.post('/api/auth/login', { email: 'ALICE@example.com', password: 'correct horse battery' }),
+    200,
+    'login (email is case-insensitive)'
+  );
+  assert.equal((await alice.get('/api/thoughts')).data.thoughts.length, 2, 'the garden is there after logging back in');
+
+  // ---------- account deletion ----------
+  const aliceId = (await alice.get('/api/auth/me')).data.user.id;
+  expectStatus(await alice.del('/api/auth/account', { password: 'wrong' }), 403, 'deletion needs the password');
+  expectStatus(await alice.del('/api/auth/account', { password: 'correct horse battery' }), 200, 'delete account');
+  for (const table of ['users', 'sessions', 'thoughts', 'collections', 'connections', 'thought_collections', 'organize_events', 'feedback']) {
+    const column = table === 'users' ? 'id' : 'user_id';
+    const { rows } = await pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE ${column} = $1`, [aliceId]);
+    assert.equal(rows[0].n, 0, `${table} has no rows left for the deleted account`);
+  }
+  console.log('✓ deleting an account removes every row it owned');
+  assert.equal((await bob.get('/api/thoughts')).data.thoughts.length, 1, "other users' gardens are untouched");
+
+  // Lockout last: it blocks Bob's email for 15 minutes.
+  const attacker = client();
+  for (let i = 0; i < 10; i++) {
+    await attacker.post('/api/auth/login', { email: 'bob@example.com', password: `guess-${i}` });
+  }
+  expectStatus(
+    await attacker.post('/api/auth/login', { email: 'bob@example.com', password: 'correct horse battery' }),
+    429,
+    'repeated failures lock the account temporarily'
+  );
 }
 
-const post = (path, body, headers) => request('POST', path, body, headers);
-const get = (path, headers) => request('GET', path, undefined, headers);
-const del = (path, headers) => request('DELETE', path, undefined, headers);
+async function main() {
+  const pool = createPool(TEST_DB);
+  let server;
+  try {
+    await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+    await migrate(pool, { log: () => {} });
+    await new Promise((resolve) => stub.listen(4016, resolve));
+    server = createApp({ pool, config }).listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    base = `http://localhost:${server.address().port}`;
+    console.log(`Testing the API at ${base}\n`);
+    await run(pool);
+    console.log('\nAll backend tests passed.');
+  } catch (err) {
+    console.error('\n✗ FAILED:', err.message);
+    process.exitCode = 1;
+  } finally {
+    if (server) server.close();
+    stub.close();
+    await pool.end();
+  }
+}
+
+main();
