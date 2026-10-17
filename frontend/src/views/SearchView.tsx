@@ -173,12 +173,20 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* A cat in the corner, looking up at the search box. Sits behind the results. */}
+      {/* A cat in the corner, looking up at the search box. On desktop it sits behind
+          the results in the empty space beside them; on phones the results are full
+          width and would cover it, so there it sits below them in the page. */}
       <img
         src={ART.cat}
         alt=""
         aria-hidden="true"
-        className="fixed -z-10 right-2 bottom-[74px] md:right-8 md:bottom-0 w-[4.5rem] md:w-40 pointer-events-none select-none"
+        className="md:hidden block ml-auto w-[5.5rem] pt-2 pointer-events-none select-none"
+      />
+      <img
+        src={ART.cat}
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block fixed -z-10 right-8 bottom-0 w-40 pointer-events-none select-none"
       />
 
       {/* Detail Modal for clicking a search result thought */}
