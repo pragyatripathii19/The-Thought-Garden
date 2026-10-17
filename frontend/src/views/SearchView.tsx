@@ -173,21 +173,15 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* A cat in the corner, looking up at the search box. On desktop it sits behind
-          the results in the empty space beside them; on phones the results are full
-          width and would cover it, so there it sits below them in the page. */}
-      <img
-        src={ART.cat}
-        alt=""
-        aria-hidden="true"
-        className="md:hidden block ml-auto w-[5.5rem] pt-2 pointer-events-none select-none"
-      />
-      <img
-        src={ART.cat}
-        alt=""
-        aria-hidden="true"
-        className="hidden md:block fixed -z-10 right-8 bottom-0 w-40 pointer-events-none select-none"
-      />
+      {/* A cat looking up at the search box, with a line beside it. Part of the page
+          (not pinned behind it), so results can never cover either one. */}
+      <div className="flex items-end justify-end gap-3 sm:gap-4 pt-4" aria-hidden="true">
+        <p className="font-serif italic text-lg sm:text-xl leading-snug text-garden-ink-soft text-right pb-5 sm:pb-8">
+          Catch the thought <br className="sm:hidden" />
+          before it flies away.
+        </p>
+        <img src={ART.cat} alt="" className="w-[5.5rem] sm:w-36 shrink-0 pointer-events-none select-none" />
+      </div>
 
       {/* Detail Modal for clicking a search result thought */}
       <ThoughtDetailModal
