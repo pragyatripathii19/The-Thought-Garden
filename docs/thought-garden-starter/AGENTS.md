@@ -16,7 +16,7 @@
 - A thought does not need to become a task. Avoid streaks, productivity guilt, forced goals, or excessive notifications.
 - Do not describe keyword similarity as semantic AI understanding.
 - Automatic organising (added after the MVP) must stay visible and reversible: every automatic change carries an "Auto" marker, an Undo, and an activity-log entry; thoughts the user organised by hand are never changed again. Smart organising (thought text sent to an AI service) is on by default for the pilot. It must stay disclosed at sign-up with a visible way to turn it off, be stored per account, and be refused by the server for accounts that turned it off.
-- Clearly communicate that data is stored in the current browser and can be lost if browser storage is cleared. Provide export and import.
+- Clearly communicate where data is stored (the user's account on the server) and who can access it. Provide export and import.
 
 ## Pilot exception (current state)
 
