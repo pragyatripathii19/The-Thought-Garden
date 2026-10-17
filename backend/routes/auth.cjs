@@ -33,6 +33,7 @@ function authRoutes({ pool, sessions, config }) {
     email: u.email,
     name: u.name,
     reasons: u.reasons || [],
+    smartOrganizing: u.smart_organizing !== false,
     createdAt: new Date(u.created_at).toISOString(),
     isAdmin: isAdmin(u.email),
   });
@@ -53,6 +54,8 @@ function authRoutes({ pool, sessions, config }) {
       const password = req.body && req.body.password;
       const name = cleanName(req.body && req.body.name);
       const reasons = cleanReasons(req.body && req.body.reasons);
+      // On unless the person unticks it at sign-up.
+      const smartOrganizing = !(req.body && req.body.smartOrganizing === false);
 
       if (!EMAIL_PATTERN.test(email) || email.length > 254) {
         return res.status(400).json({ error: 'Enter a valid email address.' });
@@ -68,11 +71,11 @@ function authRoutes({ pool, sessions, config }) {
       const passwordHash = await hashPassword(password);
       const user = await withTransaction(pool, async (client) => {
         const { rows } = await client.query(
-          `INSERT INTO users (email, password_hash, name, reasons)
-           VALUES ($1, $2, $3, $4)
+          `INSERT INTO users (email, password_hash, name, reasons, smart_organizing)
+           VALUES ($1, $2, $3, $4, $5)
            ON CONFLICT (email) DO NOTHING
            RETURNING *`,
-          [email, passwordHash, name, JSON.stringify(reasons)]
+          [email, passwordHash, name, JSON.stringify(reasons), smartOrganizing]
         );
         if (rows.length === 0) return null;
         await insertCollections(client, rows[0].id, starterCollections());
@@ -138,9 +141,14 @@ function authRoutes({ pool, sessions, config }) {
       const name = updates.name === undefined ? req.user.name : cleanName(updates.name);
       if (!name) return res.status(400).json({ error: 'Tell us what to call you.' });
       const reasons = updates.reasons === undefined ? req.user.reasons : cleanReasons(updates.reasons);
+      if (updates.smartOrganizing !== undefined && typeof updates.smartOrganizing !== 'boolean') {
+        return res.status(400).json({ error: 'smartOrganizing must be true or false.' });
+      }
+      const smartOrganizing =
+        updates.smartOrganizing === undefined ? req.user.smart_organizing : updates.smartOrganizing;
       const { rows } = await pool.query(
-        'UPDATE users SET name = $2, reasons = $3 WHERE id = $1 RETURNING *',
-        [req.user.id, name, JSON.stringify(reasons)]
+        'UPDATE users SET name = $2, reasons = $3, smart_organizing = $4 WHERE id = $1 RETURNING *',
+        [req.user.id, name, JSON.stringify(reasons), smartOrganizing]
       );
       res.json({ user: publicUser(rows[0]) });
     } catch (err) {

@@ -43,8 +43,17 @@ const Switch: React.FC<SwitchProps> = ({ id, checked, disabled, onChange }) => (
 
 export const OrganizingSettingsCard: React.FC = () => {
   const { thoughts, userProfile } = useThoughts();
-  const { settings, updateSettings, smartAvailable, embedderStatus, isWorking, events, undoEvents, organizeExisting } =
-    useOrganizer();
+  const {
+    settings,
+    updateSettings,
+    smartAvailable,
+    smartPause,
+    embedderStatus,
+    isWorking,
+    events,
+    undoEvents,
+    organizeExisting,
+  } = useOrganizer();
   const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
 
   const smartDisabledReason = !smartAvailable
@@ -54,6 +63,18 @@ export const OrganizingSettingsCard: React.FC = () => {
     : !settings.autoOrganize
     ? 'Turn on automatic organising first.'
     : null;
+
+  const resumeTime = smartPause
+    ? new Date(smartPause.until).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : '';
+  const pauseMessage =
+    !smartPause || !settings.smartOrganizing || smartDisabledReason
+      ? null
+      : smartPause.reason === 'rate-limited'
+      ? `The AI service is busy, so new thoughts are organised on this device until about ${resumeTime}.`
+      : smartPause.reason === 'unavailable'
+      ? `Smart organising isn't available right now, so new thoughts are organised on this device. It will try again around ${resumeTime}.`
+      : `Couldn't reach the AI service, so new thoughts are organised on this device. Trying again around ${resumeTime}.`;
 
   const handleOrganizeExisting = async () => {
     const count = await organizeExisting();
@@ -95,7 +116,7 @@ export const OrganizingSettingsCard: React.FC = () => {
         />
       </div>
 
-      {/* Smart organising (opt-in LLM) */}
+      {/* Smart organising (LLM, on by default) */}
       <div className="flex items-start justify-between gap-4 pt-4 border-t border-[#eee9dc]">
         <div className="space-y-1">
           <label htmlFor="toggle-smart-organizing" className="text-sm font-medium text-[#233126]">
@@ -104,9 +125,15 @@ export const OrganizingSettingsCard: React.FC = () => {
           <p className="text-xs text-[#718273] leading-relaxed">
             Better decisions and collection names. When on, each new thought, up to 10 similar thoughts and your
             collection names are sent through the Thought Garden server to an external AI service to decide where the
-            thought fits. Our server doesn’t store them, but the AI provider’s terms apply. Off by default.
+            thought fits. Our server doesn’t store them, but the AI provider’s terms apply. On by default; if the AI
+            service is busy or unreachable, thoughts are organised on this device instead.
           </p>
           {smartDisabledReason && <p className="text-[11px] text-amber-800">{smartDisabledReason}</p>}
+          {pauseMessage && (
+            <p className="text-[11px] text-amber-800" role="status">
+              {pauseMessage}
+            </p>
+          )}
         </div>
         <Switch
           id="toggle-smart-organizing"

@@ -62,6 +62,7 @@ export const AuthView: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [reasons, setReasons] = useState<string[]>([]);
+  const [smartOrganizing, setSmartOrganizing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,6 +85,7 @@ export const AuthView: React.FC = () => {
           password,
           name: name.trim(),
           reasons: reasons.length > 0 ? reasons : ['🌱 Daily Brain Dump'],
+          smartOrganizing,
         });
       } else {
         await login(email.trim(), password);
@@ -166,6 +168,23 @@ export const AuthView: React.FC = () => {
             <span className={labelClass}>Why are you growing a garden? (optional)</span>
             <ReasonPicker selected={reasons} onChange={setReasons} />
           </div>
+        )}
+
+        {isSignup && (
+          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-[#e6e1d5] text-xs text-[#556557] cursor-pointer">
+            <input
+              id="auth-smart-organizing"
+              type="checkbox"
+              checked={smartOrganizing}
+              onChange={(e) => setSmartOrganizing(e.target.checked)}
+              className="mt-0.5 accent-[#3d5a45]"
+            />
+            <span>
+              <span className="font-semibold text-[#253e2a]">Use Smart organising.</span> New thoughts and your
+              collection names are sent through our server to an AI service that sorts them into collections. Untick
+              to keep sorting on your device only. You can change this anytime in Data &amp; Settings.
+            </span>
+          </label>
         )}
 
         {error && (

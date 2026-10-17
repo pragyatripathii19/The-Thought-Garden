@@ -93,7 +93,7 @@ function createSessionStore(pool, sessionConfig) {
     try {
       const tokenHash = sha256Hex(token);
       const { rows } = await pool.query(
-        `SELECT s.expires_at, u.id, u.email, u.name, u.reasons, u.created_at, u.last_active_at
+        `SELECT s.expires_at, u.id, u.email, u.name, u.reasons, u.smart_organizing, u.created_at, u.last_active_at
            FROM sessions s JOIN users u ON u.id = s.user_id
           WHERE s.token_hash = $1 AND s.expires_at > now()`,
         [tokenHash]

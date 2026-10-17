@@ -25,7 +25,13 @@ export type OrganizeDecision =
       reason: string;
       source: 'local';
     }
-  | { action: 'none'; reason: string; source: OrganizeEventSource };
+  | {
+      action: 'none';
+      reason: string;
+      source: OrganizeEventSource;
+      /** The AI's answer was unusable (bad ids, missing name…); use the on-device rule instead. */
+      rejected?: boolean;
+    };
 
 /** A pending "group these two thoughts?" card produced by the local rule. */
 export interface GroupSuggestion {

@@ -68,7 +68,7 @@ Everyone signs up with an email and password. Their garden is stored in Postgres
 | Name, email, password, "why I'm here" reasons | Server | Passwords are stored only as scrypt hashes |
 | Feedback | Server | Only what the user submits |
 | Embeddings for automatic organising | This browser (IndexedDB) | A per-device cache; rebuilt as needed and cleared on logout |
-| Smart organising requests | Server → LLM provider | Opt-in; forwarded, not stored or logged |
+| Smart organising requests | Server → LLM provider | On by default, disclosed with a pre-ticked box at sign-up; can be turned off there or in Settings (saved on the account). Forwarded, not stored or logged |
 
 The admin dashboard (for emails in `ADMIN_EMAILS`) shows counts per user: thoughts, activity per day and feedback. It never shows thought text. Users can delete their account, and everything in it, from **Data & Settings**.
 
@@ -80,7 +80,15 @@ See `backend/README.md` for the security model and API.
 New thoughts are grouped into collections automatically, with an "Auto" badge and Undo on every change.
 
 - **On this device (default):** a small embedding model (`Xenova/all-MiniLM-L6-v2` via Transformers.js, ~25 MB, downloaded once and cached) runs in a Web Worker to find similar thoughts. Clear matches join a collection; close pairs are offered as a "group these?" card.
-- **Smart organising (opt-in):** when the user turns it on, the new thought, up to 10 similar thoughts and collection names are sent via `POST /api/classify` to an OpenAI-compatible LLM, which can also create and name new collections. Configure the server with:
+- **Smart organising (on by default):** the new thought, up to 10 similar thoughts and collection names are sent via `POST /api/classify` to an OpenAI-compatible LLM, which can also create and name new collections. The setting is stored on the account, and the server refuses AI requests for accounts that turned it off.
+- **Fallback:** whenever the AI can't be used, the thought is organised on-device instead, and the AI is paused for a while:
+  - a rate limit pauses it for as long as the provider asks; one provider limit pauses it for all users;
+  - errors, timeouts (20 s) and network failures pause it for 30 s, doubling each time up to 10 minutes;
+  - an unusable answer (invented ids, no name) is replaced by the on-device decision.
+
+  Settings shows when it's paused and until when.
+
+Configure the server with:
 
 | Variable | Default | Purpose |
 |---|---|---|

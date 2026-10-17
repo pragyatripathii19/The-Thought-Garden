@@ -8,6 +8,8 @@ export interface AuthUser {
   email: string;
   name: string;
   reasons: string[];
+  /** Smart organising (AI) on or off; on unless the user turned it off. */
+  smartOrganizing: boolean;
   createdAt: string;
   isAdmin: boolean;
 }
@@ -17,10 +19,16 @@ type AuthStatus = 'loading' | 'signed-out' | 'signed-in' | 'unreachable';
 interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
-  signup: (input: { email: string; password: string; name: string; reasons: string[] }) => Promise<void>;
+  signup: (input: {
+    email: string;
+    password: string;
+    name: string;
+    reasons: string[];
+    smartOrganizing: boolean;
+  }) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (updates: { name?: string; reasons?: string[] }) => Promise<void>;
+  updateProfile: (updates: { name?: string; reasons?: string[]; smartOrganizing?: boolean }) => Promise<void>;
   /** Permanently deletes the account and everything in it. Needs the password. */
   deleteAccount: (password: string) => Promise<void>;
   /** Re-checks the session, e.g. after the server was unreachable. */
@@ -137,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const updateProfile = useCallback(async (updates: { name?: string; reasons?: string[] }) => {
+  const updateProfile = useCallback(async (updates: { name?: string; reasons?: string[]; smartOrganizing?: boolean }) => {
     const { user: updated } = await apiFetch<{ user: AuthUser }>('/auth/me', { method: 'PATCH', body: updates });
     setUser(updated);
   }, []);

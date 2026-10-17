@@ -24,11 +24,21 @@ const config = {
 // Stand-in for the LLM provider.
 let stubMode = 'assign';
 let lastStubRequest = null;
+let stubHits = 0;
 const stub = http.createServer((req, res) => {
   let raw = '';
   req.on('data', (c) => (raw += c));
   req.on('end', () => {
+    stubHits++;
     lastStubRequest = { auth: req.headers.authorization, body: JSON.parse(raw) };
+    if (stubMode === 'ratelimit') {
+      res.writeHead(429, { 'Retry-After': '5', 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: { message: 'Rate limit reached' } }));
+    }
+    if (stubMode === 'error') {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end('{}');
+    }
     const content =
       stubMode === 'garbage'
         ? 'not json at all'
@@ -119,6 +129,7 @@ async function run(pool) {
   expectStatus(me, 200, 'me returns the signed-in user');
   assert.equal(me.data.user.email, 'alice@example.com', 'emails are stored lowercased');
   assert.equal(me.data.user.isAdmin, false);
+  assert.equal(me.data.user.smartOrganizing, true, 'Smart organising is on by default');
 
   expectStatus(await signup(client(), 'alice@example.com'), 409, 'duplicate email is refused');
   expectStatus(
@@ -256,7 +267,37 @@ async function run(pool) {
   stubMode = 'garbage';
   expectStatus(await alice.post('/api/classify', classifyBody), 502, 'malformed provider output is handled');
   await alice.post('/api/classify', classifyBody);
-  expectStatus(await alice.post('/api/classify', classifyBody), 429, 'classify is rate-limited per user');
+  const userLimited = await alice.post('/api/classify', classifyBody);
+  expectStatus(userLimited, 429, 'classify is rate-limited per user');
+  assert.ok(userLimited.data.retryAfterSeconds > 0, 'a rate limit says when to retry');
+
+  stubMode = 'error';
+  expectStatus(await bob.post('/api/classify', classifyBody), 502, 'provider errors become 502');
+
+  expectStatus(await bob.patch('/api/auth/me', { smartOrganizing: false }), 200, 'turn Smart organising off');
+  assert.equal((await bob.get('/api/auth/me')).data.user.smartOrganizing, false, 'the choice is saved to the account');
+  const hitsBefore = stubHits;
+  expectStatus(await bob.post('/api/classify', classifyBody), 403, 'classify is refused when the account turned it off');
+  assert.equal(stubHits, hitsBefore, 'nothing is sent to the provider for that account');
+  expectStatus(await bob.patch('/api/auth/me', { smartOrganizing: 'yes' }), 400, 'smartOrganizing must be a boolean');
+  await bob.patch('/api/auth/me', { smartOrganizing: true });
+
+  const optedOut = client();
+  const optedOutSignup = await optedOut.post('/api/auth/signup', {
+    email: 'quiet@example.com', password: 'correct horse battery', name: 'Quiet', smartOrganizing: false,
+  });
+  assert.equal(optedOutSignup.data.user.smartOrganizing, false, 'unticking it at sign-up is respected');
+  console.log('✓ Smart organising preference lives on the account');
+
+  stubMode = 'ratelimit';
+  const providerLimited = await bob.post('/api/classify', classifyBody);
+  expectStatus(providerLimited, 429, "the provider's rate limit is passed on");
+  assert.equal(providerLimited.data.retryAfterSeconds, 5, "the provider's Retry-After is passed on");
+  const hitsAfterLimit = stubHits;
+  const paused = await admin.post('/api/classify', classifyBody);
+  expectStatus(paused, 429, 'other users are paused too while the provider is limited');
+  assert.equal(stubHits, hitsAfterLimit, 'no request reaches the provider during the pause');
+  stubMode = 'assign';
 
   // ---------- logout, login, lockout ----------
   expectStatus(await alice.post('/api/auth/logout'), 200, 'logout');

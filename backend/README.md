@@ -65,5 +65,5 @@ All `/api` routes except health, signup and login need a session.
 | `DELETE /api/{thoughts,collections,connections,organize-events}` | Clear one resource |
 | `POST /api/garden/import` | Import a backup (`{ garden, strategy: "merge" or "replace" }`) in one transaction |
 | `POST /api/feedback` | Submit feedback |
-| `POST /api/classify` | Smart organising (forwards to the LLM, stores nothing) |
+| `POST /api/classify` | Smart organising (forwards to the LLM, stores nothing). 403 if the account turned it off; 429 with `retryAfterSeconds` for per-user limits or a provider rate limit (which pauses all users); 502 provider error; 504 timeout; 503 not configured |
 | `GET /api/admin/overview` · `DELETE /api/admin/users/:id` | Admin only |

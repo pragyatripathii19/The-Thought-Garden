@@ -18,6 +18,8 @@ import {
   undoOrganizeEvent,
 } from './organizer';
 import { SerialQueue } from './queue';
+import { smartPauseAfter } from './smartBackoff';
+import { ApiError } from '../api';
 import { validateGardenBackup, serializeGardenBackup } from '../portability';
 
 /** Deterministic embedder: looks vectors up by text, counting calls. */
@@ -155,6 +157,45 @@ describe('LLM decision validation', () => {
   it('turns a duplicate "new" collection name into an assignment', () => {
     const dup = { action: 'create', newCollection: { name: '  writing ', partnerThoughtId: 'a' } };
     expect(validateDecision(dup, ctx)).toMatchObject({ action: 'assign', collectionIds: ['col-writing'] });
+  });
+
+  it('marks unusable answers as rejected so the on-device rule takes over, but respects a deliberate "none"', () => {
+    expect(validateDecision(null, ctx)).toMatchObject({ action: 'none', rejected: true });
+    expect(validateDecision({ action: 'explode' }, ctx)).toMatchObject({ action: 'none', rejected: true });
+    expect(validateDecision({ action: 'assign', collectionIds: ['col-made-up'] }, ctx)).toMatchObject({ rejected: true });
+    const noName = { action: 'create', newCollection: { name: '', partnerThoughtId: 'a' } };
+    expect(validateDecision(noName, ctx)).toMatchObject({ rejected: true });
+
+    const deliberate = validateDecision({ action: 'none', reason: 'Nothing fits.' }, ctx);
+    expect(deliberate).toMatchObject({ action: 'none', reason: 'Nothing fits.' });
+    expect(deliberate).not.toHaveProperty('rejected');
+  });
+});
+
+describe('Smart organising backoff', () => {
+  const now = 1_000_000;
+
+  it('waits as long as a rate limit asks, capped at 10 minutes', () => {
+    expect(smartPauseAfter(new ApiError(429, 'busy', 5), 1, now)).toEqual({ reason: 'rate-limited', until: now + 5000 });
+    expect(smartPauseAfter(new ApiError(429, 'busy'), 1, now)).toEqual({ reason: 'rate-limited', until: now + 60_000 });
+    expect(smartPauseAfter(new ApiError(429, 'busy', 99_999), 1, now)?.until).toBe(now + 600_000);
+  });
+
+  it('backs off exponentially on errors, timeouts and network failures', () => {
+    expect(smartPauseAfter(new ApiError(502, 'provider'), 1, now)).toEqual({ reason: 'error', until: now + 30_000 });
+    expect(smartPauseAfter(new ApiError(504, 'slow'), 2, now)?.until).toBe(now + 60_000);
+    expect(smartPauseAfter(new ApiError(0, 'offline'), 3, now)?.until).toBe(now + 120_000);
+    expect(smartPauseAfter(new TypeError('Failed to fetch'), 20, now)?.until).toBe(now + 600_000);
+  });
+
+  it('pauses for a long while when the service is unavailable or turned off for the account', () => {
+    expect(smartPauseAfter(new ApiError(503, 'not configured'), 1, now)).toEqual({ reason: 'unavailable', until: now + 600_000 });
+    expect(smartPauseAfter(new ApiError(403, 'off'), 1, now)?.reason).toBe('unavailable');
+  });
+
+  it("doesn't pause for problems with one request or an expired session", () => {
+    expect(smartPauseAfter(new ApiError(400, 'bad'), 1, now)).toBeNull();
+    expect(smartPauseAfter(new ApiError(401, 'log in'), 1, now)).toBeNull();
   });
 });
 

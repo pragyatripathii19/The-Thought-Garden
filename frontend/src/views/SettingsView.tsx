@@ -103,7 +103,8 @@ export const SettingsView: React.FC = () => {
               only, never what you wrote.
             </p>
             <p className="text-xs text-[#596d5e] leading-relaxed">
-              Smart organising, if you turn it on below, also sends new thoughts to an AI service to sort them.
+              Smart organising (on unless you turned it off below) also sends new thoughts to an AI service to sort
+              them.
             </p>
           </div>
         </div>

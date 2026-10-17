@@ -1,14 +1,17 @@
 export interface OrganizerSettings {
   /** Local, on-device organising (embeddings + local rule). */
   autoOrganize: boolean;
-  /** Opt-in: send new thoughts to an LLM via our server for better decisions and names. */
+  /**
+   * Send new thoughts to an LLM via our server for better decisions and names.
+   * On by default; for signed-in users the account's setting is used instead.
+   */
   smartOrganizing: boolean;
   smartConsentAt?: string;
 }
 
 export const DEFAULT_ORGANIZER_SETTINGS: OrganizerSettings = {
   autoOrganize: true,
-  smartOrganizing: false,
+  smartOrganizing: true,
 };
 
 const SETTINGS_KEY = 'thought_garden_organizer_settings';
