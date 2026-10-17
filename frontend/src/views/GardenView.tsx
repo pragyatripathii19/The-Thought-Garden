@@ -13,6 +13,7 @@ import { AutoBadge } from '../components/OrganizeToast';
 import { CollectionIcon } from '../components/CollectionIcon';
 import { ART } from '../lib/art';
 import { pickCapturePrompt } from '../lib/capturePrompts';
+import { MAX_THOUGHT_LENGTH } from '../lib/defaults';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -156,6 +157,7 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
           <textarea
             id="home-capture-input"
             rows={3}
+            maxLength={MAX_THOUGHT_LENGTH}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -215,7 +217,7 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
                 <p className="font-serif italic text-lg sm:text-xl leading-snug text-garden-ink line-clamp-3 whitespace-pre-wrap">
                   “{rediscoveredThought.text}”
                 </p>
-                <p className="text-xs text-garden-ink-faint">Planted {formatRelativeTime(rediscoveredThought.createdAt)}</p>
+                <p className="text-xs text-garden-ink-faint">Planted {formatRelativeTime(rediscoveredThought.createdAt).replace(/^Just now$/, 'just now')}</p>
               </button>
               <div className="flex flex-col items-end gap-2 shrink-0">
                 <button

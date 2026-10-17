@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { pickCapturePrompt } from '../lib/capturePrompts';
+import { MAX_THOUGHT_LENGTH } from '../lib/defaults';
 import { ArrowLeft, X, ArrowUpRight } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { SproutLeafClusterArt, SeedToSproutAnimation } from './BotanicalIllustrations';
@@ -88,7 +89,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="new-thought-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -136,7 +137,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
                 ref={textareaRef}
                 rows={5}
                 value={text}
-                maxLength={1000}
+                maxLength={MAX_THOUGHT_LENGTH}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={capturePrompt}
@@ -147,7 +148,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
             {/* Bottom Row inside card: Counter + Circular Plant Button */}
             <div className="flex items-center justify-between pt-3 border-t border-garden-line">
               <span className="text-xs font-mono text-garden-ink-faint">
-                {charCount}/1000
+                {charCount.toLocaleString()} / {MAX_THOUGHT_LENGTH.toLocaleString()}
               </span>
 
               <div className="flex items-center gap-3">

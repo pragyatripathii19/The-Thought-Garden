@@ -42,3 +42,6 @@ export const STARTER_COLLECTIONS: Collection[] = [
     updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
+
+/** Longest thought the server accepts (backend/garden.cjs MAX_TEXT). */
+export const MAX_THOUGHT_LENGTH = 20000;

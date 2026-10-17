@@ -176,7 +176,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
                 className="w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-garden-paper-deep hover:bg-garden-line text-garden-ink border border-garden-line rounded-xl text-xs font-semibold transition-colors"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Profile & Goals</span>
+                <span>Edit profile</span>
               </button>
 
               {isAdmin && (

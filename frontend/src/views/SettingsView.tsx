@@ -137,7 +137,7 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Pilot Admin & Telemetry Card */}
+      {/* Feedback, profile and (for admins) the dashboard */}
       <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -145,11 +145,11 @@ export const SettingsView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-garden-pill/60 text-garden-moss flex items-center justify-center text-xs">
                 <LeafLogoIcon className="w-3.5 h-3.5" />
               </span>
-              <span>{isAdmin ? 'Pilot Testing & Admin' : 'Feedback & Profile'}</span>
+              <span>{isAdmin ? 'Feedback, profile & admin' : 'Feedback & profile'}</span>
             </h3>
             <p className="text-xs text-garden-ink-soft leading-relaxed">
               {isAdmin
-                ? 'Track who registered, thoughts planted per day, and feedback submitted by pilot testers.'
+                ? 'See how the pilot is going in the admin dashboard, or update your profile.'
                 : 'Tell us what works and what doesn\u2019t, or update how we greet you.'}
             </p>
           </div>
@@ -167,7 +167,7 @@ export const SettingsView: React.FC = () => {
               onClick={() => setIsAdminModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-garden-moss hover:bg-garden-moss-dark text-garden-paper rounded-full text-xs font-semibold transition-transform active:scale-95"
             >
-              <span>Open Pilot Admin Dashboard</span>
+              <span>Admin dashboard</span>
             </button>
           )}
 
@@ -185,7 +185,7 @@ export const SettingsView: React.FC = () => {
             onClick={() => setIsOnboardingOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink-soft rounded-xl text-xs font-medium transition-colors"
           >
-            <span>Edit Profile & Intent</span>
+            <span>Edit profile</span>
           </button>
         </div>
       </div>
