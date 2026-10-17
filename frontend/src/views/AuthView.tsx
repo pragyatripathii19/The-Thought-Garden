@@ -118,7 +118,7 @@ export const AuthView: React.FC = () => {
         </h1>
         <p className="text-xs sm:text-sm text-garden-ink-soft">
           {isSignup
-            ? 'Every thought has a home. Create your account to start your garden.'
+            ? 'Every thought has a home. Create your account to start your thought-garden.'
             : 'Log in to pick up where you left off.'}
         </p>
         {isSignup && (
@@ -192,7 +192,6 @@ export const AuthView: React.FC = () => {
               onChange={setReasons}
               custom={customReason}
               onCustomChange={setCustomReason}
-              customHint="We’ll start a collection for it in your garden."
             />
           </div>
         )}
@@ -222,24 +221,14 @@ export const AuthView: React.FC = () => {
         </button>
       </form>
 
-      <div className="space-y-3 text-center">
-        {!isSignup && (
-          <>
-            <p className="text-xs text-garden-ink-soft">
-              New here?{' '}
-              <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
-                Create an account
-              </button>
-            </p>
-            <p className="text-[11px] text-garden-ink-faint">Forgot your password? Ask the person who invited you to reset it.</p>
-          </>
-        )}
-        <p className="text-[11px] text-garden-ink-faint leading-relaxed">
-          Your thoughts are saved to your account on the Thought Garden server, so they're safe if you clear your
-          browser or switch devices. Only you can see them in the app, though whoever runs the server can access the
-          database.
+      {!isSignup && (
+        <p className="text-xs text-garden-ink-soft text-center">
+          New here?{' '}
+          <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
+            Create an account
+          </button>
         </p>
-      </div>
+      )}
     </Shell>
   );
 };
