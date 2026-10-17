@@ -5,7 +5,8 @@ import { Collection, Connection, GrowthStage, Thought } from '../types';
  *
  * - Seed: every new thought.
  * - Sprout: you came back to it — edited it, saved it, added it to a collection
- *   (or auto-organising did), or connected it to another thought.
+ *   or connected it to another thought. Collections auto-organising chose don't
+ *   count: the thought hasn't been tended until the person touches it.
  * - Bloom: it's connected to at least one thought AND has grown — edited twice
  *   or more, 300+ characters, or in 2+ collections.
  * - Mature: only when you choose it; no signal can tell when an idea is done.
@@ -29,11 +30,17 @@ export interface GrowthSignals {
   length: number;
 }
 
+/** Collections the person put the thought in themselves (not auto-organising). */
+function chosenCollectionIds(thought: Thought): string[] {
+  const auto = new Set(thought.autoCollectionIds || []);
+  return thought.collectionIds.filter((id) => !auto.has(id));
+}
+
 export function growthSignals(thought: Thought, connections: Connection[]): GrowthSignals {
   return {
     edits: thought.editCount || 0,
     saved: Boolean(thought.isSaved),
-    collections: thought.collectionIds.length,
+    collections: chosenCollectionIds(thought).length,
     connections: connections.filter(
       (c) => c.status === 'accepted' && (c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id)
     ).length,
@@ -98,7 +105,7 @@ export function describeGrowth(thought: Thought, connections: Connection[], coll
   }
 
   if (stage === 'sprout') {
-    const firstCollection = collections.find((c) => thought.collectionIds.includes(c.id));
+    const firstCollection = collections.find((c) => chosenCollectionIds(thought).includes(c.id));
     const why =
       s.connections > 0
         ? 'Sprouted when you connected it to another thought.'

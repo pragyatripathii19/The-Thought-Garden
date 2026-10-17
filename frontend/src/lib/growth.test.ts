@@ -36,6 +36,12 @@ describe('growth stages', () => {
     expect(evolvedStage(thought(extra), [])).toBe('sprout');
   });
 
+  it('stays a seed when only auto-organising filed it', () => {
+    expect(evolvedStage(thought({ collectionIds: ['a'], autoCollectionIds: ['a'] }), [])).toBeNull();
+    // Moving it into a collection by hand still counts.
+    expect(evolvedStage(thought({ collectionIds: ['a', 'b'], autoCollectionIds: ['a'] }), [])).toBe('sprout');
+  });
+
   it('sprouts once connected, but a suggestion or dismissal does not count', () => {
     expect(evolvedStage(thought(), [link('t', 'x')])).toBe('sprout');
     expect(evolvedStage(thought(), [link('t', 'x', 'dismissed')])).toBeNull();
