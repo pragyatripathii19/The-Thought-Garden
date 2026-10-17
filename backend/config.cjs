@@ -7,6 +7,9 @@ const config = {
   isProduction,
   port: Number(process.env.PORT) || 3001,
   databaseUrl: process.env.DATABASE_URL || '',
+  // Neon: the app uses the pooled DATABASE_URL; migrations need a direct
+  // (unpooled) connection, so they use this one when it's set.
+  migrationDatabaseUrl: process.env.DATABASE_URL_UNPOOLED || '',
 
   // Comma-separated emails that get the admin dashboard.
   adminEmails: (process.env.ADMIN_EMAILS || '')
