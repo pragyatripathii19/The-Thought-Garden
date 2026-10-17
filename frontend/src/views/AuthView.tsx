@@ -190,7 +190,7 @@ export const AuthView: React.FC = () => {
             <span>
               <span className="font-semibold text-garden-ink">Use Smart organising.</span> New thoughts and your
               collection names are sent through our server to an AI service that sorts them into collections. Untick
-              to keep sorting on your device only. You can change this anytime in Data &amp; Settings.
+              to keep sorting on your device only. You can change this anytime in Settings.
             </span>
           </label>
         )}

@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Download, Upload, Shield, HardDrive, AlertTriangle, LogOut, UserRound } from 'lucide-react';
+import { Download, Upload, AlertTriangle, LogOut, UserRound } from 'lucide-react';
 import { useThoughts } from '../context/StorageContext';
 import { useAuth } from '../context/AuthContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
 import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
 import { LeafLogoIcon } from '../components/BotanicalIllustrations';
+import { GardenGuide } from '../components/GardenGuide';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -78,123 +79,61 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-16">
-      <div className="border-b border-garden-line pb-4">
+      <div className="pb-1">
         <h2 className="font-serif text-[36px] sm:text-[42px] leading-tight font-semibold text-garden-ink tracking-tight">
-          Data & Settings
+          Settings
         </h2>
-        <p className="text-sm text-garden-ink-soft mt-1">
-          Manage your personal garden data and backups
-        </p>
+        <p className="text-sm text-garden-ink-soft mt-1">How your garden works, organising, your data and your account</p>
       </div>
 
-      {/* Storage Architecture Notice */}
-      <div className="bg-garden-pill/60 border border-[#CBD5AE] rounded-2xl p-5">
-        <div className="flex items-start gap-3.5">
-          <div className="w-9 h-9 rounded-xl bg-garden-moss text-garden-paper flex items-center justify-center shrink-0">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div className="space-y-1.5">
-            <h3 className="font-serif text-xl font-semibold text-garden-ink">
-              Saved to your account
-            </h3>
-            <p className="text-xs text-garden-ink-soft leading-relaxed">
-              Your thoughts, collections and connections are stored in your account on the Thought Garden server, so
-              they're safe if you clear this browser and they appear on any device you log in from. Only you can see
-              them in the app; whoever runs the server can access the database. The admin dashboard shows counts
-              only, never what you wrote.
-            </p>
-            <p className="text-xs text-garden-ink-soft leading-relaxed">
-              Smart organising (on unless you turned it off below) also sends new thoughts to an AI service to sort
-              them.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* About the garden (formerly Learn & Explore), including how thoughts grow */}
+      <GardenGuide />
 
       {/* Automatic organising */}
       <OrganizingSettingsCard />
 
-      {/* Data Backup & Restore */}
+      {/* Your data: counts, export and import */}
       <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
-        <h3 className="font-serif text-2xl font-semibold text-garden-ink">
-          Data Portability
-        </h3>
+        <h3 className="font-serif text-2xl font-semibold text-garden-ink">Your data</h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* Export */}
-          <div className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line flex flex-col justify-between min-h-[140px]">
-            <div>
-              <div className="flex items-center gap-2 text-garden-ink font-medium text-xs mb-1">
-                <Download className="w-4 h-4 text-garden-moss" />
-                <span>Export Garden</span>
-              </div>
-              <p className="text-xs text-garden-ink-soft leading-relaxed mb-3">
-                Download a full JSON backup of thoughts, connections, and collections.
-              </p>
+        <div className="grid grid-cols-3 gap-3 text-center">
+          {[
+            { label: 'Thoughts', value: thoughts.length },
+            { label: 'Collections', value: collections.length },
+            { label: 'Connections', value: connections.length },
+          ].map((stat) => (
+            <div key={stat.label} className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
+              <div className="text-[26px] font-serif font-semibold text-garden-ink tabular-nums">{stat.value}</div>
+              <div className="text-[11px] text-garden-ink-soft mt-0.5">{stat.label}</div>
             </div>
-            <button
-              type="button"
-              onClick={exportBackup}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-garden-moss hover:bg-garden-moss text-garden-paper rounded-full text-xs font-semibold transition-transform active:scale-95"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export as JSON</span>
-            </button>
-          </div>
-
-          {/* Import */}
-          <div className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line flex flex-col justify-between min-h-[140px]">
-            <div>
-              <div className="flex items-center gap-2 text-garden-ink font-medium text-xs mb-1">
-                <Upload className="w-4 h-4 text-garden-moss" />
-                <span>Import Backup</span>
-              </div>
-              <p className="text-xs text-garden-ink-soft leading-relaxed mb-3">
-                Restore a previously exported Thought Garden backup safely.
-              </p>
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".json,application/json"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={handleOpenImport}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink rounded-xl text-xs font-semibold transition-transform active:scale-95"
-            >
-              <Upload className="w-3.5 h-3.5 text-garden-ink-soft" />
-              <span>Choose Backup File</span>
-            </button>
-          </div>
+          ))}
         </div>
-      </div>
 
-      {/* Storage Information */}
-      <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6">
-        <h3 className="font-serif text-2xl font-semibold text-garden-ink mb-3.5 flex items-center gap-2">
-          <HardDrive className="w-4 h-4 text-garden-ink-soft" />
-          <span>Storage Information</span>
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
-            <div className="text-[26px] font-serif font-semibold text-garden-ink">{thoughts.length}</div>
-            <div className="text-[11px] text-garden-ink-soft mt-0.5">Thoughts</div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
-            <div className="text-[26px] font-serif font-semibold text-garden-ink">{collections.length}</div>
-            <div className="text-[11px] text-garden-ink-soft mt-0.5">Collections</div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
-            <div className="text-[26px] font-serif font-semibold text-garden-ink">{connections.length}</div>
-            <div className="text-[11px] text-garden-ink-soft mt-0.5">Connections</div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
-            <div className="text-xl font-serif font-semibold text-garden-ink truncate">Your account</div>
-            <div className="text-[11px] text-garden-ink-soft mt-0.5">Stored in</div>
-          </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={exportBackup}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-garden-moss hover:bg-garden-moss-dark text-garden-paper rounded-full text-sm font-semibold transition-transform active:scale-95"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export backup</span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".json,application/json"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={handleOpenImport}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-garden-card hover:bg-garden-paper-deep border border-garden-line text-garden-ink rounded-full text-sm font-semibold transition-transform active:scale-95"
+          >
+            <Upload className="w-4 h-4 text-garden-ink-soft" />
+            <span>Import backup</span>
+          </button>
+          <span className="text-xs text-garden-ink-faint">A JSON file of your thoughts, collections and connections.</span>
         </div>
       </div>
 

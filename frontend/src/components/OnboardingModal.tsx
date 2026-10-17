@@ -116,7 +116,7 @@ export const OnboardingModal: React.FC = () => {
               <span>
                 <span className="font-semibold text-garden-ink">Turn on Smart organising (optional).</span>{' '}
                 New thoughts and your collection names are sent through our server to an AI service to group them
-                into collections. You can change this anytime in Data &amp; Settings.
+                into collections. You can change this anytime in Settings.
               </span>
             </label>
           )}

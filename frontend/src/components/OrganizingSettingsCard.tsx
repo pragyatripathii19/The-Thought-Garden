@@ -89,7 +89,7 @@ export const OrganizingSettingsCard: React.FC = () => {
     <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-5">
       <h3 className="font-serif text-2xl font-semibold text-garden-ink flex items-center gap-2">
         <FolderTree className="w-4 h-4 text-garden-ink-soft" />
-        <span>Automatic organising</span>
+        <span>Organising</span>
       </h3>
 
       {/* On-device organising */}
@@ -99,9 +99,7 @@ export const OrganizingSettingsCard: React.FC = () => {
             Organise on this device
           </label>
           <p className="text-xs text-garden-ink-soft leading-relaxed">
-            A small model running in your browser (about 25 MB, downloaded once) finds similar thoughts; the comparison
-            happens on this device. Clear matches join a collection; close pairs are suggested on Home. Every change can
-            be undone.
+            Files similar thoughts into collections, right in your browser. Every change can be undone.
           </p>
           <p className="text-[11px] text-garden-ink-faint">
             {STATUS_COPY[embedderStatus]}
@@ -123,11 +121,15 @@ export const OrganizingSettingsCard: React.FC = () => {
             Smart organising (AI)
           </label>
           <p className="text-xs text-garden-ink-soft leading-relaxed">
-            Better decisions and collection names. When on, each new thought, up to 10 similar thoughts and your
-            collection names are sent through the Thought Garden server to an external AI service to decide where the
-            thought fits. Our server doesn’t store them, but the AI provider’s terms apply. On by default; if the AI
-            service is busy or unreachable, thoughts are organised on this device instead.
+            Uses an AI service for better grouping and names. Falls back to on-device organising when it’s unavailable.
           </p>
+          <details className="text-xs text-garden-ink-soft">
+            <summary className="cursor-pointer font-semibold text-garden-moss w-fit">How this works</summary>
+            <p className="mt-1 leading-relaxed">
+              Each new thought, up to 10 similar thoughts and your collection names go through the Thought Garden server
+              to the AI provider. Our server doesn’t keep them; the provider’s terms apply.
+            </p>
+          </details>
           {smartDisabledReason && <p className="text-[11px] text-amber-800">{smartDisabledReason}</p>}
           {pauseMessage && (
             <p className="text-[11px] text-amber-800" role="status">
