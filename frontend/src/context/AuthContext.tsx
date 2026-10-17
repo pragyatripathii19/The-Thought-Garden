@@ -42,6 +42,19 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // Which account the per-device data below belongs to.
 const DEVICE_USER_KEY = 'thought_garden_device_user';
 
+// Set once anyone has signed in on this browser, and kept after log out, so the
+// next visit opens on Log in rather than Sign up.
+const RETURNING_KEY = 'thought_garden_has_account';
+
+/** Whether someone has signed in on this browser before. */
+export function hasSignedInHereBefore(): boolean {
+  try {
+    return localStorage.getItem(RETURNING_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 // Per-device data that belongs to whoever is signed in; cleared when they leave.
 const DEVICE_KEYS = [
   DEVICE_USER_KEY,
@@ -106,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (previousUserId !== nextUser.id) await clearDeviceData();
     try {
       localStorage.setItem(DEVICE_USER_KEY, nextUser.id);
+      localStorage.setItem(RETURNING_KEY, '1');
     } catch {
       // Storage unavailable.
     }

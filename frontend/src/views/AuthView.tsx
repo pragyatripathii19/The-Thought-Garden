@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sprout, ArrowRight, CloudOff } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, hasSignedInHereBefore } from '../context/AuthContext';
 import { ReasonPicker } from '../components/ReasonPicker';
 import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ART } from '../lib/art';
@@ -67,7 +67,7 @@ export const AuthStatusScreen: React.FC<{ status: 'loading' | 'unreachable'; onR
 
 export const AuthView: React.FC = () => {
   const { login, signup } = useAuth();
-  const [mode, setMode] = useState<'login' | 'signup'>('signup');
+  const [mode, setMode] = useState<'login' | 'signup'>(() => (hasSignedInHereBefore() ? 'login' : 'signup'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -121,6 +121,14 @@ export const AuthView: React.FC = () => {
             ? 'Every thought has a home. Create your account to start your garden.'
             : 'Log in to pick up where you left off.'}
         </p>
+        {isSignup && (
+          <p className="text-xs text-garden-ink-soft">
+            Already have a garden?{' '}
+            <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
+              Log in
+            </button>
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -215,14 +223,16 @@ export const AuthView: React.FC = () => {
       </form>
 
       <div className="space-y-3 text-center">
-        <p className="text-xs text-garden-ink-soft">
-          {isSignup ? 'Already have a garden?' : 'New here?'}{' '}
-          <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
-            {isSignup ? 'Log in' : 'Create an account'}
-          </button>
-        </p>
         {!isSignup && (
-          <p className="text-[11px] text-garden-ink-faint">Forgot your password? Ask the person who invited you to reset it.</p>
+          <>
+            <p className="text-xs text-garden-ink-soft">
+              New here?{' '}
+              <button type="button" onClick={switchMode} className="font-semibold text-garden-moss underline underline-offset-2">
+                Create an account
+              </button>
+            </p>
+            <p className="text-[11px] text-garden-ink-faint">Forgot your password? Ask the person who invited you to reset it.</p>
+          </>
         )}
         <p className="text-[11px] text-garden-ink-faint leading-relaxed">
           Your thoughts are saved to your account on the Thought Garden server, so they're safe if you clear your
