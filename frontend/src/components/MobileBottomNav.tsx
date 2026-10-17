@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Library, Search, SlidersHorizontal, Plus } from 'lucide-react';
+import { Home, Library, Search, Bookmark, Plus } from 'lucide-react';
 import { NavTab } from '../types';
 
 interface MobileBottomNavProps {
@@ -67,16 +67,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <span>Search</span>
       </button>
 
-      {/* Profile / Settings */}
+      {/* Saved (Settings is in the avatar menu, as on desktop) */}
       <button
         type="button"
-        onClick={() => onTabChange('settings')}
+        onClick={() => onTabChange('saved')}
         className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-          activeTab === 'settings' ? 'text-garden-moss font-semibold' : 'text-garden-ink-faint'
+          activeTab === 'saved' ? 'text-garden-moss font-semibold' : 'text-garden-ink-faint'
         }`}
       >
-        <SlidersHorizontal className="w-5 h-5" />
-        <span>Settings</span>
+        <Bookmark className="w-5 h-5" />
+        <span>Saved</span>
       </button>
     </nav>
   );
