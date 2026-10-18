@@ -38,7 +38,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
   return (
     <>
       {/* Mobile Top Header (< md) */}
-      <header className="md:hidden sticky top-0 z-30 bg-garden-paper/90 backdrop-blur-md border-b border-garden-line px-4 py-3 flex items-center justify-between">
+      <header className="md:hidden sticky top-0 z-30 bg-garden-paper/95 border-b border-garden-line px-4 py-3 flex items-center justify-between">
         <div
           onClick={() => onTabChange('garden')}
           className="flex items-center gap-2.5 cursor-pointer"
@@ -101,11 +101,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
+          className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in"
           onClick={() => setIsProfileOpen(false)}
         >
           <div
-            className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-4"
+            className="modal-panel bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-garden-line">

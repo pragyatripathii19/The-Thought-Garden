@@ -56,11 +56,11 @@ export const OnboardingModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-title"
-      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/50 sm:backdrop-blur-xs animate-fade-in"
       onClick={close}
     >
       <div
-        className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6 max-h-[90vh] overflow-y-auto"
+        className="modal-panel bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6 max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button

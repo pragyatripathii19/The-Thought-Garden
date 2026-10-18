@@ -89,11 +89,11 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="new-thought-title"
-      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between max-h-[90vh]"
+        className="modal-panel bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
