@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Sprout, ArrowRight, CloudOff } from 'lucide-react';
-import { useAuth, hasSignedInHereBefore } from '../context/AuthContext';
+import { Sprout, ArrowRight, ArrowLeft, CloudOff } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { ReasonPicker } from '../components/ReasonPicker';
 import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ART } from '../lib/art';
@@ -66,9 +66,15 @@ export const AuthStatusScreen: React.FC<{ status: 'loading' | 'unreachable'; onR
   </Shell>
 );
 
-export const AuthView: React.FC = () => {
+interface AuthViewProps {
+  mode: 'login' | 'signup';
+  onModeChange: (mode: 'login' | 'signup') => void;
+  /** Back to the landing page. */
+  onShowLanding: () => void;
+}
+
+export const AuthView: React.FC<AuthViewProps> = ({ mode, onModeChange, onShowLanding }) => {
   const { login, signup } = useAuth();
-  const [mode, setMode] = useState<'login' | 'signup'>(() => (hasSignedInHereBefore() ? 'login' : 'signup'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +86,7 @@ export const AuthView: React.FC = () => {
   const isSignup = mode === 'signup';
 
   const switchMode = () => {
-    setMode(isSignup ? 'login' : 'signup');
+    onModeChange(isSignup ? 'login' : 'signup');
     setError(null);
   };
 
@@ -112,6 +118,17 @@ export const AuthView: React.FC = () => {
 
   return (
     <Shell>
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          onShowLanding();
+        }}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-garden-ink-soft hover:text-garden-moss"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        About The Thought Garden
+      </a>
       <div className="text-center space-y-2">
         <Emblem />
         <h1 className="font-serif text-[32px] sm:text-[40px] font-semibold text-garden-ink">
