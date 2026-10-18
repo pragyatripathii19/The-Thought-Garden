@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -182,7 +183,8 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
     return col ? col.name : 'Garden';
   };
 
-  return (
+  // Rendered at the top of the page, so containers it opens from (e.g. Home's layered content) can't put the bottom nav above it.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -547,6 +549,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
