@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ImportBackupModal } from '../components/ImportBackupModal';
 import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
 import { LeafLogoIcon } from '../components/BotanicalIllustrations';
+import { PasswordInput } from '../components/PasswordInput';
 import { GardenGuide } from '../components/GardenGuide';
 
 export const SettingsView: React.FC = () => {
@@ -285,9 +286,8 @@ export const SettingsView: React.FC = () => {
               <label htmlFor="delete-password" className="block text-xs font-semibold text-[#715454]">
                 Enter your password to confirm
               </label>
-              <input
+              <PasswordInput
                 id="delete-password"
-                type="password"
                 autoComplete="current-password"
                 autoFocus
                 value={deletePassword}
