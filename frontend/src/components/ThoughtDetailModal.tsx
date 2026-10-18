@@ -186,7 +186,7 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="modal-overlay z-50 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div

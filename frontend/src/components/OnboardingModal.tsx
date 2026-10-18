@@ -56,7 +56,7 @@ export const OnboardingModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-title"
-      className="modal-overlay z-50 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/50 sm:backdrop-blur-xs animate-fade-in"
       onClick={close}
     >
       <div

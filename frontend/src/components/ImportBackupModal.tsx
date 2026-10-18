@@ -88,7 +88,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="import-backup-title"
-      className="modal-overlay z-50 bg-garden-ink/40 backdrop-blur-sm animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div

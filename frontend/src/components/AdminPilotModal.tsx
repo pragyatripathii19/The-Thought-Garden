@@ -159,7 +159,7 @@ export const AdminPilotModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-title"
-      className="modal-overlay z-50 p-3 sm:p-5 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
+      className="modal-overlay z-50 p-3 sm:p-5 bg-garden-ink/60 sm:backdrop-blur-sm animate-fade-in"
       onClick={() => setIsAdminModalOpen(false)}
     >
       <div
@@ -582,7 +582,7 @@ export const AdminPilotModal: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="modal-overlay z-60 bg-garden-ink/70 backdrop-blur-sm animate-fade-in"
+          className="modal-overlay z-60 bg-garden-ink/70 sm:backdrop-blur-sm animate-fade-in"
           onClick={() => !isDeletingUser && setUserToDelete(null)}
         >
           <div

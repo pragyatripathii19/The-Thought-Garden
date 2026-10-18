@@ -89,7 +89,7 @@ export const NewThoughtModal: React.FC<NewThoughtModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="new-thought-title"
-      className="modal-overlay z-50 bg-garden-ink/40 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div

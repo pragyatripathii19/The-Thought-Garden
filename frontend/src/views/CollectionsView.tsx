@@ -242,7 +242,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
         {/* Delete Collection Modal */}
         {collectionToDelete && (
-          <div className="modal-overlay z-50 bg-garden-ink/40 backdrop-blur-xs animate-fade-in">
+          <div className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in">
             <div className="modal-panel w-full max-w-md bg-garden-card border border-garden-line rounded-3xl p-6 shadow-xl space-y-4">
               <div className="flex items-center gap-3 text-rose-600">
                 <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
@@ -402,7 +402,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
 
       {/* Create Collection Dialog Modal */}
       {isCreateModalOpen && (
-        <div className="modal-overlay z-50 bg-garden-ink/40 backdrop-blur-xs animate-fade-in">
+        <div className="modal-overlay z-50 bg-garden-ink/40 sm:backdrop-blur-xs animate-fade-in">
           <div className="modal-panel w-full max-w-md bg-garden-card border border-garden-line rounded-3xl p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-garden-line">
               <h3 className="font-serif text-[26px] font-semibold text-garden-ink">

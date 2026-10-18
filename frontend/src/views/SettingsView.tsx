@@ -246,7 +246,7 @@ export const SettingsView: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="modal-overlay z-50 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
+          className="modal-overlay z-50 bg-garden-ink/60 sm:backdrop-blur-sm animate-fade-in"
           onClick={closeDeleteDialog}
         >
           <form
