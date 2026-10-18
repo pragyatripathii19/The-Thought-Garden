@@ -184,12 +184,27 @@
   animation: rediscovery-shimmer 2.2s ease-out 1;
 }
 
+/* A slow bob for the birds and butterflies on the landing page. */
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-gentle-float {
+  animation: gentle-float 6s ease-in-out infinite;
+}
+
 /* Accessibility: Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .animate-breeze-stem,
   .animate-breeze-sprout,
   .animate-sprout-bloom,
   .animate-rediscovery-accent,
+  .animate-gentle-float,
   .animate-fade-in,
   .leaf-falling-ambient {
     animation: none !important;

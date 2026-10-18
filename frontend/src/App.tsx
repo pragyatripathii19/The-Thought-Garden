@@ -19,8 +19,10 @@ import { useThoughts } from './context/StorageContext';
 import { OrganizerProvider } from './context/OrganizerContext';
 import { OrganizeToast } from './components/OrganizeToast';
 import { LocalGardenUploadCard } from './components/LocalGardenUploadCard';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, hasSignedInHereBefore } from './context/AuthContext';
 import { AuthView, AuthStatusScreen } from './views/AuthView';
+import { LandingView } from './views/LandingView';
+import { SignedOutScreen, hashForScreen, initialScreen, screenFromHash } from './lib/signedOutScreen';
 import { createApiRepositories, importGardenOnServer } from './storage/api';
 
 function AppContent() {
@@ -119,12 +121,62 @@ function SignedInApp() {
   );
 }
 
+/**
+ * Landing page, sign-up or log-in. The screen lives in the URL hash (#signup, #login),
+ * so the browser's back button returns to the landing page.
+ */
+function SignedOutApp() {
+  const [screen, setScreen] = useState<SignedOutScreen>(() =>
+    initialScreen(window.location.hash, hasSignedInHereBefore())
+  );
+
+  useEffect(() => {
+    // Returning visitors open on Log in; record that in the URL without adding a history step.
+    window.history.replaceState(window.history.state, '', urlFor(screen));
+    const sync = () => setScreen(screenFromHash(window.location.hash));
+    window.addEventListener('popstate', sync);
+    window.addEventListener('hashchange', sync);
+    return () => {
+      window.removeEventListener('popstate', sync);
+      window.removeEventListener('hashchange', sync);
+    };
+  }, []);
+
+  const go = (next: SignedOutScreen, replace = false) => {
+    if (replace) window.history.replaceState(window.history.state, '', urlFor(next));
+    else window.history.pushState(null, '', urlFor(next));
+    setScreen(next);
+    window.scrollTo(0, 0);
+  };
+
+  if (screen === 'landing') return <LandingView onStart={() => go('signup')} onLogin={() => go('login')} />;
+  return (
+    <AuthView
+      mode={screen}
+      onModeChange={(mode) => go(mode, true)}
+      onShowLanding={() => go('landing')}
+    />
+  );
+}
+
+function urlFor(screen: SignedOutScreen) {
+  return window.location.pathname + window.location.search + hashForScreen(screen);
+}
+
 function AuthGate() {
   const { status, user, retry } = useAuth();
+
+  // Drop #login / #signup from the address once someone is in.
+  useEffect(() => {
+    if (user && screenFromHash(window.location.hash) !== 'landing') {
+      window.history.replaceState(window.history.state, '', urlFor('landing'));
+    }
+  }, [user]);
+
   if (status === 'loading' || status === 'unreachable') {
     return <AuthStatusScreen status={status} onRetry={retry} />;
   }
-  if (status === 'signed-out' || !user) return <AuthView />;
+  if (status === 'signed-out' || !user) return <SignedOutApp />;
   return <SignedInApp key={user.id} />;
 }
 
