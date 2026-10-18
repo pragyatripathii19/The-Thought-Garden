@@ -5,6 +5,7 @@ import { ReasonPicker } from '../components/ReasonPicker';
 import { SeedToSproutAnimation } from '../components/BotanicalIllustrations';
 import { ART } from '../lib/art';
 import { joinReasons } from '../lib/profileReasons';
+import { PasswordInput } from '../components/PasswordInput';
 import { suggestCollectionIcon } from '../lib/collectionIcons';
 
 const inputClass =
@@ -171,9 +172,9 @@ export const AuthView: React.FC = () => {
           <label htmlFor="auth-password" className={labelClass}>
             Password
           </label>
-          <input
+          <PasswordInput
+            key={mode}
             id="auth-password"
-            type="password"
             required
             minLength={isSignup ? 8 : undefined}
             autoComplete={isSignup ? 'new-password' : 'current-password'}
