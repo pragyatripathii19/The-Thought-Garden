@@ -246,12 +246,12 @@ export const SettingsView: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
+          className="modal-overlay z-50 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
           onClick={closeDeleteDialog}
         >
           <form
             onSubmit={runDelete}
-            className="bg-garden-card border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            className="modal-panel bg-garden-card border border-[#eed0d0] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">

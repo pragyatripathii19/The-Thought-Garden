@@ -159,11 +159,11 @@ export const AdminPilotModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-title"
-      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
+      className="modal-overlay z-50 p-3 sm:p-5 bg-garden-ink/60 backdrop-blur-sm animate-fade-in"
       onClick={() => setIsAdminModalOpen(false)}
     >
       <div
-        className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+        className="modal-panel bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-5xl max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -582,11 +582,11 @@ export const AdminPilotModal: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 !m-0 z-60 flex items-center justify-center p-4 bg-garden-ink/70 backdrop-blur-sm animate-fade-in"
+          className="modal-overlay z-60 bg-garden-ink/70 backdrop-blur-sm animate-fade-in"
           onClick={() => !isDeletingUser && setUserToDelete(null)}
         >
           <div
-            className="bg-garden-card border border-[#eed0d0] rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4"
+            className="modal-panel bg-garden-card border border-[#eed0d0] rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">

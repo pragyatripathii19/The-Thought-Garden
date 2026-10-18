@@ -24,6 +24,31 @@
   }
 }
 
+/*
+ * Modals. The overlay scrolls when a dialog is taller than the screen, and the panel's auto margins
+ * centre it without pushing its top out of reach. The margin reset stops space-y-* parents nudging it.
+ */
+@layer components {
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    margin: 0 !important;
+    display: flex;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem;
+  }
+
+  .modal-panel {
+    margin: auto;
+  }
+}
+
+/* Keep the page behind an open modal still. */
+html:has(.modal-overlay) {
+  overflow: hidden;
+}
+
 /* Phones: iOS Safari zooms the page in when a text field under 16px gets focus, and stays zoomed. */
 @media (max-width: 639px) {
   input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),

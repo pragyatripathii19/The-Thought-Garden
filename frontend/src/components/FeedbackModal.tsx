@@ -57,11 +57,11 @@ export const FeedbackModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-title"
-      className="fixed inset-0 !m-0 z-50 flex items-center justify-center p-4 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
+      className="modal-overlay z-50 bg-garden-ink/50 backdrop-blur-xs animate-fade-in"
       onClick={() => setIsFeedbackModalOpen(false)}
     >
       <div
-        className="bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative overflow-hidden space-y-5"
+        className="modal-panel bg-[#FDFBF3] border border-garden-line rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative overflow-hidden space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
