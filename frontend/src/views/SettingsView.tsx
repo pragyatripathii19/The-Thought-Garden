@@ -7,6 +7,7 @@ import { OrganizingSettingsCard } from '../components/OrganizingSettingsCard';
 import { LeafLogoIcon } from '../components/BotanicalIllustrations';
 import { PasswordInput } from '../components/PasswordInput';
 import { GardenGuide } from '../components/GardenGuide';
+import { InstallSettingsCard } from '../components/InstallApp';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -92,6 +93,9 @@ export const SettingsView: React.FC = () => {
 
       {/* Automatic organising */}
       <OrganizingSettingsCard />
+
+      {/* Add the app to the home screen */}
+      <InstallSettingsCard />
 
       {/* Your data: counts, export and import */}
       <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">

@@ -2,6 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { listenForInstall } from './lib/install';
+
+listenForInstall();
 
 // Keeps the app's own files on the device (see public/sw.js). Production only, so dev always serves fresh code.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

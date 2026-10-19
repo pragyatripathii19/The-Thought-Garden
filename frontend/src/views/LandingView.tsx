@@ -234,8 +234,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onStart, onLogin }) =>
           title="Your thoughts deserve a place to grow."
           intro="That idea you keep meaning to write down? Start there."
         />
-        <div className="text-center mt-10">
+        <div className="text-center mt-10 space-y-3">
           <PlantButton onStart={onStart} />
+          <p className="text-sm text-garden-ink-faint">On your phone? Add it to your home screen and it opens like an app.</p>
         </div>
       </Section>
 

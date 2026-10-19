@@ -19,6 +19,7 @@ import { useThoughts } from './context/StorageContext';
 import { OrganizerProvider } from './context/OrganizerContext';
 import { OrganizeToast } from './components/OrganizeToast';
 import { LocalGardenUploadCard } from './components/LocalGardenUploadCard';
+import { InstallHomeCard } from './components/InstallApp';
 import { AuthProvider, useAuth, hasSignedInHereBefore } from './context/AuthContext';
 import { AuthView, AuthStatusScreen } from './views/AuthView';
 import { LandingView } from './views/LandingView';
@@ -75,6 +76,7 @@ function AppContent() {
         {/* Main Content Area */}
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12">
           <LocalGardenUploadCard />
+          {activeTab === 'garden' && <InstallHomeCard />}
           {activeTab === 'garden' && (
             <GardenView
               onNavigateTab={setActiveTab}
