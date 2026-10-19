@@ -68,6 +68,8 @@ interface StorageContextValue {
   ) => Promise<Thought>;
   updateThought: (id: string, updates: UpdateThoughtDTO) => Promise<Thought>;
   deleteThought: (id: string) => Promise<void>;
+  /** Removes several thoughts; resolves with how many were removed, or throws if any failed. */
+  deleteThoughts: (ids: string[]) => Promise<number>;
   refreshThoughts: () => Promise<void>;
   toggleThoughtCollection: (thoughtId: string, collectionId: string) => Promise<Thought>;
   toggleSaveThought: (id: string) => Promise<Thought>;
@@ -443,6 +445,44 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     [thoughtRepository, connectionRepository, embeddingRepository, connections]
   );
 
+  const deleteThoughts = useCallback(
+    async (ids: string[]): Promise<number> => {
+      setError(null);
+      const removed = new Set<string>();
+      let failure: unknown = null;
+      // A few at a time: quick on a slow server without flooding it.
+      const queue = [...new Set(ids)];
+      const worker = async () => {
+        for (let id = queue.shift(); id !== undefined && !failure; id = queue.shift()) {
+          try {
+            await thoughtRepository.delete(id);
+            removed.add(id);
+            await embeddingRepository.delete(id).catch(() => {});
+          } catch (err) {
+            failure = err;
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+
+      const touches = (c: Connection) => removed.has(c.sourceThoughtId) || removed.has(c.targetThoughtId);
+      for (const c of connections.filter(touches)) {
+        await connectionRepository.delete(c.id).catch(() => {});
+      }
+      setThoughts((prev) => prev.filter((t) => !removed.has(t.id)));
+      setConnections((prev) => prev.filter((c) => !touches(c)));
+
+      if (failure) {
+        console.error('Failed to delete thoughts:', failure);
+        const msg = failure instanceof Error ? failure.message : 'Failed to delete thoughts';
+        setError(msg);
+        throw failure;
+      }
+      return removed.size;
+    },
+    [thoughtRepository, connectionRepository, embeddingRepository, connections]
+  );
+
   const toggleThoughtCollection = useCallback(
     async (thoughtId: string, collectionId: string): Promise<Thought> => {
       const thought = thoughts.find((t) => t.id === thoughtId);
@@ -755,6 +795,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         createThought,
         updateThought,
         deleteThought,
+        deleteThoughts,
         refreshThoughts,
         toggleThoughtCollection,
         toggleSaveThought,
