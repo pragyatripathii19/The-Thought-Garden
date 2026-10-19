@@ -8,6 +8,7 @@ const { gardenRoutes } = require('./routes/garden.cjs');
 const { feedbackRoutes } = require('./routes/feedback.cjs');
 const { adminRoutes } = require('./routes/admin.cjs');
 const { classifyRoutes } = require('./routes/classify.cjs');
+const { reminderRoutes } = require('./routes/reminder.cjs');
 
 /** Builds the Express app. Kept separate from listen() so tests can run it on any port. */
 function createApp({ pool, config }) {
@@ -50,6 +51,7 @@ function createApp({ pool, config }) {
   app.use('/api/feedback', feedbackRoutes({ pool }));
   app.use('/api/admin', adminRoutes({ pool, config }));
   app.use('/api/classify', classifyRoutes({ config }));
+  app.use('/api', reminderRoutes());
   app.use('/api', gardenRoutes({ pool }));
 
   app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));

@@ -8,6 +8,7 @@ import { LeafLogoIcon } from '../components/BotanicalIllustrations';
 import { PasswordInput } from '../components/PasswordInput';
 import { GardenGuide } from '../components/GardenGuide';
 import { InstallSettingsCard } from '../components/InstallApp';
+import { ReminderCard } from '../components/ReminderCard';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -96,6 +97,9 @@ export const SettingsView: React.FC = () => {
 
       {/* Add the app to the home screen */}
       <InstallSettingsCard />
+
+      {/* A daily nudge in the person's own calendar */}
+      <ReminderCard />
 
       {/* Your data: counts, export and import */}
       <div className="bg-garden-card border border-garden-line rounded-2xl p-5 sm:p-6 space-y-4">
