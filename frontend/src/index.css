@@ -70,11 +70,13 @@ html:has(.modal-overlay) {
 
 @media (max-width: 639px) {
   .modal-overlay.modal-overlay {
-    padding: 2.5rem 0 0;
+    padding: 2.5rem 0 env(safe-area-inset-bottom);
   }
 
   .modal-overlay > .modal-panel {
     margin: auto 0 0;
+    /* In the installed app, fill the strip behind the iPhone home bar with the sheet's paper colour. */
+    box-shadow: 0 env(safe-area-inset-bottom) 0 0 #fdfbf3;
     border-bottom-width: 0;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;

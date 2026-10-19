@@ -33,7 +33,7 @@ export const OrganizeToast: React.FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className="fixed z-40 left-4 right-4 bottom-24 md:left-auto md:right-6 md:bottom-6 md:max-w-sm bg-[#FDFBF3] border border-[#CBD5AE] rounded-2xl shadow-lg p-3.5 flex items-start gap-3"
+      className="fixed z-40 left-4 right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] md:left-auto md:right-6 md:bottom-6 md:max-w-sm bg-[#FDFBF3] border border-[#CBD5AE] rounded-2xl shadow-lg p-3.5 flex items-start gap-3"
     >
       <div className="w-7 h-7 rounded-full bg-garden-pill/60 text-garden-moss flex items-center justify-center shrink-0">
         <Leaf className="w-3.5 h-3.5" />
