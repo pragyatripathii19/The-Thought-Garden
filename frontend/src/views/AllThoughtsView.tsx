@@ -15,6 +15,7 @@ import { GrowthStage } from '../types';
 import { formatRelativeTime } from '../lib/time';
 import { GrowthStageBadge } from '../components/GrowthStageBadge';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
+import { useThoughtSelection, SelectModeButton, SelectCheck, SelectionBar } from '../components/BulkSelect';
 
 type SortOption = 'newest' | 'oldest' | 'stage';
 
@@ -74,6 +75,9 @@ export const AllThoughtsView: React.FC = () => {
     return list;
   }, [thoughts, query, stageFilter, collectionFilter, sortBy]);
 
+  const visibleIds = useMemo(() => filtered.map((t) => t.id), [filtered]);
+  const selection = useThoughtSelection(visibleIds);
+
   const sortLabels: Record<SortOption, string> = {
     newest: 'Newest first',
     oldest: 'Oldest first',
@@ -99,15 +103,18 @@ export const AllThoughtsView: React.FC = () => {
               {thoughts.length} {thoughts.length === 1 ? 'thought' : 'thoughts'} in your garden
             </p>
           </div>
-          <button
-            type="button"
-            onClick={cycleSortOption}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-garden-ink-soft bg-garden-pill/60 hover:bg-garden-pill/60 border border-[#CBD5AE] rounded-xl font-medium transition-colors"
-            title={`Sort: ${sortLabels[sortBy]}`}
-          >
-            <ArrowUpDown className="w-3.5 h-3.5" />
-            <span>{sortLabels[sortBy]}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <SelectModeButton selection={selection} disabled={thoughts.length === 0} />
+            <button
+              type="button"
+              onClick={cycleSortOption}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-garden-ink-soft bg-garden-pill/60 hover:bg-garden-pill/60 border border-[#CBD5AE] rounded-xl font-medium transition-colors"
+              title={`Sort: ${sortLabels[sortBy]}`}
+            >
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              <span>{sortLabels[sortBy]}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -223,57 +230,76 @@ export const AllThoughtsView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-garden-card border border-garden-line rounded-2xl divide-y divide-garden-line-soft overflow-hidden">
-          {filtered.map((thought) => (
-            <div
-              key={thought.id}
-              onClick={() => setSelectedThoughtId(thought.id)}
-              className="p-3.5 sm:p-4 hover:bg-[#FDFBF3] cursor-pointer transition-colors flex items-start justify-between gap-3 group"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-garden-ink group-hover:text-garden-ink leading-relaxed">
-                  {thought.text}
-                </p>
-                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="text-[11px] text-garden-ink-faint">
-                    {formatRelativeTime(thought.createdAt)}
-                  </span>
-                  {thought.collectionIds?.length > 0 && (
-                    <>
-                      <span className="text-[#c8d3c9]">•</span>
-                      {thought.collectionIds.slice(0, 2).map((cid) => {
-                        const col = collections.find((c) => c.id === cid);
-                        return col ? (
-                          <span key={cid} className="text-[11px] text-garden-ink-soft">{col.name}</span>
-                        ) : null;
-                      })}
-                    </>
-                  )}
-                  {thought.isSaved && (
-                    <>
-                      <span className="text-[#c8d3c9]">•</span>
-                      <span className="inline-flex items-center gap-0.5 text-[11px] text-garden-moss" title="Saved">
-                        <Bookmark className="w-3 h-3 fill-current" aria-hidden="true" />
-                        <span className="sr-only">Saved</span>
-                      </span>
-                    </>
-                  )}
+          {filtered.map((thought) => {
+            const isChecked = selection.isSelected(thought.id);
+            return (
+              <div
+                key={thought.id}
+                onClick={() => (selection.isSelecting ? selection.toggle(thought.id) : setSelectedThoughtId(thought.id))}
+                {...(selection.isSelecting && {
+                  role: 'checkbox',
+                  'aria-checked': isChecked,
+                  tabIndex: 0,
+                  onKeyDown: (e: React.KeyboardEvent) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      selection.toggle(thought.id);
+                    }
+                  },
+                })}
+                className={`p-3.5 sm:p-4 cursor-pointer transition-colors flex items-start justify-between gap-3 group ${
+                  isChecked ? 'bg-garden-pill/40' : 'hover:bg-[#FDFBF3]'
+                }`}
+              >
+                {selection.isSelecting && <SelectCheck checked={isChecked} />}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-garden-ink group-hover:text-garden-ink leading-relaxed">
+                    {thought.text}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="text-[11px] text-garden-ink-faint">
+                      {formatRelativeTime(thought.createdAt)}
+                    </span>
+                    {thought.collectionIds?.length > 0 && (
+                      <>
+                        <span className="text-[#c8d3c9]">•</span>
+                        {thought.collectionIds.slice(0, 2).map((cid) => {
+                          const col = collections.find((c) => c.id === cid);
+                          return col ? (
+                            <span key={cid} className="text-[11px] text-garden-ink-soft">{col.name}</span>
+                          ) : null;
+                        })}
+                      </>
+                    )}
+                    {thought.isSaved && (
+                      <>
+                        <span className="text-[#c8d3c9]">•</span>
+                        <span className="inline-flex items-center gap-0.5 text-[11px] text-garden-moss" title="Saved">
+                          <Bookmark className="w-3 h-3 fill-current" aria-hidden="true" />
+                          <span className="sr-only">Saved</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
+                <GrowthStageBadge
+                  stage={thought.stage || 'seed'}
+                  size="sm"
+                  showLabel={true}
+                  onClick={selection.isSelecting ? undefined : () => {
+                    const stages: GrowthStage[] = ['seed', 'sprout', 'bloom', 'mature'];
+                    const currentIndex = stages.indexOf(thought.stage || 'seed');
+                    const nextStage = stages[(currentIndex + 1) % stages.length];
+                    updateThought(thought.id, { stage: nextStage });
+                  }}
+                />
               </div>
-              <GrowthStageBadge
-                stage={thought.stage || 'seed'}
-                size="sm"
-                showLabel={true}
-                onClick={() => {
-                  const stages: GrowthStage[] = ['seed', 'sprout', 'bloom', 'mature'];
-                  const currentIndex = stages.indexOf(thought.stage || 'seed');
-                  const nextStage = stages[(currentIndex + 1) % stages.length];
-                  updateThought(thought.id, { stage: nextStage });
-                }}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      <SelectionBar selection={selection} />
 
       {/* Thought Detail Modal */}
       <ThoughtDetailModal
