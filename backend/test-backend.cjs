@@ -62,7 +62,8 @@ function client() {
     const res = await fetch(base + path, {
       method,
       headers,
-      body: body === undefined ? (json && method !== 'GET' ? '{}' : undefined) : JSON.stringify(body),
+      // No body when there's nothing to send, as the browser does for DELETE and logout.
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
     const setCookie = res.headers.get('set-cookie');
     if (setCookie) {
