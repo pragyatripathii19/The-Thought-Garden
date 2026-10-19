@@ -15,7 +15,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-garden-paper/95 border-t border-garden-line px-4 py-2 flex items-center justify-around select-none"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-garden-paper/95 border-t border-garden-line px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around select-none"
       aria-label="Mobile Navigation"
     >
       {/* Home */}

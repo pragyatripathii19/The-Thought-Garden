@@ -38,7 +38,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onTabChange }) => {
   return (
     <>
       {/* Mobile Top Header (< md) */}
-      <header className="md:hidden sticky top-0 z-30 bg-garden-paper/95 border-b border-garden-line px-4 py-3 flex items-center justify-between">
+      <header className="md:hidden sticky top-0 z-30 bg-garden-paper/95 border-b border-garden-line px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between">
         <div
           onClick={() => onTabChange('garden')}
           className="flex items-center gap-2.5 cursor-pointer"

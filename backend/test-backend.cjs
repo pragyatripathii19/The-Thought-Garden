@@ -7,6 +7,7 @@ const { createPool } = require('./db.cjs');
 const { migrate } = require('./migrate.cjs');
 const { createApp } = require('./app.cjs');
 const { validTimeZone, dayIn, addDays, streakEndingAt } = require('./routes/admin.cjs');
+const { buildReminderIcs } = require('./routes/reminder.cjs');
 
 const TEST_DB = process.env.TEST_DATABASE_URL || '';
 if (!/test/i.test(new URL(TEST_DB || 'postgres://x/none').pathname)) {
@@ -127,6 +128,27 @@ async function run(pool) {
   assert.equal(addDays('2026-03-01', -1), '2026-02-28');
   assert.equal(streakEndingAt(new Set(['2026-01-09', '2026-01-10']), '2026-01-11'), 2, 'a streak survives until the day ends');
   console.log('✓ dashboard date helpers');
+
+  // ---------- daily reminder (calendar file) ----------
+  const ics = buildReminderIcs({
+    time: '07:30',
+    date: '2026-10-19',
+    appUrl: 'https://the-thought-garden.onrender.com/?new=1',
+    now: new Date('2026-10-19T01:02:03.456Z'),
+    uid: 'u1',
+  });
+  assert.ok(ics.split('\r\n').every((line) => line.length <= 75), 'calendar lines stay within 75 characters');
+  const unfolded = ics.replace(/\r\n /g, '');
+  assert.ok(unfolded.includes('DTSTART:20261019T073000\r\n'), 'the reminder starts at the chosen local time');
+  assert.ok(unfolded.includes('RRULE:FREQ=DAILY'), 'it repeats every day');
+  assert.ok(unfolded.includes('DTSTAMP:20261019T010203Z'));
+  assert.ok(unfolded.includes('URL:https://the-thought-garden.onrender.com/?new=1'), 'tapping it opens a new thought');
+  const reminder = await fetch(base + '/api/reminder.ics?time=21:15&date=2026-10-19');
+  assert.equal(reminder.status, 200);
+  assert.match(reminder.headers.get('content-type'), /^text\/calendar/);
+  assert.ok((await reminder.text()).includes('DTSTART:20261019T211500'), 'served without an account');
+  expectStatus(await client().get('/api/reminder.ics?time=25:00'), 400, 'a reminder needs a real time');
+  console.log('✓ daily reminder calendar file');
 
   // ---------- accounts ----------
   const health = await client().get('/api/health');

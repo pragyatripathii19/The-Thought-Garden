@@ -19,6 +19,7 @@ import { useThoughts } from './context/StorageContext';
 import { OrganizerProvider } from './context/OrganizerContext';
 import { OrganizeToast } from './components/OrganizeToast';
 import { LocalGardenUploadCard } from './components/LocalGardenUploadCard';
+import { InstallHomeCard } from './components/InstallApp';
 import { AuthProvider, useAuth, hasSignedInHereBefore } from './context/AuthContext';
 import { AuthView, AuthStatusScreen } from './views/AuthView';
 import { LandingView } from './views/LandingView';
@@ -29,6 +30,15 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<NavTab>('garden');
   const [isNewThoughtModalOpen, setIsNewThoughtModalOpen] = useState(false);
   const { setIsAdminModalOpen, setIsFeedbackModalOpen, isAdmin } = useThoughts();
+
+  // The home-screen shortcut "Plant a thought" (and the daily reminder) open /?new=1.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('new')) return;
+    setIsNewThoughtModalOpen(true);
+    url.searchParams.delete('new');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, []);
 
   // Global keyboard shortcuts:
   // - Ctrl + N: New Thought
@@ -64,8 +74,9 @@ function AppContent() {
         <TopHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Main Content Area */}
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8 pb-24 md:pb-12">
+        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-12">
           <LocalGardenUploadCard />
+          {activeTab === 'garden' && <InstallHomeCard />}
           {activeTab === 'garden' && (
             <GardenView
               onNavigateTab={setActiveTab}
