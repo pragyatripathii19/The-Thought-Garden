@@ -25,8 +25,10 @@ function createApp({ pool, config }) {
 
   // CSRF guard: browsers can't send a cross-site JSON request with cookies
   // without a CORS preflight, which this server never approves.
+  // Checks the header itself: req.is() is null for bodyless requests such as DELETE or logout.
   app.use('/api', (req, res, next) => {
-    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.is('application/json')) return next();
+    const sentAsJson = /^application\/json\s*(;|$)/i.test(req.headers['content-type'] || '');
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || sentAsJson) return next();
     res.status(415).json({ error: 'Requests must be sent as JSON.' });
   });
 

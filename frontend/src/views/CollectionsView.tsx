@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Search,
@@ -18,6 +18,7 @@ import { formatRelativeTime } from '../lib/time';
 import { ThoughtDetailModal } from '../components/ThoughtDetailModal';
 import { getThoughtCategoryMeta } from '../lib/categoryMeta';
 import { AutoBadge } from '../components/OrganizeToast';
+import { useThoughtSelection, SelectModeButton, SelectCheck, SelectionBar } from '../components/BulkSelect';
 import { CollectionIcon } from '../components/CollectionIcon';
 import { ART } from '../lib/art';
 import { COLLECTION_ICONS, COLLECTION_ICON_KEYS, suggestCollectionIcon } from '../lib/collectionIcons';
@@ -62,6 +63,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
     : [];
 
   const selectedThought = thoughts.find((t) => t.id === selectedThoughtId) || null;
+
+  const activeThoughtIds = useMemo(() => activeThoughts.map((t) => t.id), [activeThoughts]);
+  const selection = useThoughtSelection(activeThoughtIds);
+  const stopSelecting = selection.stop;
+  // Opening or leaving a collection starts with nothing selected.
+  useEffect(() => stopSelecting(), [activeCollectionId, stopSelecting]);
 
   // Filter collections by search query
   const filteredCollections = collections.filter(
@@ -145,6 +152,11 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
           </div>
 
           <div className="relative flex items-center gap-1">
+            {activeThoughts.length > 0 && (
+              <span className="mr-1">
+                <SelectModeButton selection={selection} />
+              </span>
+            )}
             <button
               type="button"
               onClick={() => toggleSaveCollection(activeCollection.id)}
@@ -200,14 +212,29 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
             {activeThoughts.map((thought) => {
               const meta = getThoughtCategoryMeta(thought);
               const CategoryIcon = meta.Icon;
+              const isChecked = selection.isSelected(thought.id);
 
               return (
                 <div
                   key={thought.id}
-                  onClick={() => setSelectedThoughtId(thought.id)}
-                  className="bg-garden-card border border-garden-line hover:border-[#D6CAA6] p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3 group"
+                  onClick={() => (selection.isSelecting ? selection.toggle(thought.id) : setSelectedThoughtId(thought.id))}
+                  {...(selection.isSelecting && {
+                    role: 'checkbox',
+                    'aria-checked': isChecked,
+                    tabIndex: 0,
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        selection.toggle(thought.id);
+                      }
+                    },
+                  })}
+                  className={`border p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3 group ${
+                    isChecked ? 'bg-garden-pill/40 border-[#CBD5AE]' : 'bg-garden-card border-garden-line hover:border-[#D6CAA6]'
+                  }`}
                 >
                   <div className="flex items-start gap-3 min-w-0">
+                    {selection.isSelecting && <SelectCheck checked={isChecked} />}
                     <div className={`w-8 h-8 rounded-full ${meta.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
                       <CategoryIcon className="w-4 h-4" />
                     </div>
@@ -229,6 +256,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onNavigateTab 
             })}
           </div>
         )}
+
+        <SelectionBar selection={selection} />
 
         {/* Thought Detail Modal */}
         <ThoughtDetailModal
