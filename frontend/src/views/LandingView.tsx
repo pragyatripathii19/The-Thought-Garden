@@ -241,8 +241,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onStart, onLogin }) =>
       </Section>
 
       <footer className="border-t border-garden-line-soft">
-        <div className={`${container} py-8 text-center`}>
+        <div className={`${container} py-8 text-center space-y-1`}>
           <p className="font-serif italic text-lg text-garden-ink-soft">The Thought Garden. Every thought has a home.</p>
+          <p className="text-sm text-garden-ink-faint">Grown with care by Pragya</p>
         </div>
       </footer>
     </main>
