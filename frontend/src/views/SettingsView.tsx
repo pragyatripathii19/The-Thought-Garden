@@ -109,7 +109,7 @@ export const SettingsView: React.FC = () => {
           {[
             { label: 'Thoughts', value: thoughts.length },
             { label: 'Collections', value: collections.length },
-            { label: 'Connections', value: connections.length },
+            { label: 'Connections', value: connections.filter((c) => c.status === 'accepted').length },
           ].map((stat) => (
             <div key={stat.label} className="p-3 rounded-xl bg-[#FDFBF3] border border-garden-line">
               <div className="text-[26px] font-serif font-semibold text-garden-ink tabular-nums">{stat.value}</div>
