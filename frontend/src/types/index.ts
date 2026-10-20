@@ -26,6 +26,8 @@ export interface Thought {
   editCount?: number;
   /** The user picked the stage themselves, so it no longer changes automatically. */
   stageManual?: boolean;
+  /** Hash of the text last checked for connections; "local:" when checked without the AI. */
+  connectChecked?: string;
 }
 
 export type CollectionColorVariant = 'green' | 'rose' | 'purple' | 'amber';
@@ -75,6 +77,18 @@ export interface OrganizeEvent {
 
 export type ConnectionStatus = 'suggested' | 'accepted' | 'dismissed';
 
+/**
+ * How two thoughts relate. The first four come from the AI; "similar" (meaning, on this
+ * device) and "shared-words" are the fallbacks used without it.
+ */
+export type ConnectionKind =
+  | 'same-subject'
+  | 'shared-theme'
+  | 'different-feelings'
+  | 'builds-on'
+  | 'similar'
+  | 'shared-words';
+
 export interface Connection {
   id: string;
   sourceThoughtId: string;
@@ -82,6 +96,9 @@ export interface Connection {
   status: ConnectionStatus;
   score?: number;
   reason: string;
+  kind?: ConnectionKind;
+  /** What both thoughts are about, in a few words. */
+  subject?: string;
   createdAt: string;
   updatedAt: string;
 }

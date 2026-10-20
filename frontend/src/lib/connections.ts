@@ -1,5 +1,3 @@
-import { Thought, Connection } from '../types';
-
 export const ENGLISH_STOP_WORDS = new Set([
   'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', 'aren',
   'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
@@ -42,14 +40,6 @@ export function extractMeaningfulTokens(text: string): string[] {
   return Array.from(meaningful);
 }
 
-export interface SuggestedConnection {
-  sourceThought: Thought;
-  targetThought: Thought;
-  sharedTokens: string[];
-  reason: string;
-  score: number;
-}
-
 /**
  * Generates an explainable reason grounded in the shared terms.
  */
@@ -63,71 +53,32 @@ export function formatConnectionReason(sharedTokens: string[]): string {
 }
 
 /**
- * Discovers the best connection candidate among the thoughts.
- * Conservative threshold: requires at least 2 distinct meaningful shared tokens.
- * Excludes self-links and any pair that has already been recorded (accepted or dismissed).
+ * A rough word stem, so "vote", "votes", "voted" and "voting" match. Only used by the
+ * last-resort word matching on devices that can't run the meaning model.
  */
-export function findTopSuggestedConnection(
-  thoughts: Thought[],
-  existingConnections: Connection[]
-): SuggestedConnection | null {
-  if (thoughts.length < 2) return null;
-
-  // Build a lookup set of existing pairs (unordered)
-  const existingPairs = new Set<string>();
-  for (const conn of existingConnections) {
-    const pairKey1 = `${conn.sourceThoughtId}:::${conn.targetThoughtId}`;
-    const pairKey2 = `${conn.targetThoughtId}:::${conn.sourceThoughtId}`;
-    existingPairs.add(pairKey1);
-    existingPairs.add(pairKey2);
-  }
-
-  // Pre-tokenize thoughts
-  const tokenMap = new Map<string, string[]>();
-  for (const thought of thoughts) {
-    tokenMap.set(thought.id, extractMeaningfulTokens(thought.text));
-  }
-
-  const candidates: SuggestedConnection[] = [];
-
-  for (let i = 0; i < thoughts.length; i++) {
-    for (let j = i + 1; j < thoughts.length; j++) {
-      const t1 = thoughts[i];
-      const t2 = thoughts[j];
-
-      // Exclude already recorded pairs
-      const pairKey = `${t1.id}:::${t2.id}`;
-      if (existingPairs.has(pairKey)) continue;
-
-      const tokens1 = tokenMap.get(t1.id) || [];
-      const tokens2 = tokenMap.get(t2.id) || [];
-
-      // Find shared tokens
-      const shared = tokens1.filter((t) => tokens2.includes(t));
-
-      // Conservative threshold: require at least 2 shared meaningful words
-      if (shared.length >= 2) {
-        const unionSize = new Set([...tokens1, ...tokens2]).size;
-        const jaccardScore = unionSize > 0 ? shared.length / unionSize : 0;
-
-        candidates.push({
-          sourceThought: t1,
-          targetThought: t2,
-          sharedTokens: shared,
-          reason: formatConnectionReason(shared),
-          score: jaccardScore,
-        });
-      }
+export function stemWord(word: string): string {
+  let w = word;
+  if (w.length > 4 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+  for (const suffix of ['ingly', 'edly', 'ings', 'ing', 'ers', 'ed', 'er', 'es', 'ly', 's']) {
+    if (suffix === 's' && w.endsWith('ss')) break;
+    if (w.endsWith(suffix) && w.length - suffix.length >= 3) {
+      w = w.slice(0, -suffix.length);
+      break;
     }
   }
+  if (w.length > 3 && w.endsWith('e')) w = w.slice(0, -1);
+  // running -> runn -> run
+  if (w.length > 3 && w[w.length - 1] === w[w.length - 2] && !'aeiouls'.includes(w[w.length - 1])) w = w.slice(0, -1);
+  return w;
+}
 
-  if (candidates.length === 0) return null;
-
-  // Sort descending by score, then by shared tokens count
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.sharedTokens.length - a.sharedTokens.length;
-  });
-
-  return candidates[0];
+/** Meaningful words two texts share, compared by stem; reported as they appear in the first text. */
+export function sharedWords(textA: string, textB: string): string[] {
+  const stemsB = new Set(extractMeaningfulTokens(textB).map(stemWord));
+  const shared = new Map<string, string>();
+  for (const token of extractMeaningfulTokens(textA)) {
+    const stem = stemWord(token);
+    if (stemsB.has(stem) && !shared.has(stem)) shared.set(stem, token);
+  }
+  return [...shared.values()];
 }

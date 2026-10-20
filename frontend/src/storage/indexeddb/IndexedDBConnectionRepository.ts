@@ -14,6 +14,8 @@ export class IndexedDBConnectionRepository implements IConnectionRepository {
         status: dto.status,
         reason: dto.reason,
         score: dto.score,
+        kind: dto.kind,
+        subject: dto.subject,
       });
     }
 
@@ -29,6 +31,8 @@ export class IndexedDBConnectionRepository implements IConnectionRepository {
       status: dto.status,
       score: dto.score,
       reason: dto.reason,
+      kind: dto.kind,
+      subject: dto.subject,
       createdAt: now,
       updatedAt: now,
     };
@@ -81,6 +85,8 @@ export class IndexedDBConnectionRepository implements IConnectionRepository {
       status: dto.status !== undefined ? dto.status : existing.status,
       score: dto.score !== undefined ? dto.score : existing.score,
       reason: dto.reason !== undefined ? dto.reason : existing.reason,
+      kind: dto.kind !== undefined ? dto.kind : existing.kind,
+      subject: dto.subject !== undefined ? dto.subject : existing.subject,
       updatedAt: new Date().toISOString(),
     };
 

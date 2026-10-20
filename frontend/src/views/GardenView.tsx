@@ -14,6 +14,7 @@ import { CollectionIcon } from '../components/CollectionIcon';
 import { ART } from '../lib/art';
 import { pickCapturePrompt } from '../lib/capturePrompts';
 import { MAX_THOUGHT_LENGTH } from '../lib/defaults';
+import { describeConnection } from '../lib/connect/labels';
 
 interface GardenViewProps {
   onNavigateTab?: (tab: NavTab) => void;
@@ -243,73 +244,67 @@ export const GardenView: React.FC<GardenViewProps> = ({ onNavigateTab }) => {
         )}
 
         {/* Suggested connection */}
-        {suggestedConnection && (
-          <section className={`${CARD} p-5 sm:p-6 space-y-4 animate-fade-in`}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-garden-pill/70 text-garden-moss flex items-center justify-center shrink-0" aria-hidden="true">
-                  <Link2 className="w-5 h-5" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <h3 className="font-serif text-2xl leading-tight font-semibold text-garden-ink">This might connect to…</h3>
-                  <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-garden-tag text-garden-tag-ink border border-garden-line">
-                    {suggestedConnection.reason}
+        {suggestedConnection && (() => {
+          const { connection, sourceThought, targetThought } = suggestedConnection;
+          const kindLabel = describeConnection(connection);
+          const notRelated = () => dismissConnection(sourceThought.id, targetThought.id);
+          return (
+            <section className={`${CARD} p-5 sm:p-6 space-y-4 animate-fade-in`} aria-label="Suggested connection">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="w-10 h-10 rounded-full bg-garden-pill/70 text-garden-moss flex items-center justify-center shrink-0" aria-hidden="true">
+                    <Link2 className="w-5 h-5" strokeWidth={1.75} />
                   </span>
+                  <div className="space-y-1.5">
+                    <h3 className="font-serif text-2xl leading-tight font-semibold text-garden-ink">These might connect</h3>
+                    {kindLabel && (
+                      <span className="inline-block text-xs px-2.5 py-0.5 rounded-full bg-garden-tag text-garden-tag-ink border border-garden-line">
+                        {kindLabel}
+                      </span>
+                    )}
+                    <p className="text-sm text-garden-ink-soft leading-relaxed">{connection.reason}</p>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  dismissConnection(suggestedConnection.sourceThought.id, suggestedConnection.targetThought.id)
-                }
-                className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
-                title="Dismiss suggestion"
-                aria-label="Dismiss suggestion"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[suggestedConnection.sourceThought, suggestedConnection.targetThought].map((t) => (
                 <button
-                  key={t.id}
                   type="button"
-                  onClick={() => setSelectedThoughtId(t.id)}
-                  className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line-soft text-left hover:border-[#D6CAA6] transition-colors"
+                  onClick={notRelated}
+                  className="p-1.5 text-garden-ink-faint hover:text-garden-ink rounded-lg"
+                  title="Not related"
+                  aria-label="Not related"
                 >
-                  <p className="text-sm text-garden-ink line-clamp-3 leading-relaxed">{t.text}</p>
+                  <X className="w-4 h-4" />
                 </button>
-              ))}
-            </div>
+              </div>
 
-            <div className="flex items-center justify-end gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  dismissConnection(suggestedConnection.sourceThought.id, suggestedConnection.targetThought.id)
-                }
-                className={QUIET_BUTTON}
-              >
-                Dismiss for now
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  acceptConnection(
-                    suggestedConnection.sourceThought.id,
-                    suggestedConnection.targetThought.id,
-                    suggestedConnection.reason
-                  )
-                }
-                className={PRIMARY_BUTTON}
-              >
-                <Link2 className="w-4 h-4" />
-                <span>Connect them</span>
-              </button>
-            </div>
-          </section>
-        )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[sourceThought, targetThought].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedThoughtId(t.id)}
+                    className="p-4 rounded-xl bg-[#FDFBF3] border border-garden-line-soft text-left hover:border-[#D6CAA6] transition-colors"
+                  >
+                    <p className="text-sm text-garden-ink line-clamp-3 leading-relaxed">{t.text}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-4">
+                <button type="button" onClick={notRelated} className={QUIET_BUTTON}>
+                  Not related
+                </button>
+                <button
+                  type="button"
+                  onClick={() => acceptConnection(sourceThought.id, targetThought.id, connection.reason)}
+                  className={PRIMARY_BUTTON}
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span>Connect them</span>
+                </button>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Automatic organising: "group these two thoughts?" (on-device rule) */}
         {groupSuggestions.slice(0, 1).map((s) => (

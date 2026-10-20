@@ -3,6 +3,7 @@ import {
   Collection,
   Connection,
   ConnectionStatus,
+  ConnectionKind,
   GrowthStage,
   ThoughtCategory,
   CollectionColorVariant,
@@ -32,6 +33,7 @@ export interface UpdateThoughtDTO {
   organizeLocked?: boolean;
   classifyState?: ClassifyState;
   classifiedAt?: string;
+  connectChecked?: string;
   /** Turn automatic growth back on (false) or off (true) without changing the stage. */
   stageManual?: boolean;
   /** A stage reached automatically. Unlike `stage`, it isn't the user's choice and isn't "tending". */
@@ -72,6 +74,7 @@ export function applyThoughtUpdate(existing: Thought, dto: UpdateThoughtDTO): Th
   if (dto.organizeLocked !== undefined) updated.organizeLocked = dto.organizeLocked;
   if (dto.classifyState !== undefined) updated.classifyState = dto.classifyState;
   if (dto.classifiedAt !== undefined) updated.classifiedAt = dto.classifiedAt;
+  if (dto.connectChecked !== undefined) updated.connectChecked = dto.connectChecked;
   if (touchesContent) updated.updatedAt = new Date().toISOString();
   return updated;
 }
@@ -131,12 +134,16 @@ export interface CreateConnectionDTO {
   status: ConnectionStatus;
   score?: number;
   reason: string;
+  kind?: ConnectionKind;
+  subject?: string;
 }
 
 export interface UpdateConnectionDTO {
   status?: ConnectionStatus;
   score?: number;
   reason?: string;
+  kind?: ConnectionKind;
+  subject?: string;
 }
 
 /**

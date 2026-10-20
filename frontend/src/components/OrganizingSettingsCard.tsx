@@ -121,14 +121,16 @@ export const OrganizingSettingsCard: React.FC = () => {
             Smart organising (AI)
           </label>
           <p className="text-xs text-garden-ink-soft leading-relaxed">
-            Uses an AI service for better grouping and names. Falls back to on-device organising when it’s unavailable.
+            Uses an AI service for better grouping and names, and to spot thoughts that connect by meaning. Falls back
+            to this device when it’s unavailable.
           </p>
           <details className="text-xs text-garden-ink-soft">
             <summary className="cursor-pointer font-semibold text-garden-moss w-fit">How this works</summary>
             <p className="mt-1 leading-relaxed">
               Each new thought, up to 10 similar thoughts, your collection names and why you’re here (from your
-              profile) go through the Thought Garden server to the AI provider. Our server doesn’t keep them; the
-              provider’s terms apply.
+              profile) go through the Thought Garden server to the AI provider. To suggest connections, a thought and
+              up to 5 thoughts closest in meaning are sent the same way, once for each thought (and again if you
+              edit it). Our server doesn’t keep them; the provider’s terms apply.
             </p>
           </details>
           {smartDisabledReason && <p className="text-[11px] text-amber-800">{smartDisabledReason}</p>}

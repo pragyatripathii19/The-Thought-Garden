@@ -17,12 +17,14 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import { Thought, GrowthStage } from '../types';
+import { Connection, Thought, GrowthStage } from '../types';
 import { GrowthStageBadge, stageConfig } from './GrowthStageBadge';
 import { useThoughts } from '../context/StorageContext';
 import { describeGrowth } from '../lib/growth';
 import { formatRelativeTime } from '../lib/time';
 import { AutoBadge } from './OrganizeToast';
+import { rankSuggestions } from '../lib/connect/finder';
+import { describeConnection } from '../lib/connect/labels';
 
 interface ThoughtDetailModalProps {
   thought: Thought | null;
@@ -50,7 +52,16 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
   onDelete,
   onSelectThought,
 }) => {
-  const { collections, toggleSaveThought, connections, thoughts, toggleThoughtCollection } = useThoughts();
+  const {
+    collections,
+    toggleSaveThought,
+    connections,
+    thoughts,
+    toggleThoughtCollection,
+    acceptConnection,
+    dismissConnection,
+    unlinkConnection,
+  } = useThoughts();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -89,23 +100,17 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
   if (!isOpen || !thought) return null;
 
-  // Find accepted connected thoughts
-  const activeConnections = connections.filter(
-    (c) =>
-      c.status === 'accepted' &&
-      (c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id)
-  );
-
-  const connectedThoughts = activeConnections.map((c) => {
-    const otherId = c.sourceThoughtId === thought.id ? c.targetThoughtId : c.sourceThoughtId;
-    const otherThought = thoughts.find((t) => t.id === otherId);
-    return {
-      connection: c,
-      thought: otherThought,
-    };
-  }).filter((item): item is { connection: typeof item.connection; thought: Thought } => Boolean(item.thought));
-
-  const primaryConnectionReason = activeConnections[0]?.reason || null;
+  // Each connection of this thought with the thought on its other end.
+  const withOther = (list: Connection[]) =>
+    list
+      .filter((c) => c.sourceThoughtId === thought.id || c.targetThoughtId === thought.id)
+      .map((c) => ({
+        connection: c,
+        thought: thoughts.find((t) => t.id === (c.sourceThoughtId === thought.id ? c.targetThoughtId : c.sourceThoughtId)),
+      }))
+      .filter((item): item is { connection: Connection; thought: Thought } => Boolean(item.thought));
+  const connectedThoughts = withOther(connections.filter((c) => c.status === 'accepted'));
+  const suggestedThoughts = withOther(rankSuggestions(connections, thoughts));
 
   const handleSaveText = async () => {
     const trimmed = editText.trim();
@@ -345,53 +350,70 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
 
             {connectedThoughts.length === 0 ? (
               <p className="text-xs text-garden-ink-faint p-3.5 bg-garden-card rounded-2xl border border-garden-line">
-                No accepted connections yet. As more thoughts accumulate, the connection discovery engine will suggest related ideas here.
+                {suggestedThoughts.length > 0
+                  ? 'Nothing linked yet. Have a look at the suggestions below.'
+                  : "Nothing linked yet. When another thought shares a subject with this one, it'll be suggested here."}
               </p>
             ) : (
               <div className="space-y-2.5">
-                {connectedThoughts.map(({ thought: related }) => {
-                  const iconMeta = getThoughtIcon(related);
-                  const Icon = iconMeta.Icon;
-                  const colName = getCollectionName(related.collectionIds);
-
-                  return (
-                    <div
-                      key={related.id}
-                      onClick={() => onSelectThought && onSelectThought(related)}
-                      className="p-3.5 bg-garden-card hover:bg-[#FDFBF3] border border-garden-line hover:border-[#D6CAA6] rounded-2xl cursor-pointer transition-all flex items-start gap-3"
+                {connectedThoughts.map(({ connection, thought: related }) => (
+                  <RelatedThoughtRow
+                    key={connection.id}
+                    thought={related}
+                    connection={connection}
+                    collectionName={getCollectionName(related.collectionIds)}
+                    icon={getThoughtIcon(related)}
+                    onOpen={() => onSelectThought && onSelectThought(related)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => unlinkConnection(connection.id)}
+                      className="text-xs text-garden-ink-faint hover:text-garden-ink underline underline-offset-2"
                     >
-                      <div className={`w-8 h-8 rounded-full ${iconMeta.bg} flex items-center justify-center shrink-0 mt-0.5`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs sm:text-sm text-garden-ink leading-relaxed line-clamp-2">
-                          {related.text}
-                        </p>
-                        <div className="text-[11px] text-garden-ink-faint mt-1 flex items-center gap-1.5">
-                          <span>{formatRelativeTime(related.createdAt)}</span>
-                          <span>•</span>
-                          <span>{colName}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                      Unlink
+                    </button>
+                  </RelatedThoughtRow>
+                ))}
               </div>
             )}
           </div>
 
-          {/* "A possible connection" Section */}
-          {primaryConnectionReason && (
-            <div className="p-4 rounded-2xl bg-garden-pill/40 border border-[#CBD5AE] space-y-1.5">
+          {/* Suggested connections for this thought */}
+          {suggestedThoughts.length > 0 && (
+            <div className="space-y-3">
               <div className="flex items-center gap-2 text-garden-moss">
                 <Sparkles className="w-4 h-4" />
-                <h4 className="font-serif text-base font-semibold">
-                  A possible connection
-                </h4>
+                <h3 className="font-serif text-xl font-semibold text-garden-ink">Might connect</h3>
               </div>
-              <p className="text-xs sm:text-sm text-garden-ink-soft leading-relaxed">
-                {primaryConnectionReason}
-              </p>
+              <div className="space-y-2.5">
+                {suggestedThoughts.map(({ connection, thought: related }) => (
+                  <RelatedThoughtRow
+                    key={connection.id}
+                    thought={related}
+                    connection={connection}
+                    collectionName={getCollectionName(related.collectionIds)}
+                    icon={getThoughtIcon(related)}
+                    onOpen={() => onSelectThought && onSelectThought(related)}
+                    suggested
+                  >
+                    <button
+                      type="button"
+                      onClick={() => dismissConnection(connection.sourceThoughtId, connection.targetThoughtId)}
+                      className="text-xs text-garden-ink-soft hover:text-garden-ink"
+                    >
+                      Not related
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => acceptConnection(connection.sourceThoughtId, connection.targetThoughtId, connection.reason)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-garden-moss hover:bg-garden-moss-dark text-garden-paper text-xs font-semibold"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                      <span>Connect</span>
+                    </button>
+                  </RelatedThoughtRow>
+                ))}
+              </div>
             </div>
           )}
 
@@ -551,5 +573,49 @@ export const ThoughtDetailModal: React.FC<ThoughtDetailModalProps> = ({
       </div>
     </div>,
     document.body
+  );
+};
+
+/** A thought linked (or suggested) to the open one: its text, why they connect, and actions. */
+const RelatedThoughtRow: React.FC<{
+  thought: Thought;
+  connection: Connection;
+  collectionName: string;
+  icon: { Icon: React.ComponentType<{ className?: string }>; bg: string };
+  onOpen: () => void;
+  suggested?: boolean;
+  children: React.ReactNode;
+}> = ({ thought, connection, collectionName, icon, onOpen, suggested = false, children }) => {
+  const { Icon, bg } = icon;
+  const kindLabel = describeConnection(connection);
+  return (
+    <div
+      className={`p-3.5 border rounded-2xl space-y-2.5 ${
+        suggested ? 'bg-garden-pill/30 border-[#CBD5AE]' : 'bg-garden-card border-garden-line'
+      }`}
+    >
+      <button type="button" onClick={onOpen} className="w-full flex items-start gap-3 text-left group">
+        <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0 mt-0.5`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-garden-ink leading-relaxed line-clamp-2 group-hover:underline underline-offset-2 decoration-garden-line">
+            {thought.text}
+          </p>
+          <div className="text-[11px] text-garden-ink-faint mt-1 flex items-center gap-1.5">
+            <span>{formatRelativeTime(thought.createdAt)}</span>
+            <span>•</span>
+            <span>{collectionName}</span>
+          </div>
+        </div>
+      </button>
+      {(kindLabel || connection.reason) && (
+        <p className="text-xs text-garden-ink-soft leading-relaxed">
+          {kindLabel && <span className="font-semibold text-garden-moss">{kindLabel}. </span>}
+          {connection.reason}
+        </p>
+      )}
+      <div className="flex items-center justify-end gap-3">{children}</div>
+    </div>
   );
 };

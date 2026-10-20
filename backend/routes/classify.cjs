@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireUser } = require('../auth.cjs');
 const { createSlidingLimiter } = require('../rateLimit.cjs');
+const { sendLlmError } = require('../llm.cjs');
 
 const clip = (value, max) => (typeof value === 'string' ? value.slice(0, max) : '');
 
@@ -21,19 +22,6 @@ const CLASSIFY_SYSTEM_PROMPT = [
   '"newCollection":{"name":"...","description":"...","partnerThoughtId":"...","icon":"..."},"reason":"one short sentence"}',
 ].join('\n');
 
-// When the provider rate-limits us without saying for how long.
-const DEFAULT_PROVIDER_PAUSE_SECONDS = 30;
-const MAX_PROVIDER_PAUSE_SECONDS = 10 * 60;
-
-/** Seconds from a Retry-After header (seconds or HTTP date), clamped to a sane range. */
-function retryAfterSeconds(header) {
-  if (!header) return DEFAULT_PROVIDER_PAUSE_SECONDS;
-  const seconds = Number(header);
-  const value = Number.isFinite(seconds) ? seconds : (Date.parse(header) - Date.now()) / 1000;
-  if (!Number.isFinite(value)) return DEFAULT_PROVIDER_PAUSE_SECONDS;
-  return Math.min(MAX_PROVIDER_PAUSE_SECONDS, Math.max(1, Math.ceil(value)));
-}
-
 /**
  * Smart organising: classify a new thought against its retrieved candidates.
  * Stateless — thought text is forwarded to the LLM and never stored or logged here.
@@ -43,12 +31,10 @@ function retryAfterSeconds(header) {
  * 502 for provider errors, 504 for timeouts, 503 when no provider is configured,
  * 403 when the account has Smart organising turned off.
  */
-function classifyRoutes({ config }) {
+function classifyRoutes({ config, llmClient }) {
   const router = express.Router();
   const { llm } = config;
   const limiter = createSlidingLimiter({ max: llm.rateLimit, windowMs: llm.rateWindowMs });
-  // One API key serves every user: when the provider rate-limits it, pause for everyone.
-  let providerPausedUntil = 0;
 
   const rateLimited = (res, seconds, error) =>
     res.status(429).set('Retry-After', String(seconds)).json({ error, retryAfterSeconds: seconds });
@@ -65,7 +51,7 @@ function classifyRoutes({ config }) {
       if (!thought || typeof thought.id !== 'string' || typeof thought.text !== 'string') {
         return res.status(400).json({ error: 'thought is required' });
       }
-      const pausedFor = Math.ceil((providerPausedUntil - Date.now()) / 1000);
+      const pausedFor = llmClient.pausedFor();
       if (pausedFor > 0) {
         return rateLimited(res, pausedFor, 'The AI service is busy, try again shortly');
       }
@@ -92,47 +78,7 @@ function classifyRoutes({ config }) {
         userFocus: (Array.isArray(userFocus) ? userFocus : []).slice(0, 7).map((f) => clip(f, 60)).filter(Boolean),
       };
 
-      const llmRes = await fetch(`${llm.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${llm.apiKey}` },
-        body: JSON.stringify({
-          model: llm.model,
-          temperature: 0,
-          max_tokens: llm.maxTokens,
-          ...(llm.reasoningEffort ? { reasoning_effort: llm.reasoningEffort } : {}),
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: CLASSIFY_SYSTEM_PROMPT },
-            { role: 'user', content: JSON.stringify(input) },
-          ],
-        }),
-        signal: AbortSignal.timeout(llm.timeoutMs),
-      });
-
-      if (llmRes.status === 429) {
-        const seconds = retryAfterSeconds(llmRes.headers.get('retry-after'));
-        providerPausedUntil = Date.now() + seconds * 1000;
-        console.warn(`Classify: provider rate limit, pausing Smart organising for ${seconds}s`);
-        return rateLimited(res, seconds, 'The AI service is busy, try again shortly');
-      }
-      if (!llmRes.ok) {
-        console.error(`Classify: LLM provider returned HTTP ${llmRes.status}`);
-        return res.status(502).json({ error: 'Classification provider error' });
-      }
-
-      let data;
-      try {
-        data = await llmRes.json();
-      } catch {
-        return res.status(502).json({ error: 'Classification provider returned an unreadable response' });
-      }
-      const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-      let decision;
-      try {
-        decision = JSON.parse(content);
-      } catch {
-        return res.status(502).json({ error: 'Classification provider returned invalid JSON' });
-      }
+      const decision = await llmClient.chatJson({ system: CLASSIFY_SYSTEM_PROMPT, input, label: 'Classify' });
       if (!decision || !['assign', 'create', 'none'].includes(decision.action)) {
         return res.status(502).json({ error: 'Classification provider returned an unknown action' });
       }
@@ -140,13 +86,7 @@ function classifyRoutes({ config }) {
       // The client validates ids and names against its own data before applying anything.
       res.json({ ok: true, decision });
     } catch (err) {
-      // Log only the error type — never the request body.
-      const name = err && err.name ? err.name : 'Error';
-      console.error('Classify failed:', name);
-      if (name === 'TimeoutError' || name === 'AbortError') {
-        return res.status(504).json({ error: 'The AI service took too long to answer' });
-      }
-      res.status(502).json({ error: 'Classification failed' });
+      sendLlmError(res, err, 'Classification');
     }
   });
 

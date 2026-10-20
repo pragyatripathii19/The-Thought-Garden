@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { OrganizeEvent } from '../types';
 import { useThoughts } from './StorageContext';
 import { useOptionalAuth } from './AuthContext';
+import { useConnectionFinder } from './useConnectionFinder';
 import { Embedder, canRunLocalEmbedder } from '../lib/organize/embedder';
 import {
   OrganizerActions,
@@ -367,6 +368,14 @@ export const OrganizerProvider: React.FC<OrganizerProviderProps> = ({ children, 
     },
     [embeddingRepository, getEmbedder, recordEvents]
   );
+
+  // Connections are looked for once organising has nothing left to do.
+  useConnectionFinder({
+    aiUsable: settings.smartOrganizing && smartAvailable && Boolean(userProfile),
+    organizingBusy: isWorking || thoughts.some((t) => t.classifyState === 'pending'),
+    embedderUnsupported: embedderStatus === 'unsupported',
+    getEmbedder,
+  });
 
   // Sweep: queue every pending thought. Re-runs when thoughts change or a task finishes.
   useEffect(() => {

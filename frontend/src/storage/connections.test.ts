@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryConnectionRepository } from './memory/InMemoryConnectionRepository';
 import { InMemoryThoughtRepository } from './memory/InMemoryThoughtRepository';
-import {
-  extractMeaningfulTokens,
-  findTopSuggestedConnection,
-  formatConnectionReason,
-} from '../lib/connections';
-import { Thought } from '../types';
+import { extractMeaningfulTokens, formatConnectionReason, sharedWords, stemWord } from '../lib/connections';
 
 describe('Local Connection Discovery Algorithm Tests', () => {
   it('should filter common stop-words and short tokens', () => {
@@ -31,82 +26,17 @@ describe('Local Connection Discovery Algorithm Tests', () => {
     expect(reason3).toBe('Both thoughts mention "trees", "forest", and "roots".');
   });
 
-  it('should discover connection when 2 or more meaningful tokens match', () => {
-    const t1: Thought = {
-      id: 't1',
-      text: 'Permaculture design principles for urban forest gardens.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const t2: Thought = {
-      id: 't2',
-      text: 'We planted an urban forest with indigenous species today.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const suggestion = findTopSuggestedConnection([t1, t2], []);
-    expect(suggestion).not.toBeNull();
-    expect(suggestion?.sharedTokens).toContain('urban');
-    expect(suggestion?.sharedTokens).toContain('forest');
-    expect(suggestion?.reason).toContain('urban');
-    expect(suggestion?.reason).toContain('forest');
+  it('matches word forms by stem, so "vote" meets "voting"', () => {
+    expect(stemWord('voting')).toBe(stemWord('vote'));
+    expect(stemWord('voters')).toBe(stemWord('vote'));
+    expect(stemWord('running')).toBe(stemWord('run'));
+    expect(stemWord('classes')).toBe(stemWord('class'));
+    expect(stemWord('stories')).toBe('story');
+    expect(sharedWords('Voting in the local elections', 'Who should I vote for in this election?')).toEqual(['voting', 'elections']);
   });
 
-  it('should show NO suggestion if fewer than 2 meaningful terms match (conservative threshold)', () => {
-    const t1: Thought = {
-      id: 't1',
-      text: 'Reading a book on typography.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const t2: Thought = {
-      id: 't2',
-      text: 'Looking at another book tomorrow.', // Only shares 'book'
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const suggestion = findTopSuggestedConnection([t1, t2], []);
-    expect(suggestion).toBeNull();
-  });
-
-  it('should never suggest a pair that was already accepted or dismissed', () => {
-    const t1: Thought = {
-      id: 't1',
-      text: 'Urban forest gardening is rewarding.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const t2: Thought = {
-      id: 't2',
-      text: 'Studying urban forest ecosystems.',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collectionIds: [],
-    };
-
-    const dismissedConnection = {
-      id: 'c1',
-      sourceThoughtId: 't1',
-      targetThoughtId: 't2',
-      status: 'dismissed' as const,
-      reason: 'Dismissed by user',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // When dismissed, suggestion should be suppressed
-    const suggestion = findTopSuggestedConnection([t1, t2], [dismissedConnection]);
-    expect(suggestion).toBeNull();
+  it('ignores filler words when comparing', () => {
+    expect(sharedWords('I really think about the garden', 'Maybe think about the weather')).toEqual([]);
   });
 });
 
@@ -173,5 +103,23 @@ describe('Connection Repository Contract Tests', () => {
     expect(accepted.length).toBe(1);
     expect(dismissed.length).toBe(1);
     expect(accepted[0].reason).toBe('Accepted link');
+  });
+
+  it('keeps the kind and subject of a suggestion when it is accepted', async () => {
+    await connRepo.create({
+      sourceThoughtId: 't1',
+      targetThoughtId: 't2',
+      status: 'suggested',
+      reason: 'Both are about voting.',
+      kind: 'shared-theme',
+      subject: 'elections and voting',
+      score: 0.29,
+    });
+    const accepted = await connRepo.create({ sourceThoughtId: 't2', targetThoughtId: 't1', status: 'accepted', reason: 'Both are about voting.' });
+    expect(accepted.status).toBe('accepted');
+    expect(accepted.kind).toBe('shared-theme');
+    expect(accepted.subject).toBe('elections and voting');
+    expect(accepted.score).toBe(0.29);
+    expect(await connRepo.count()).toBe(1);
   });
 });

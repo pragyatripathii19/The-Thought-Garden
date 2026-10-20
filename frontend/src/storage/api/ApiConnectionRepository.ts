@@ -14,7 +14,8 @@ export class ApiConnectionRepository implements IConnectionRepository {
     const existing = await this.findPair(dto.sourceThoughtId, dto.targetThoughtId);
     if (existing) {
       // If the pair exists, update it rather than creating a duplicate.
-      return this.update(existing.id, { status: dto.status, reason: dto.reason, score: dto.score });
+      const { status, reason, score, kind, subject } = dto;
+      return this.update(existing.id, { status, reason, score, kind, subject });
     }
     const now = new Date().toISOString();
     return this.save({
@@ -24,6 +25,8 @@ export class ApiConnectionRepository implements IConnectionRepository {
       status: dto.status,
       score: dto.score,
       reason: dto.reason,
+      kind: dto.kind,
+      subject: dto.subject,
       createdAt: now,
       updatedAt: now,
     });
@@ -66,6 +69,8 @@ export class ApiConnectionRepository implements IConnectionRepository {
       status: dto.status !== undefined ? dto.status : existing.status,
       score: dto.score !== undefined ? dto.score : existing.score,
       reason: dto.reason !== undefined ? dto.reason : existing.reason,
+      kind: dto.kind !== undefined ? dto.kind : existing.kind,
+      subject: dto.subject !== undefined ? dto.subject : existing.subject,
       updatedAt: new Date().toISOString(),
     });
   }
