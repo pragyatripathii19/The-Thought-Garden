@@ -25,7 +25,7 @@ import {
   getEmbeddingRepository,
   getOrganizeEventRepository,
 } from '../storage';
-import { findTopSuggestedConnection, SuggestedConnection } from '../lib/connections';
+import { FoundLink, rankSuggestions } from '../lib/connect/finder';
 import { downloadBackupFile, GardenBackupV1, ImportStats } from '../lib/portability';
 import { pickThoughtToRevisit } from '../lib/rediscovery';
 import { STARTER_COLLECTIONS } from '../lib/defaults';
@@ -37,11 +37,19 @@ import { useOptionalAuth } from './AuthContext';
 // How often returning to the tab may reload the garden from the server.
 const FOCUS_REFRESH_INTERVAL_MS = 15 * 1000;
 
+/** A saved connection suggestion with both of its thoughts. */
+export interface ConnectionSuggestion {
+  connection: Connection;
+  sourceThought: Thought;
+  targetThought: Thought;
+}
+
 interface StorageContextValue {
   thoughts: Thought[];
   collections: Collection[];
   connections: Connection[];
-  suggestedConnection: SuggestedConnection | null;
+  /** The best suggestion to show on Home. */
+  suggestedConnection: ConnectionSuggestion | null;
   rediscoveredThought: Thought | null;
   activeCollectionId: string | null;
   setActiveCollectionId: (id: string | null) => void;
@@ -96,6 +104,11 @@ interface StorageContextValue {
   // Connection actions
   acceptConnection: (sourceId: string, targetId: string, reason: string) => Promise<Connection>;
   dismissConnection: (sourceId: string, targetId: string) => Promise<Connection>;
+  /** Removes an accepted link; the pair won't be suggested again. */
+  unlinkConnection: (id: string) => Promise<Connection>;
+  /** Saves links found by the connection finder as suggestions. */
+  addConnectionSuggestions: (links: FoundLink[]) => Promise<void>;
+  removeConnections: (ids: string[]) => Promise<void>;
   refreshConnections: () => Promise<void>;
   // Portability
   exportBackup: () => void;
@@ -348,9 +361,12 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     })();
   }, [thoughts, connections, isLoading, thoughtRepository, growthPass]);
 
-  // Compute live suggested connection candidate
-  const suggestedConnection = useMemo(() => {
-    return findTopSuggestedConnection(thoughts, connections);
+  const suggestedConnection = useMemo<ConnectionSuggestion | null>(() => {
+    const best = rankSuggestions(connections, thoughts)[0];
+    if (!best) return null;
+    const sourceThought = thoughts.find((t) => t.id === best.sourceThoughtId);
+    const targetThought = thoughts.find((t) => t.id === best.targetThoughtId);
+    return sourceThought && targetThought ? { connection: best, sourceThought, targetThought } : null;
   }, [thoughts, connections]);
 
   const createThought = useCallback(
@@ -644,6 +660,55 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
     [connectionRepository]
   );
 
+  const unlinkConnection = useCallback(
+    async (id: string): Promise<Connection> => {
+      try {
+        setError(null);
+        const conn = await connectionRepository.update(id, { status: 'dismissed' });
+        setConnections((prev) => prev.map((c) => (c.id === id ? conn : c)));
+        return conn;
+      } catch (err) {
+        console.error('Failed to unlink thoughts:', err);
+        setError(err instanceof Error ? err.message : 'Failed to unlink thoughts');
+        throw err;
+      }
+    },
+    [connectionRepository]
+  );
+
+  const addConnectionSuggestions = useCallback(
+    async (links: FoundLink[]): Promise<void> => {
+      const added: Connection[] = [];
+      for (const link of links) {
+        // A pair the person already decided on stays as it is.
+        const existing = await connectionRepository.findPair(link.thoughtId, link.otherId);
+        if (existing) continue;
+        added.push(
+          await connectionRepository.create({
+            sourceThoughtId: link.thoughtId,
+            targetThoughtId: link.otherId,
+            status: 'suggested',
+            score: link.score,
+            reason: link.reason,
+            kind: link.kind,
+            subject: link.subject,
+          })
+        );
+      }
+      if (added.length > 0) setConnections((prev) => [...added, ...prev]);
+    },
+    [connectionRepository]
+  );
+
+  const removeConnections = useCallback(
+    async (ids: string[]): Promise<void> => {
+      for (const id of ids) await connectionRepository.delete(id);
+      const removed = new Set(ids);
+      setConnections((prev) => prev.filter((c) => !removed.has(c.id)));
+    },
+    [connectionRepository]
+  );
+
   // Rediscovery state & actions
   const [dismissedRediscoveryIds, setDismissedRediscoveryIds] = useState<Set<string>>(() => new Set());
 
@@ -807,6 +872,9 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({
         refreshCollections,
         acceptConnection,
         dismissConnection,
+        unlinkConnection,
+        addConnectionSuggestions,
+        removeConnections,
         refreshConnections,
         exportBackup,
         importBackup,
