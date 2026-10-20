@@ -8,6 +8,8 @@ const { gardenRoutes } = require('./routes/garden.cjs');
 const { feedbackRoutes } = require('./routes/feedback.cjs');
 const { adminRoutes } = require('./routes/admin.cjs');
 const { classifyRoutes } = require('./routes/classify.cjs');
+const { connectRoutes } = require('./routes/connect.cjs');
+const { createLlmClient } = require('./llm.cjs');
 const { reminderRoutes } = require('./routes/reminder.cjs');
 
 /** Builds the Express app. Kept separate from listen() so tests can run it on any port. */
@@ -52,7 +54,10 @@ function createApp({ pool, config }) {
   app.use('/api/auth', authRoutes({ pool, sessions, config }));
   app.use('/api/feedback', feedbackRoutes({ pool }));
   app.use('/api/admin', adminRoutes({ pool, config }));
-  app.use('/api/classify', classifyRoutes({ config }));
+  // One client, so a provider rate limit pauses organising and connections alike.
+  const llmClient = createLlmClient(config.llm);
+  app.use('/api/classify', classifyRoutes({ config, llmClient }));
+  app.use('/api/connect', connectRoutes({ config, llmClient }));
   app.use('/api', reminderRoutes());
   app.use('/api', gardenRoutes({ pool }));
 

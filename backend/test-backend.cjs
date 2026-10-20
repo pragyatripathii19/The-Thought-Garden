@@ -8,6 +8,7 @@ const { migrate } = require('./migrate.cjs');
 const { createApp } = require('./app.cjs');
 const { validTimeZone, dayIn, addDays, streakEndingAt } = require('./routes/admin.cjs');
 const { buildReminderIcs } = require('./routes/reminder.cjs');
+const { pairsFrom, validLinks } = require('./routes/connect.cjs');
 
 const TEST_DB = process.env.TEST_DATABASE_URL || '';
 if (!/test/i.test(new URL(TEST_DB || 'postgres://x/none').pathname)) {
@@ -41,10 +42,20 @@ const stub = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end('{}');
     }
+    const isConnect = lastStubRequest.body.messages[0].content.startsWith('You find meaningful links');
     const content =
       stubMode === 'garbage'
         ? 'not json at all'
-        : JSON.stringify({ action: 'assign', collectionIds: ['col-writing'], reason: 'About writing.' });
+        : isConnect
+          ? JSON.stringify({
+              verdicts: [
+                { pair: 1, toneA: 'neutral', toneB: 'neutral', kind: 'shared-theme', subject: 'Elections and Voting', reason: 'Both are about voting.', strength: 'clear' },
+                { pair: 1, toneA: 'neutral', toneB: 'neutral', kind: 'same-subject', subject: 'voting', reason: 'The same pair again.', strength: 'clear' },
+                { pair: 9, kind: 'same-subject', subject: 'x', reason: 'Not asked about.', strength: 'clear' },
+                { pair: 2, toneA: 'neutral', toneB: 'neutral', kind: 'same-subject', subject: 'groceries', reason: 'A stretch.', strength: 'loose' },
+              ],
+            })
+          : JSON.stringify({ action: 'assign', collectionIds: ['col-writing'], reason: 'About writing.' });
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ choices: [{ message: { content } }] }));
   });
@@ -263,6 +274,12 @@ async function run(pool) {
   expectStatus(await alice.put('/api/connections/c3', connection('c3', 't1', 't1')), 400, 'self-connection is refused');
   const c1 = await alice.put('/api/connections/c1', connection('c1', 't1', 't2', { status: 'dismissed' }));
   assert.equal(c1.data.connection.status, 'dismissed', 'connection update');
+  const kinded = await alice.put('/api/connections/c1', connection('c1', 't1', 't2', { status: 'suggested', kind: 'different-feelings', subject: 'gardens' }));
+  assert.equal(kinded.data.connection.kind, 'different-feelings', 'the kind of link is stored');
+  assert.equal(kinded.data.connection.subject, 'gardens', 'the shared subject is stored');
+  expectStatus(await alice.put('/api/connections/c1', connection('c1', 't1', 't2', { kind: 'soulmates' })), 400, 'unknown kinds are refused');
+  const checked = await alice.put('/api/thoughts/t1', { ...t1, text: 'Edited', collectionIds: [], autoCollectionIds: [], connectChecked: 'local:abc123' });
+  assert.equal(checked.data.thought.connectChecked, 'local:abc123', 'the connection check marker is stored');
   await alice.del('/api/thoughts/t2');
   assert.equal((await alice.get('/api/connections')).data.connections.length, 0, 'deleting a thought removes its connections');
   console.log('✓ thought delete removes its connections');
@@ -381,6 +398,49 @@ async function run(pool) {
   assert.equal(optedOutSignup.data.user.smartOrganizing, false, 'unticking it at sign-up is respected');
   console.log('✓ Smart organising preference lives on the account');
 
+  // ---------- connections by meaning ----------
+  stubMode = 'assign';
+  const connectBody = {
+    thoughts: [
+      { id: 'v1', text: 'Thinking about the upcoming elections', candidates: [{ id: 'v2', text: 'Register to vote' }, { id: 'v3', text: 'Buy milk' }] },
+      { id: 'v2', text: 'Register to vote', candidates: [{ id: 'v1', text: 'Thinking about the upcoming elections' }] },
+    ],
+  };
+  expectStatus(await client().post('/api/connect', connectBody), 401, 'connect needs a session');
+  expectStatus(await admin.post('/api/connect', { thoughts: [] }), 400, 'connect needs thoughts');
+  const linked = await admin.post('/api/connect', connectBody);
+  expectStatus(linked, 200, 'connect asks the provider');
+  assert.deepEqual(
+    linked.data.connections,
+    [{ thoughtId: 'v1', candidateId: 'v2', kind: 'shared-theme', subject: 'elections and voting', reason: 'Both are about voting.' }],
+    'only clear, well-formed links between pairs that were asked about come back, once per pair'
+  );
+  const sent = JSON.parse(lastStubRequest.body.messages[1].content);
+  assert.deepEqual(
+    sent.pairs,
+    [
+      { pair: 1, a: 'Thinking about the upcoming elections', b: 'Register to vote' },
+      { pair: 2, a: 'Thinking about the upcoming elections', b: 'Buy milk' },
+    ],
+    'the AI gets each pair once, numbered, without ids'
+  );
+  const feelings = validLinks(
+    { verdicts: [
+      { pair: 1, toneA: 'positive', toneB: 'negative', kind: 'same-subject', subject: 'working from home', reason: 'Love it, and lonely.', strength: 'clear' },
+      { pair: 2, toneA: 'positive', toneB: 'negative', kind: 'builds-on', subject: 'spanish', reason: 'A plan and a worry.', strength: 'clear' },
+      { pair: 3, toneA: 'neutral', toneB: 'neutral', kind: 'none' },
+    ] },
+    pairsFrom([{ id: 'w1', text: 'a', candidates: [{ id: 'w2', text: 'b' }, { id: 'w3', text: 'c' }, { id: 'w4', text: 'd' }] }])
+  );
+  assert.deepEqual(feelings.map((l) => l.kind), ['different-feelings', 'builds-on'], 'opposite tones about one subject become "different feelings"; "none" is dropped');
+  const connectHits = stubHits;
+  expectStatus(await optedOut.post('/api/connect', connectBody), 403, 'connect is refused when the account turned it off');
+  assert.equal(stubHits, connectHits, 'nothing is sent to the provider for that account');
+  const lonely = await admin.post('/api/connect', { thoughts: [{ id: 'v1', text: 'Alone', candidates: [] }] });
+  assert.deepEqual(lonely.data.connections, [], 'no candidates: answered without asking the AI');
+  assert.equal(stubHits, connectHits, 'no request for a thought without candidates');
+  console.log('✓ connections are judged by the AI and checked by the server');
+
   stubMode = 'ratelimit';
   const providerLimited = await bob.post('/api/classify', classifyBody);
   expectStatus(providerLimited, 429, "the provider's rate limit is passed on");
@@ -389,6 +449,8 @@ async function run(pool) {
   const paused = await admin.post('/api/classify', classifyBody);
   expectStatus(paused, 429, 'other users are paused too while the provider is limited');
   assert.equal(stubHits, hitsAfterLimit, 'no request reaches the provider during the pause');
+  expectStatus(await admin.post('/api/connect', connectBody), 429, 'the pause covers connections too');
+  assert.equal(stubHits, hitsAfterLimit, 'connections wait out the pause as well');
   stubMode = 'assign';
 
   // ---------- logout, login, lockout ----------

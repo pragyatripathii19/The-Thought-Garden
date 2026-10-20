@@ -11,6 +11,7 @@ const COLOR_VARIANTS = ['green', 'rose', 'purple', 'amber'];
 const ICON_KEY = /^[a-z0-9-]{1,40}$/;
 const ORIGINS = ['manual', 'auto', 'starter'];
 const CONNECTION_STATUSES = ['suggested', 'accepted', 'dismissed'];
+const CONNECTION_KINDS = ['same-subject', 'shared-theme', 'different-feelings', 'builds-on', 'similar', 'shared-words'];
 const EVENT_ACTIONS = ['assign', 'create'];
 const EVENT_SOURCES = ['llm', 'local', 'user-accepted'];
 
@@ -90,6 +91,7 @@ function parseThought(body) {
     stageManual: Boolean(body.stageManual),
     classifyState: oneOf(body.classifyState, CLASSIFY_STATES, 'classifyState'),
     classifiedAt: timestamp(body.classifiedAt, 'classifiedAt', { required: false }),
+    connectChecked: text(body.connectChecked, 'connectChecked', { max: 100, required: false }),
     createdAt: timestamp(body.createdAt, 'createdAt'),
     updatedAt: timestamp(body.updatedAt, 'updatedAt'),
     collectionIds: idList(body.collectionIds, 'collectionIds'),
@@ -122,6 +124,8 @@ function parseConnection(body) {
     status: oneOf(body.status, CONNECTION_STATUSES, 'status'),
     score: typeof body.score === 'number' && Number.isFinite(body.score) ? body.score : null,
     reason: text(body.reason, 'reason', { max: MAX_DESCRIPTION, required: false }) || '',
+    kind: oneOf(body.kind, CONNECTION_KINDS, 'kind'),
+    subject: text(body.subject, 'subject', { max: MAX_NAME, required: false }),
     createdAt: timestamp(body.createdAt, 'createdAt'),
     updatedAt: timestamp(body.updatedAt, 'updatedAt'),
   };
@@ -168,6 +172,7 @@ function thoughtFromRow(r) {
     organizeLocked: r.organize_locked || undefined,
     classifyState: r.classify_state || undefined,
     classifiedAt: iso(r.classified_at),
+    connectChecked: r.connect_checked || undefined,
   };
 }
 
@@ -194,6 +199,8 @@ function connectionFromRow(r) {
     status: r.status,
     score: r.score === null ? undefined : r.score,
     reason: r.reason,
+    kind: r.kind || undefined,
+    subject: r.subject || undefined,
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at),
   };
@@ -242,7 +249,7 @@ async function getThought(db, userId, thoughtId) {
 
 const THOUGHT_RECORD = `x(id text, text text, stage text, category text, is_saved boolean, organize_locked boolean,
   classify_state text, classified_at timestamptz, created_at timestamptz, updated_at timestamptz,
-  edit_count integer, stage_manual boolean)`;
+  edit_count integer, stage_manual boolean, connect_checked text)`;
 
 function thoughtRecord(t) {
   return {
@@ -258,6 +265,7 @@ function thoughtRecord(t) {
     updated_at: t.updatedAt,
     edit_count: t.editCount || 0,
     stage_manual: Boolean(t.stageManual),
+    connect_checked: t.connectChecked,
   };
 }
 
@@ -289,16 +297,16 @@ async function insertMemberships(db, userId, records) {
 async function upsertThought(db, userId, t) {
   await db.query(
     `INSERT INTO thoughts (user_id, id, text, stage, category, is_saved, organize_locked, classify_state,
-                           classified_at, created_at, updated_at, edit_count, stage_manual)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                           classified_at, created_at, updated_at, edit_count, stage_manual, connect_checked)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      ON CONFLICT (user_id, id) DO UPDATE SET
        text = EXCLUDED.text, stage = EXCLUDED.stage, category = EXCLUDED.category,
        is_saved = EXCLUDED.is_saved, organize_locked = EXCLUDED.organize_locked,
        classify_state = EXCLUDED.classify_state, classified_at = EXCLUDED.classified_at,
        updated_at = EXCLUDED.updated_at, edit_count = EXCLUDED.edit_count,
-       stage_manual = EXCLUDED.stage_manual`,
+       stage_manual = EXCLUDED.stage_manual, connect_checked = EXCLUDED.connect_checked`,
     [userId, t.id, t.text, t.stage, t.category, t.isSaved, t.organizeLocked, t.classifyState,
-      t.classifiedAt, t.createdAt, t.updatedAt, t.editCount, t.stageManual]
+      t.classifiedAt, t.createdAt, t.updatedAt, t.editCount, t.stageManual, t.connectChecked]
   );
   await db.query('DELETE FROM thought_collections WHERE user_id = $1 AND thought_id = $2', [userId, t.id]);
   await insertMemberships(db, userId, membershipRecords([t]));
@@ -310,9 +318,9 @@ async function insertThoughts(db, userId, thoughts) {
   if (thoughts.length === 0) return 0;
   const { rows } = await db.query(
     `INSERT INTO thoughts (user_id, id, text, stage, category, is_saved, organize_locked, classify_state,
-                           classified_at, created_at, updated_at, edit_count, stage_manual)
+                           classified_at, created_at, updated_at, edit_count, stage_manual, connect_checked)
      SELECT $1, x.id, x.text, x.stage, x.category, x.is_saved, x.organize_locked, x.classify_state,
-            x.classified_at, x.created_at, x.updated_at, x.edit_count, x.stage_manual
+            x.classified_at, x.created_at, x.updated_at, x.edit_count, x.stage_manual, x.connect_checked
        FROM jsonb_to_recordset($2::jsonb) AS ${THOUGHT_RECORD}
      ON CONFLICT DO NOTHING
      RETURNING id`,
@@ -403,9 +411,9 @@ async function listConnections(db, userId) {
   return rows.map(connectionFromRow);
 }
 
-const CONNECTION_COLUMNS = 'id, source_thought_id, target_thought_id, status, score, reason, created_at, updated_at';
+const CONNECTION_COLUMNS = 'id, source_thought_id, target_thought_id, status, score, reason, kind, subject, created_at, updated_at';
 const CONNECTION_RECORD = `x(id text, source_thought_id text, target_thought_id text, status text,
-  score double precision, reason text, created_at timestamptz, updated_at timestamptz)`;
+  score double precision, reason text, kind text, subject text, created_at timestamptz, updated_at timestamptz)`;
 
 function connectionRecord(c) {
   return {
@@ -415,6 +423,8 @@ function connectionRecord(c) {
     status: c.status,
     score: c.score,
     reason: c.reason,
+    kind: c.kind,
+    subject: c.subject,
     created_at: c.createdAt,
     updated_at: c.updatedAt,
   };
@@ -425,7 +435,8 @@ async function upsertConnection(db, userId, c) {
     `INSERT INTO connections (user_id, ${CONNECTION_COLUMNS})
      SELECT $1, ${CONNECTION_COLUMNS} FROM jsonb_to_recordset($2::jsonb) AS ${CONNECTION_RECORD}
      ON CONFLICT (user_id, id) DO UPDATE SET
-       status = EXCLUDED.status, score = EXCLUDED.score, reason = EXCLUDED.reason, updated_at = EXCLUDED.updated_at
+       status = EXCLUDED.status, score = EXCLUDED.score, reason = EXCLUDED.reason,
+       kind = EXCLUDED.kind, subject = EXCLUDED.subject, updated_at = EXCLUDED.updated_at
      RETURNING *`,
     [userId, JSON.stringify([connectionRecord(c)])]
   );

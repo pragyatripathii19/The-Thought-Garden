@@ -38,10 +38,17 @@ const config = {
     model,
     // Reasoning models (e.g. gpt-oss) need a low effort so their reasoning doesn't use up
     // the output budget before the JSON answer. Only sent when set.
-    reasoningEffort: process.env.LLM_REASONING_EFFORT ?? (model.includes('gpt-oss') ? 'low' : ''),
+    reasoningEffortFor: (name) => process.env.LLM_REASONING_EFFORT ?? (name.includes('gpt-oss') ? 'low' : ''),
     maxTokens: Number(process.env.LLM_MAX_TOKENS) || 600,
     timeoutMs: Number(process.env.LLM_TIMEOUT_MS) || 15000,
     rateLimit: Number(process.env.CLASSIFY_RATE_LIMIT) || 10, // requests per user per minute
+    // Judging connections is subtler than filing, so by default it uses Groq's larger free model;
+    // with a custom LLM_MODEL it uses that model unless LLM_CONNECT_MODEL says otherwise.
+    connectModel: process.env.LLM_CONNECT_MODEL || (process.env.LLM_MODEL ? model : 'openai/gpt-oss-120b'),
+    // Finding connections checks up to 4 thoughts per request; it runs in the background, so it gets a smaller share.
+    connectRateLimit: Number(process.env.CONNECT_RATE_LIMIT) || 4,
+    connectMaxTokens: Number(process.env.LLM_CONNECT_MAX_TOKENS) || 1500,
+    connectTimeoutMs: Number(process.env.LLM_CONNECT_TIMEOUT_MS) || 25000,
     rateWindowMs: 60 * 1000,
   },
 };
